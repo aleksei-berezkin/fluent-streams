@@ -1,6 +1,6 @@
 {
   "name": "fluent-streams",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Fluent API for JavaScript iterables processing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,10 @@
     "clean": "rm -rf dist",
     "build": "tsc --project tsconfig.build.json ; rm -f dist/impl/*.d.ts"
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aleksei-berezkin/fluent-streams.git"
