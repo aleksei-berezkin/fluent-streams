@@ -2,7 +2,7 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "declaration": true,
-    "module": "es2015",
+    "module": "umd",
     "moduleResolution": "node",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
