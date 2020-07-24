@@ -1,4 +1,4 @@
-import { range, stream, streamOf } from './stream';
+import { range, stream, streamOf } from './index';
 
 test('From array', () => {
     expect(stream(['a', 'b']).toArray()).toEqual(['a', 'b']);

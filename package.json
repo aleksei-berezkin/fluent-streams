@@ -4,7 +4,9 @@
   "description": "Fluent API for JavaScript iterables processing",
   "main": "index.js",
   "scripts": {
-    "test": "npx jest"
+    "test": "jest",
+    "clean": "rm -rf dist",
+    "build": "tsc --project tsconfig.build.json"
   },
   "repository": {
     "type": "git",
