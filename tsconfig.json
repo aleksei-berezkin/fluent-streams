@@ -2,7 +2,7 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "declaration": true,
-    "module": "umd",
+    "module": "CommonJS",
     "moduleResolution": "node",
     "noUnusedLocals": true,
     "noUnusedParameters": true,

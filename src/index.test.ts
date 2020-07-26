@@ -1,4 +1,4 @@
-import { range, stream, streamOf } from './index';
+import { abc, continually, range, same, stream, streamOf } from './index';
 
 test('From array', () => {
     expect(stream(['a', 'b']).toArray()).toEqual(['a', 'b']);
@@ -31,7 +31,30 @@ test('Range', () => {
     expect(range(0, 3).toArray()).toEqual([0, 1, 2]);
 });
 
-test('Iterate multiple', () => {
+test('Iterate range multiple', () => {
     const r = range(0, 2);
     expect([r.toArray(), r.toArray()]).toEqual([[0, 1], [0, 1]]);
+});
+
+test('abc', () => {
+    const a = abc();
+    expect(a.toArray()).toEqual([
+        'a', 'b', 'c', 'd', 'e', 'f',
+        'g', 'h', 'i', 'j', 'k', 'l',
+        'm', 'n', 'o', 'p', 'q', 'r',
+        's', 't', 'u', 'v', 'w', 'x',
+        'y', 'z',
+    ]);
+});
+
+test('same', () => {
+    const a = same('a').take(2);
+    expect(a.toArray()).toEqual(['a', 'a']);
+});
+
+test('continually', () => {
+    let i = 0;
+    const c = continually(() => i++).take(3);
+    expect(c.toArray()).toEqual([0, 1, 2]);
+    expect(c.toArray()).toEqual([4, 5, 6]);
 });
