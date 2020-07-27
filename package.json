@@ -5,13 +5,14 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "jest",
     "clean": "rm -rf dist",
-    "build": "tsc --project tsconfig.build.json ; rm -f dist/impl/*.d.ts"
+    "test": "jest",
+    "compile": "tsc --project tsconfig.build.json",
+    "rm-impl-typedef": "rm -f dist/impl/*.d.ts",
+    "build": "npm-run-all clean test compile rm-impl-typedef"
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "repository": {
     "type": "git",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@types/jest": "^26.0.5",
     "jest": "^26.1.0",
+    "npm-run-all": "^4.1.5",
     "ts-jest": "^26.1.3",
     "typescript": "^3.9.7"
   }
