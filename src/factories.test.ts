@@ -1,55 +1,111 @@
-import { abc, continually, range, same, stream, streamOf } from './factories';
+import {
+    abc,
+    continually,
+    entryStream,
+    optional,
+    optionalOfNullable,
+    range,
+    same,
+    stream,
+    streamOf
+} from './factories';
 
-test('From array', () => {
-    expect(stream(['a', 'b']).toArray()).toEqual(['a', 'b']);
+function twice(callback: () => void): void {
+    callback();
+    callback();
+}
+
+test('stream', () => {
+    const s = stream(['a', 'b']);
+    twice(() => expect(s.toArray()).toEqual(['a', 'b']));
 });
 
-test('From iterable', () => {
-    expect(stream({
+test('stream of iterable', () => {
+    const s = stream({
         [Symbol.iterator]() {
             return function* () {
                 yield 'a';
                 yield 'b';
             }();
         }
-    }).toArray()).toEqual(['a', 'b'])
+    });
+    twice(() => expect(s.toArray()).toEqual(['a', 'b']));
 });
 
-test('From items', () => {
-    expect(streamOf('a', 'b').toArray()).toEqual(['a' ,'b']);
+test('stream of iterables alternate', () => {
+    let i = 0;
+    const s = stream({
+        [Symbol.iterator]() {
+            return function* () {
+                yield i++;
+                yield i++;
+            }();
+        }
+    });
+    expect([s.toArray(), s.toArray()]).toEqual([[0, 1], [2, 3]]);
 });
 
-test('Empty ranges', () => {
-    expect([
-        range(0, -1).toArray(),
-        range(0, 0).toArray(),
-        range(1, 1).toArray(),
-    ]).toEqual([[], [], []]);
+test('streamOf', () => {
+    twice(() => expect(streamOf('a', 'b').toArray()).toEqual(['a' ,'b']));
 });
 
-test('Range', () => {
-    expect(range(0, 3).toArray()).toEqual([0, 1, 2]);
+test('entryStream', () => {
+    const o = {
+        a: 0,
+        b: 1,
+        c: 2,
+    };
+    twice(() => expect(entryStream(o).toArray()).toEqual([['a', 0], ['b', 1], ['c', 2]]));
 });
 
-test('Iterate range multiple', () => {
-    const r = range(0, 2);
-    expect([r.toArray(), r.toArray()]).toEqual([[0, 1], [0, 1]]);
+test('entryStream skips prototype', () => {
+    const o = {
+        a: 0,
+        b: 1,
+    };
+    const p = {
+        c: 2,
+    };
+    Object.setPrototypeOf(o, p);
+    twice(() => expect(entryStream(o).toArray()).toEqual([['a', 0], ['b', 1]]));
+});
+
+test('empty ranges', () => {
+    const e1 = range(0, -1);
+    const e2 = range(0, 0);
+    const e3 = range(1, 1);
+    twice(() =>
+        expect([
+            e1.toArray(),
+            e2.toArray(),
+            e3.toArray(),
+        ]).toEqual([
+            [], [], []
+        ])
+    );
+});
+
+test('range', () => {
+    const r = range(0, 3);
+    twice(() => expect(r.toArray()).toEqual([0, 1, 2]));
 });
 
 test('abc', () => {
     const a = abc();
-    expect(a.toArray()).toEqual([
-        'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l',
-        'm', 'n', 'o', 'p', 'q', 'r',
-        's', 't', 'u', 'v', 'w', 'x',
-        'y', 'z',
-    ]);
+    twice(() => 
+        expect(a.toArray()).toEqual([
+            'a', 'b', 'c', 'd', 'e', 'f',
+            'g', 'h', 'i', 'j', 'k', 'l',
+            'm', 'n', 'o', 'p', 'q', 'r',
+            's', 't', 'u', 'v', 'w', 'x',
+            'y', 'z',
+        ])
+    );
 });
 
 test('same', () => {
     const a = same('a').take(2);
-    expect(a.toArray()).toEqual(['a', 'a']);
+    twice(() => expect(a.toArray()).toEqual(['a', 'a']));
 });
 
 test('continually', () => {
@@ -57,4 +113,44 @@ test('continually', () => {
     const c = continually(() => i++).take(3);
     expect(c.toArray()).toEqual([0, 1, 2]);
     expect(c.toArray()).toEqual([4, 5, 6]);
+});
+
+test('optional iterable empty', () => {
+    const o = optional([]);
+    twice(() => expect(o.toArray()).toEqual([]));
+});
+
+test('optional iterable nonempty', () => {
+    const o = optional(['a']);
+    twice(() => expect(o.toArray()).toEqual(['a']));
+});
+
+test('optional trims array', () => {
+    const o = optional(['a', 'b', 'c']);
+    twice(() => expect(o.toArray()).toEqual(['a']));
+});
+
+test('optionalOfNullable null', () => {
+    const o = optionalOfNullable(() => null);
+    twice(() => expect(o.toArray()).toEqual([]));
+});
+
+test('optionalOfNullable undefined', () => {
+    const o = optionalOfNullable(() => undefined);
+    twice(() => expect(o.toArray()).toEqual([]));
+});
+
+test('optionalOfNullable nonempty', () => {
+    const o = optionalOfNullable(() => 'a');
+    twice(() => expect(o.toArray()).toEqual(['a']));
+});
+
+test('optionalOfNullable alternate', () => {
+    let i = 0;
+    const o = optionalOfNullable(() => i++ % 2 === 0 ? null : i);
+    expect([
+        o.toArray(), o.toArray(), o.toArray(), o.toArray()
+    ]).toEqual([
+        [], [2], [], [4]
+    ]);
 });
