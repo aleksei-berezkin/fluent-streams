@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
     "declaration": true,
     "module": "CommonJS",
     "moduleResolution": "node",
@@ -9,7 +8,7 @@
     "outDir": "dist",
     "sourceMap": true,
     "strict": true,
-    "target": "es2019"
+    "target": "esnext"
   },
   "include": ["src"]
 }
