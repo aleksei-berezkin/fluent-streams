@@ -83,7 +83,7 @@ export function continually<T>(getItem: () => T): Stream<T> {
 export function optional<T>(input: Iterable<T>): Optional<T> {
     return new OptionalImpl({
         [Symbol.iterator]() {
-            return trimIterable(input);
+            return trimIterable(input)[Symbol.iterator]();
         }
     }, i => i);
 }

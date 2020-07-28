@@ -9,7 +9,7 @@ export abstract class Base<P, T> implements Iterable<T> {
 
     size(): number {
         let counter = 0;
-        for (const _ in this) {
+        for (const _ of this) {
             counter++;
         }
         return counter;

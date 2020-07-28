@@ -3,7 +3,7 @@ import { Stream } from '../stream';
 import { Optional } from '../optional';
 import { RingBuffer } from './ringBuffer';
 import { OptionalImpl } from './optionalImpl';
-import { trimIterable } from './util';
+import { collectToMap, trimIterable } from './util';
 
 export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     constructor(parent: Iterable<P>,
@@ -442,17 +442,4 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
             }
         });
     }
-}
-
-function collectToMap<K, T>(items: Iterable<T>, getKey: (item: T) => K) {
-    const m = new Map<K, T[]>();
-    for (const i of items) {
-        const k = getKey(i);
-        if (m.has(k)) {
-            m.get(k)!.push(i);
-        } else {
-            m.set(k, [i]);
-        }
-    }
-    return m;
 }
