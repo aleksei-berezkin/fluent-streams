@@ -73,7 +73,7 @@ export interface Stream<T> extends Iterable<T> {
 
     toArray(): T[];
 
-    toObject(): T extends readonly [string, any] ? { [key in T[0]]: T[1] } : never;
+    toObject(): T extends readonly [string, any] ? { [key in T[0]]: T[1] } : unknown;
 
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]>;
 
