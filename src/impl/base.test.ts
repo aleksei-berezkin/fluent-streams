@@ -1,44 +1,28 @@
-import { Base } from './base';
 import { twice } from './testUtil';
+import { BaseImpl } from './base';
 
-class BaseImpl<P, T> extends Base<P, T> {
-    constructor(parent: Iterable<P>, operation: (input: Iterable<P>) => Iterable<T>) {
-        super(parent, operation);
-    }
+function of<T>(...items: T[]) {
+    return new BaseImpl(undefined, function* () {
+        yield *items;
+    });
 }
 
-test('Base size', () => {
-    const b = new BaseImpl(['a', 'a', 'a'], i => i);
+test('BaseImpl size', () => {
+    const b = of('a', 'a', 'a');
     twice(() => expect(b.size()).toEqual(3));
 });
 
-test('Base simple op', () => {
-    const b = new BaseImpl(['a', 'b', 'c'], function* (items) {
-        for (const i of items) {
-            yield i + 'x';
-        }
-    });
-    twice(() => expect([...b]).toEqual(['ax', 'bx', 'cx']));
-});
-
-test('Base composition', () => {
-    const b1 = new BaseImpl(['a', 'b', 'c'], function* (items) {
-        for (const i of items) {
-            yield 'x' + i;
-        }
-    });
+test('BaseImpl composition', () => {
+    const b1 = of('a', 'b', 'c');
     const b2 = new BaseImpl(b1, function* (items) {
         yield *items;
-        yield 'xd';
+        yield 'd';
     });
-    twice(() => expect([...b2]).toEqual(['xa', 'xb', 'xc', 'xd']));
+    twice(() => expect([...b2]).toEqual(['a', 'b', 'c', 'd']));
 });
 
-test('Base composition to other', () => {
-    const b = new BaseImpl(['a', 'b'], function* (items) {
-        yield *items;
-        yield 'c';
-    });
+test('BaseImpl composition to other', () => {
+    const b = of('a', 'b', 'c');
     const bb1 = new BaseImpl(b, function* (items) {
         yield *items;
         yield 'd';

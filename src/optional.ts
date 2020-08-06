@@ -5,7 +5,7 @@ export interface Optional<T> extends Iterable<T> {
 
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U>;
 
-    flatMapTo<U>(mapper: (item: T) => Optional<U>): Optional<U>;
+    flatMapOptional<U>(mapper: (item: T) => Optional<U>): Optional<U>;
 
     get(): T;
 

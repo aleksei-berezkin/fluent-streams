@@ -1,13 +1,14 @@
-import { Base } from './base';
+import { BaseImpl, Base } from './base';
 import { Stream } from '../stream';
 import { Optional } from '../optional';
 import { RingBuffer } from './ringBuffer';
 import { OptionalImpl } from './optionalImpl';
-import { collectToMap, trimIterable } from './util';
+import { appendReturned, collectToMap, matchGenerator, toAnyArray, toModifiableArray } from './util';
+import { assertResult, assertVoid, StreamGenerator } from './streamGenerator';
 
-export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
-    constructor(parent: Iterable<P>,
-                operation: (input: Iterable<P>) => Iterable<T>) {
+export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
+    constructor(parent: Base<P> | undefined,
+                operation: (input: StreamGenerator<P>) => StreamGenerator<T>) {
         super(parent, operation);
     }
 
@@ -30,23 +31,24 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     at(index: number): Optional<T> {
-        return new OptionalImpl(this, function* (items) {
+        return new OptionalImpl(this, function* (gen) {
             if (index < 0) {
                 return;
             }
 
-            if (Array.isArray(items)) {
-                if (index < items.length) {
-                    yield items[index];
+            const {head, tail} = matchGenerator(gen);
+            
+            let current = 0;
+            for (const i of head) {
+                if (index === current++) {
+                    yield i;
+                    return;
                 }
-            } else {
-                let current = 0;
-                for (const i of items) {
-                    if (index === current++) {
-                        yield i;
-                        break;
-                    }
-                }
+            }
+
+            const i = index - current;
+            if (i < tail().array.length) {
+                yield tail().array[i];
             }
         });
     }
@@ -56,15 +58,15 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     append(item: T) {
-        return new StreamImpl(this, function* (items) {
-            yield* items;
+        return new StreamImpl<T, T>(this, function* (gen) {
+            yield* appendReturned(gen);
             yield item;
         });
     }
 
-    appendIf(condition: boolean, item: T): Stream<T> {
-        return new StreamImpl(this, function* (items) {
-            yield* items;
+    appendIf(condition: boolean, item: T) {
+        return new StreamImpl<T, T>(this, function* (gen) {
+            yield* appendReturned(gen);
             if (condition) {
                 yield item;
             }
@@ -72,26 +74,32 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     appendAll(newItems: Iterable<T>) {
-        return new StreamImpl(this, function* (items) {
-            yield* items;
-            yield* newItems;
-        });
+        return this.appendAllIf(true, newItems);
     }
 
     appendAllIf(condition: boolean, newItems: Iterable<T>): Stream<T> {
-        return new StreamImpl(this, function* (items) {
-            yield* items;
+        return new StreamImpl(this, function* (gen) {
+            yield* gen;
             if (condition) {
-                yield* newItems;
+                if (Array.isArray(newItems)) {
+                    return {
+                        array: newItems as T[],
+                        canModify: false,
+                    }
+                } else {
+                    yield* newItems;
+                }
             }
         });
     }
 
     butLast() {
-        return new StreamImpl(this, function* (items) {
+        return new StreamImpl(this, function* (gen) {
+            const {head,tail} = matchGenerator(gen);
+
             let first = true;
             let prev: T = undefined as any as T;
-            for (const i of items) {
+            for (const i of head) {
                 if (!first) {
                     yield prev;
                 } else {
@@ -99,13 +107,23 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
                 }
                 prev = i;
             }
+
+            if (tail().array.length) {
+                if (!first) {
+                    yield prev;
+                }
+                return {
+                    array: tail().array.slice(0, tail().array.length - 1),
+                    canModify: true,
+                };
+            }
         });
     }
 
     distinctBy(getKey: (item: T) => any) {
-        return new StreamImpl(this, function* (items) {
+        return new StreamImpl(this, function* (gen) {
             const keys = new Set<T>();
-            for (const i of items) {
+            for (const i of appendReturned(gen)) {
                 const key = getKey(i);
                 if (!keys.has(key)) {
                     keys.add(key);
@@ -128,8 +146,8 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     filter(predicate: (item: T) => boolean) {
-        return new StreamImpl(this, function* (items: Iterable<T>) {
-            for (const i of items) {
+        return new StreamImpl(this, function* (gen) {
+            for (const i of appendReturned(gen)) {
                 if (predicate(i)) {
                     yield i;
                 }
@@ -138,8 +156,8 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     filterWithAssertion<U extends T>(assertion: (item: T) => item is U): Stream<U> {
-        return new StreamImpl<T, U>(this, function* (items: Iterable<T>) {
-            for (const i of items) {
+        return new StreamImpl<T, U>(this, function* (gen) {
+            for (const i of appendReturned(gen)) {
                 if (assertion(i)) {
                     yield i;
                 }
@@ -148,8 +166,8 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     find(predicate: (item: T) => boolean): Optional<T> {
-        return new OptionalImpl(this, function* (items) {
-            for (const i of items) {
+        return new OptionalImpl(this, function* (gen) {
+            for (const i of appendReturned(gen)) {
                 if (predicate(i)) {
                     yield i;
                     break;
@@ -159,8 +177,8 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
-        return new StreamImpl(this, function* (items: Iterable<T>) {
-            for (const i of items) {
+        return new StreamImpl(this, function* (gen) {
+            for (const i of appendReturned(gen)) {
                 yield* mapper(i);
             }
         });
@@ -172,14 +190,19 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
         }
     }
 
-    groupBy<K>(getKey: (item: T) => K): Stream<readonly [K, T[]]> {
+    groupBy<K>(getKey: (item: T) => K) {
         return new StreamImpl<T, readonly [K, T[]]>(this, function* (items) {
-            yield* collectToMap(items, getKey);
+            yield* collectToMap(appendReturned(items), getKey);
         });
     }
 
     head(): Optional<T> {
-        return new OptionalImpl<T, T>(this, trimIterable);
+        return new OptionalImpl<T, T>(this, function* (gen) {
+            const n = appendReturned(gen)[Symbol.iterator]().next();
+            if (!n.done) {
+                yield n.value;
+            }
+        });
     }
 
     join(delimiter: string): string {
@@ -191,7 +214,7 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
         let prev: T = undefined as any;
         let first = true;
         const itr = this[Symbol.iterator]();
-        for (; ;) {
+        for ( ; ; ) {
             const n = itr.next();
             if (n.done) {
                 break;
@@ -209,48 +232,53 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     last(): Optional<T> {
-        return new OptionalImpl(this, function* (items) {
-            if (Array.isArray(items)) {
-                if (items.length) {
-                    yield items[items.length - 1];
-                }
-                return;
-            }
-            let result: T = undefined as any;
-            let found = false;
-            for (const i of items) {
-                result = i;
-                found = true;
+        return new OptionalImpl(this, function* (gen) {
+            const {head, tail} = matchGenerator(gen);
+            let lastInHead: T = undefined as any;
+            let foundInHead = false;
+            for (const i of head) {
+                lastInHead = i;
+                foundInHead = true;
             }
 
-            if (found) {
-                yield result;
+            if (tail().array.length) {
+                yield tail().array[tail().array.length - 1];
+            } else if (foundInHead) {
+                yield lastInHead;
             }
         });
     }
 
     map<U>(mapper: (item: T) => U) {
-        return new StreamImpl(this, function* (items: Iterable<T>) {
-            for (const i of items) {
+        return new StreamImpl(this, function* (gen) {
+            for (const i of appendReturned(gen)) {
                 yield mapper(i);
             }
         });
     }
 
     randomItem(): Optional<T> {
-        return new OptionalImpl(this, function* (items) {
-            const a: T[] = Array.isArray(items) ? items : [...items];
-            if (a.length) {
-                yield a[Math.floor(Math.random() * a.length)];
+        return new OptionalImpl(this, function* (gen) {
+            const {head, tail} = matchGenerator(gen);
+            const headArr = [...head];
+            if (headArr.length + tail().array.length === 0) {
+                return;
+            }
+
+            const i = Math.floor(Math.random() * (headArr.length + tail().array.length));
+            if (i < headArr.length) {
+                yield headArr[i];
+            } else {
+                yield tail().array[i - headArr.length];
             }
         });
     }
 
     reduce(reducer: (l: T, r: T) => T): Optional<T> {
-        return new OptionalImpl(this, function* (items) {
+        return new OptionalImpl(this, function* (gen) {
             let found = false;
             let result: T = undefined as any;
-            for (const i of items) {
+            for (const i of appendReturned(gen)) {
                 if (!found) {
                     result = i;
                     found = true;
@@ -273,34 +301,41 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     shuffle(): Stream<T> {
-        return new StreamImpl(this, function* (items) {
-            const a = [...items];
+        return new StreamImpl(this, function* (gen) {
+            const a = toModifiableArray(gen);
+
             for (let i = 0; i < a.length - 1; i++) {
                 const j = i + Math.floor(Math.random() * (a.length - i));
                 if (i !== j) {
                     [a[i], a[j]] = [a[j], a[i]];
                 }
             }
-            yield* a;
+
+            return {array: a, canModify: true};
         });
     }
 
     single(): Optional<T> {
-        return new OptionalImpl(this, function* (items) {
-            const itr = items[Symbol.iterator]();
+        return new OptionalImpl(this, function* (gen) {
+            const itr = gen[Symbol.iterator]();
             const n = itr.next();
-            if (!n.done) {
-                if (itr.next().done) {
+            if (n.done) {
+                if (assertResult(n.value) && n.value.array.length === 1) {
+                    yield n.value.array[0];
+                }
+            } else {
+                const nn = itr.next();
+                if (nn.done && assertVoid(nn.value)) {
                     yield n.value;
                 }
             }
         });
     }
 
-    sortOn(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
-        return new StreamImpl(this, function* (items) {
-            const copy = [...items];
-            copy.sort((a, b) => {
+    sortOn(getComparable: (item: T) => (number | string | boolean)) {
+        return new StreamImpl(this, function* (gen) {
+            const a = toModifiableArray(gen);
+            a.sort((a, b) => {
                 if (getComparable(a) < getComparable(b)) {
                     return -1;
                 }
@@ -309,14 +344,17 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
                 }
                 return 0;
             });
-            yield* copy;
+            return {
+                array: a,
+                canModify: true,
+            };
         });
     }
 
     splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]> {
-        return new StreamImpl(this, function* (items) {
+        return new StreamImpl(this, function* (gen) {
             let chunk: T[] | undefined = undefined;
-            for (const item of items) {
+            for (const item of appendReturned(gen)) {
                 if (!chunk) {
                     chunk = [item];
                 } else if (isSplit(chunk[chunk.length - 1], item)) {
@@ -330,58 +368,89 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     tail(): Stream<T> {
-        return new StreamImpl(this, function* (items) {
+        return new StreamImpl(this, function* (gen) {
+            const {head, tail} = matchGenerator(gen);
             let first = true;
-            for (const i of items) {
+            for (const i of head) {
                 if (first) {
                     first = false;
                 } else {
                     yield i;
                 }
             }
+
+            if (tail().array.length) {
+                if (first) {
+                    return {
+                        array: tail().array.slice(1),
+                        canModify: true,
+                    }
+                } else {
+                    return tail();
+                }
+            }
         });
     }
 
     take(n: number): Stream<T> {
-        return new StreamImpl(this, function* (items) {
+        return new StreamImpl(this, function* (gen) {
+            const {head, tail} = matchGenerator(gen);
             let count = 0;
-            for (const i of items) {
+            for (const i of head) {
                 if (count >= n) {
                     return;
                 }
                 yield i;
                 count++;
             }
+
+            const takeFromTail = n - count;
+            if (takeFromTail > 0) {
+                return {
+                    array: tail().array.slice(0, takeFromTail),
+                    canModify: true,
+                }
+            }
         });
     }
 
     takeRandom(n: number): Stream<T> {
-        return new StreamImpl(this, function* (items) {
-            const a = [...items];
+        return new StreamImpl(this, function* (gen) {
+            const a = toModifiableArray(gen);
             for (let i = 0; i < Math.min(a.length - 1, n); i++) {
                 const j = i + Math.floor(Math.random() * (a.length - i));
                 if (i !== j) {
                     [a[i], a[j]] = [a[j], a[i]];
                 }
             }
-            yield* a.slice(0, Math.min(a.length, n));
+            return {
+                array: a.slice(0, Math.min(a.length, n)),
+                canModify: true,
+            };
         });
     }
 
-    takeLast(n: number): Stream<T> {
-        return new StreamImpl(this, function* (items) {
-            if (Array.isArray(items)) {
-                if (items.length <= n) {
-                    return items;
-                }
-                return items.slice(items.length - n, items.length);
-            }
-
+    takeLast(n: number) {
+        return new StreamImpl(this, function* (gen) {
+            const {head, tail} = matchGenerator(gen);
             const buffer = new RingBuffer<T>(n);
-            for (const i of items) {
+            for (const i of head) {
                 buffer.add(i);
             }
-            yield* buffer;
+
+            const nFromBuffer = n - tail().array.length;
+            if (nFromBuffer >= 0) {
+                yield* buffer.takeLast(nFromBuffer);
+                return {
+                    array: tail().array,
+                    canModify: tail().canModify,
+                }
+            } else {
+                return {
+                    array: tail().array.slice(tail().array.length - n),
+                    canModify: true,
+                }
+            }
         });
     }
 
@@ -407,9 +476,9 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]> {
-        return new StreamImpl(this, function* (items) {
+        return new StreamImpl(this, function* (gen) {
             const oItr = other[Symbol.iterator]();
-            for (const i of items) {
+            for (const i of appendReturned(gen)) {
                 const oNext = oItr.next();
                 if (oNext.done) {
                     return;
@@ -425,17 +494,17 @@ export class StreamImpl<P, T> extends Base<P, T> implements Stream<T> {
     }
 
     zipWithIndex(): Stream<readonly [T, number]> {
-        return new StreamImpl(this, function* (items) {
+        return new StreamImpl(this, function* (gen) {
             let index = 0;
-            for (const i of items) {
+            for (const i of appendReturned(gen)) {
                 yield [i, index++] as const;
             }
         });
     }
 
     zipWithIndexAndLen(): Stream<readonly [T, number, number]> {
-        return new StreamImpl(this, function* (items) {
-            const a = Array.isArray(items) ? items : [...items];
+        return new StreamImpl(this, function* (gen) {
+            const a = toAnyArray(gen);
             let index = 0;
             for (const i of a) {
                 yield [i, index++, a.length] as const;
