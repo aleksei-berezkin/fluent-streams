@@ -1,10 +1,18 @@
-import { BaseImpl, Base } from './base';
+import { Base, BaseImpl } from './base';
 import { Stream } from '../stream';
 import { Optional } from '../optional';
 import { RingBuffer } from './ringBuffer';
 import { OptionalImpl } from './optionalImpl';
-import { appendReturned, collectToMap, matchGenerator, toAnyArray, toModifiableArray } from './util';
-import { assertResult, assertVoid, StreamGenerator } from './streamGenerator';
+import { collectToMap } from './util';
+import {
+    appendReturned,
+    assertResult,
+    assertVoid,
+    matchGenerator,
+    StreamGenerator,
+    toAnyArray,
+    toModifiableArray
+} from '../streamGenerator';
 
 export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
     constructor(parent: Base<P> | undefined,

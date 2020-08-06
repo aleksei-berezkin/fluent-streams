@@ -2,8 +2,7 @@ import { Base, BaseImpl } from './base';
 import { Optional } from '../optional';
 import { Stream } from '../stream';
 import { StreamImpl } from './streamImpl';
-import { StreamGenerator } from './streamGenerator';
-import { appendReturned } from './util';
+import { appendReturned, StreamGenerator } from '../streamGenerator';
 
 export class OptionalImpl<P, T> extends BaseImpl<P, T> implements Optional<T> {
     constructor(parent: Base<P> | undefined,

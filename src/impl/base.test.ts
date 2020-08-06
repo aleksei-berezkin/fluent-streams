@@ -1,6 +1,6 @@
 import { twice } from './testUtil';
 import { BaseImpl } from './base';
-import { appendReturned } from './util';
+import { appendReturned } from '../streamGenerator';
 
 function of<T>(head: T[], tail?: T[]) {
     return new BaseImpl(undefined, function* () {

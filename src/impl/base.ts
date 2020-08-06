@@ -1,5 +1,4 @@
-import { StreamGenerator } from './streamGenerator';
-import { appendReturned, matchGenerator, toModifiableArray } from './util';
+import { appendReturned, matchGenerator, StreamGenerator, toModifiableArray } from '../streamGenerator';
 
 export interface Base<T> {
     createGenerator(): StreamGenerator<T>;
