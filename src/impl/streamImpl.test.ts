@@ -27,51 +27,51 @@ test('all', () => {
 test('all neg', () => {
     forInput(
         ['ax', 'bx', 'c'],
-        s => twice(() => expect(s.all(i => i.endsWith('x'))).toBe(false)),
+        (s, inputHint) => twice(runHint => expect(s.all(i => i.endsWith('x'))).toBeWithHint(false, inputHint, runHint)),
     );
 });
 
 test('any', () => {
     forInput(
         ['a', 'b'],
-        s => twice(() => expect(s.any(i => i === 'a')).toBe(true)),
+        (s, inputHint) => twice(runHint => expect(s.any(i => i === 'a')).toBeWithHint(true, inputHint, runHint)),
     );
 });
 
 test('any neg', () => {
     forInput(
         ['a', 'b'],
-        s => twice(() => expect(s.any(i => i === 'c')).toBe(false)),
+        (s, inputHint) => twice(runHint => expect(s.any(i => i === 'c')).toBeWithHint(false, inputHint, runHint)),
     );
 });
 
 test('at neg', () => {
     forInput(
         ['a', 'b'],
-        s => twice(() => expect(s.at(-1).resolve()).toEqual({has: false})),
+        (s, inputHint)  => twice(runHint => expect(s.at(-1).resolve()).toEqualWithHint({has: false}, inputHint, runHint)),
     );
 });
 
 test('at', () => {
     forInput(
         ['a', 'b'],
-        s => twice(() => expect(s.at(1).resolve()).toEqual({has: true, val: 'b'})),
+        (s, inputHint) => twice(runHint => expect(s.at(1).resolve()).toEqualWithHint({has: true, val: 'b'}, inputHint, runHint)),
     );
 });
 
 test('at out of', () => {
     forInput(
         ['a', 'b'],
-        s =>  twice(() => expect(s.at(3).resolve()).toEqual({has: false})),
+        (s, inputHint) =>  twice(runHint => expect(s.at(3).resolve()).toEqualWithHint({has: false}, inputHint, runHint)),
     );
 });
 
 test('awaitAll const', doneTest => {
     forInput(
         ['a', 'b'],
-        s => twiceAsync(doneTest, doneRun =>
+        (s, inputHint) => twiceAsync(doneTest, (doneRun, runHint) =>
             s.awaitAll().then(items => {
-                expect(items).toEqual(['a', 'b']);
+                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
                 doneRun();
             })
         )
@@ -84,9 +84,9 @@ test('awaitAll promise', doneTest => {
             new Promise(resolve => setTimeout(() => resolve('a'), 100)),
             new Promise(resolve => setTimeout(() => resolve('b'), 200))
         ],
-        s => twiceAsync(doneTest, doneRun =>
+        (s, inputHint) => twiceAsync(doneTest, (doneRun, runHint) =>
             s.awaitAll().then(items => {
-                expect(items).toEqual(['a', 'b']);
+                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
                 doneRun();
             })
         )
@@ -99,9 +99,9 @@ test('awaitAll mix', doneTest => {
             new Promise(resolve => setTimeout(() => resolve('a'), 100)),
             'b',
         ],
-        s => twiceAsync(doneTest, doneRun =>
+        (s, inputHint) => twiceAsync(doneTest, (doneRun, runHint) =>
             s.awaitAll().then(items => {
-                expect(items).toEqual(['a', 'b']);
+                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
                 doneRun();
             })
         ),
@@ -111,14 +111,14 @@ test('awaitAll mix', doneTest => {
 test('long chain', () => {
     forInput(
         ['a', 'b'],
-        s => twice(() => {
+        (s, inputHint) => twice(runHint => {
             expect(
                 s
                     .append('c')
                     .map(c => c.toUpperCase())
                     .filter(c => c !== 'B')
                     .toArray()
-            ).toEqual(['A', 'C']);
+            ).toEqualWithHint(['A', 'C'], inputHint, runHint);
         }),
     );
 });
@@ -126,12 +126,12 @@ test('long chain', () => {
 test('with r', () => {
     forInput(
         ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'],
-        b => {
+        (b, inputHint) => {
             const a = () => b
                 .shuffle()
                 .at(0)
                 .get();
-            expect([a(), a(), a(), a(), a()]).not.toEqual(['a', 'a', 'a', 'a', 'a']);
+            expect([a(), a(), a(), a(), a()]).not.toEqualWithHint(['a', 'a', 'a', 'a', 'a'], inputHint, 'Single run');
         }
     )
 });
