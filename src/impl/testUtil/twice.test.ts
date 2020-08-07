@@ -1,4 +1,4 @@
-import { twice } from './twice';
+import { twice, twiceAsync } from './twice';
 
 test('twice', () => {
     let i = 0;
@@ -6,39 +6,39 @@ test('twice', () => {
     expect(i).toEqual(2);
 });
 
-test('twice with done', () => {
-    const trace: number[] = [];
-    const mockDone = () => trace.push(99);
+test('twiceAsync sync', () => {
+    const trace: (number | 'done')[] = [];
+    const doneMock = () => trace.push('done');
     let count = 0;
-    twice(mockDone, _done => {
+    twiceAsync(doneMock, doneRun => {
         trace.push(count++); 
-        _done();
+        doneRun();
     });
-    expect(trace).toEqual([0, 1, 99]);
+    expect(trace).toEqual([0, 1, 'done']);
 });
 
-test('twice async', done => {
-    const trace: number[] = [];
-    const mockDone = () => trace.push(99);
+test('twiceAsync async', doneTest => {
+    const trace: (number | 'done')[] = [];
+    const doneMock = () => trace.push('done');
     let count = 0;
-    twice(mockDone, _done => {
+    twiceAsync(doneMock, doneRun => {
         const i = count++;
         setTimeout(() => {
             trace.push(i);
-            setTimeout(_done, 50);
+            setTimeout(doneRun, 50);
         }, i * 10);
     });
     setTimeout(() => {
-        expect(trace).toEqual([0, 1, 99]);
-        done();
+        expect(trace).toEqual([0, 1, 'done']);
+        doneTest();
     }, 100)
 });
 
 test('twice no repeated done', () => {
     expect(
-        () => twice(() => {}, _done => {
-            _done();
-            _done();
+        () => twiceAsync(() => {}, doneRun => {
+            doneRun();
+            doneRun();
         })
     ).toThrow();
 });

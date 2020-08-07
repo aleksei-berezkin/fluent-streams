@@ -1,4 +1,4 @@
-import { twice } from './testUtil/twice';
+import { twice, twiceAsync } from './testUtil/twice';
 import { Stream } from '../stream';
 import { StreamImpl } from './streamImpl';
 
@@ -80,43 +80,43 @@ test('at out of', () => {
     );
 });
 
-test('awaitAll const', done => {
+test('awaitAll const', doneTest => {
     forInput(
         ['a', 'b'],
-        s => twice(done, _done =>
+        s => twiceAsync(doneTest, doneRun =>
             s.awaitAll().then(items => {
                 expect(items).toEqual(['a', 'b']);
-                _done();
+                doneRun();
             })
         )
     );
 });
 
-test('awaitAll promise', done => {
+test('awaitAll promise', doneTest => {
     forInput(
         [
             new Promise(resolve => setTimeout(() => resolve('a'), 100)),
             new Promise(resolve => setTimeout(() => resolve('b'), 200))
         ],
-        s => twice(done, _done =>
+        s => twiceAsync(doneTest, doneRun =>
             s.awaitAll().then(items => {
                 expect(items).toEqual(['a', 'b']);
-                _done();
+                doneRun();
             })
         )
     )
 });
 
-test('awaitAll mix', done => {
+test('awaitAll mix', doneTest => {
     forInput(
         [
             new Promise(resolve => setTimeout(() => resolve('a'), 100)),
             'b',
         ],
-        s => twice(done, _done =>
+        s => twiceAsync(doneTest, doneRun =>
             s.awaitAll().then(items => {
                 expect(items).toEqual(['a', 'b']);
-                _done();
+                doneRun();
             })
         ),
     );
