@@ -9,7 +9,7 @@ import {
     stream,
     streamOf
 } from './factories';
-import { twice } from './impl/testUtil';
+import { twice } from './impl/testUtil/twice';
 
 test('stream', () => {
     const s = stream(['a', 'b']);

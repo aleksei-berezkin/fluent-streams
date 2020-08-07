@@ -1,4 +1,4 @@
-import { twice } from './testUtil';
+import { twice } from './twice';
 
 test('twice', () => {
     let i = 0;

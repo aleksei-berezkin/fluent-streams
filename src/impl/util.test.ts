@@ -1,5 +1,5 @@
 import { trimIterable } from './util';
-import { twice } from './testUtil';
+import { twice } from './testUtil/twice';
 
 test('trimIterable empty', () => {
     const i = trimIterable([]);

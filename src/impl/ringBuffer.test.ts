@@ -1,5 +1,5 @@
 import { RingBuffer } from './ringBuffer';
-import { twice } from './testUtil';
+import { twice } from './testUtil/twice';
 
 test('Bad capacity', () => {
     expect(() => new RingBuffer(0)).toThrow();

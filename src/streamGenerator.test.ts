@@ -75,7 +75,7 @@ test('matchGenerator no head', () => {
 });
 
 test('matchGenerator no tail', () => {
-    const {head, tail} = matchGenerator(function *() {
+    const {head, tail} = matchGenerator(function* () {
         yield* ['a', 'b'];
     }());
     expect([...head]).toEqual(['a', 'b']);
@@ -90,7 +90,7 @@ test('matchGenerator full', () => {
         array: ['c', 'd'],
         canModify: true,
     }
-    const {head, tail} = matchGenerator(function *() {
+    const {head, tail} = matchGenerator(function* () {
         yield* ['a', 'b'];
         return genRes;
     }());

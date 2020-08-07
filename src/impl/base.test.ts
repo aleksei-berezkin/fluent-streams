@@ -1,6 +1,7 @@
-import { twice } from './testUtil';
+import { twice } from './testUtil/twice';
 import { BaseImpl } from './base';
-import { appendReturned } from '../streamGenerator';
+import { appendReturned, matchGenerator } from '../streamGenerator';
+import './testUtil/extendExpect';
 
 function of<T>(head: T[], tail?: T[]) {
     return new BaseImpl(undefined, function* () {
@@ -14,11 +15,13 @@ function of<T>(head: T[], tail?: T[]) {
     });
 }
 
-function forInput<T>(input: T[], run: (base: BaseImpl<unknown, T>) => void) {
+function forInput<T>(input: T[], run: (base: BaseImpl<unknown, T>, msg: string) => void) {
     for (let headSize = 0; headSize <= input.length; headSize++) {
-        run(of(input.slice(0, headSize), input.slice(headSize)));
+        const head = input.slice(0, headSize);
+        const tail = input.slice(headSize);
+        run(of(head, tail), `head: ${head}, tail: ${tail}`);
     }
-    twice(() => run(of(input)));
+    run(of(input), `head: ${input}`);
 }
 
 test('BaseImpl size', () => {
@@ -39,6 +42,23 @@ test('BaseImpl composition', () => {
             twice(() => expect([...bb]).toEqual(['a', 'b', 'c', 'd']));
         }
     );
+});
+
+test('BaseImpl composition match', () => {
+    forInput(
+        ['a', 'b', 'c'],
+        (b, msg1) => {
+            const bb = new BaseImpl(b, function* (gen) {
+                const {head, tail} = matchGenerator(gen);
+                yield* head;
+                return {
+                    array: [...tail().array, 'd'],
+                    canModify: true,
+                }
+            });
+            twice(msg2 => expect([...bb]).toEqualWithMsg(['a', 'b', 'c', 'd'], `${msg2} ${msg1}`));
+        }
+    )
 });
 
 test('BaseImpl composition to other', () => {
