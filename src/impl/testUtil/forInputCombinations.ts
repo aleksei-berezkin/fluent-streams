@@ -3,7 +3,7 @@ import { StreamGeneratorResult } from '../../streamGenerator';
 export function forInputCombinations<T, Out>(
     input: T[],
     create: (head: T[], tail?: StreamGeneratorResult<T>) => Out,
-    run: (base: Out, getMessage: () => string) => void
+    run: (base: Out, inputHint: () => string) => void
 ) {
     for (let headSize = 0; headSize <= input.length; headSize++) {
         const head = input.slice(0, headSize);

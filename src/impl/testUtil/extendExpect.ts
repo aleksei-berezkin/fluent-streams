@@ -1,30 +1,67 @@
+import MatcherContext = jest.MatcherContext;
+
 export {};  // declare global needs to be in module
 
-expect.extend({
-    toEqualWithMsg(received: any, expected: any, message: string) {
-        const getMsg = (not: boolean) =>
-            `${message}\n
-expected: ${not ? 'not ' : ''}${this.utils.printExpected(expected)}\n 
-received: ${this.utils.printReceived(received)}`;
-        
-        if (this.equals(received, expected)) {
-            return {
-                message: () => getMsg(true),
-                pass: true,
-            }
-        }
+function getResult(pass: boolean, matcherName: string, comment: string, ctx: MatcherContext,
+                   received: any, expected: any, inputHint: () => string, runHint: string) {
+    const matcherHint = ctx.utils.matcherHint(matcherName, undefined, undefined, {
+        comment,
+        isNot: ctx.isNot,
+        promise: ctx.promise,
+    })
 
+    const getMessage = (not: boolean) =>
+        `${matcherHint}
+${inputHint()}  --  ${runHint}
+expected: ${not ? 'not ' : ''}${ctx.utils.printExpected(expected)} 
+received: ${ctx.utils.printReceived(received)}`;
+
+    if (pass) {
         return {
-            message: () => getMsg(false),
-            pass: false,
+            message: () => getMessage(true),
+            pass: true,
         }
+    }
+
+    return {
+        message: () => getMessage(false),
+        pass: false,
+    }
+}
+
+expect.extend({
+    toEqualWithHint(received: any, expected: any, inputHint: () => string, runHint: string) {
+        return getResult(
+            this.equals(received, expected),
+            'toEqualWithHint',
+            'Deep equality',
+            this,
+            received,
+            expected,
+            inputHint,
+            runHint,
+        );
+    },
+
+    toBeWithHint(received: any, expected: any, inputHint: () => string, runHint: string) {
+        return getResult(
+            received === expected,
+            'toBeWithHint',
+            'Strict equality',
+            this,
+            received,
+            expected,
+            inputHint,
+            runHint,
+        );
     }
 });
 
 declare global {
     namespace jest {
         interface Matchers<R> {
-            toEqualWithMsg(expected: any, message: string): R;
+            toEqualWithHint(expected: any, inputHint: () => string, runHint: string): R;
+            toBeWithHint(expected: any, inputHint: () => string, runHint: string): R;
         }
     }
 }

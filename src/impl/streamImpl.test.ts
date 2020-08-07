@@ -2,8 +2,9 @@ import { twice, twiceAsync } from './testUtil/twice';
 import { Stream } from '../stream';
 import { StreamImpl } from './streamImpl';
 import { forInputCombinations } from './testUtil/forInputCombinations';
+import './testUtil/extendExpect';
 
-function forInput<T>(input: T[], run: (base: Stream<T>, getMessage: () => string) => void) {
+function forInput<T>(input: T[], run: (base: Stream<T>, inputHint: () => string) => void) {
     return forInputCombinations(
         input,
         (head, tail) => new StreamImpl(undefined, function* () {
@@ -19,7 +20,7 @@ function forInput<T>(input: T[], run: (base: Stream<T>, getMessage: () => string
 test('all', () => {
     forInput(
         ['ax', 'bx', 'cx'],
-        s => twice(() => expect(s.all(i => i.endsWith('x'))).toBe(true)),
+        (s, inputHint) => twice(runHint => expect(s.all(i => i.endsWith('x'))).toBeWithHint(true, inputHint, runHint)),
     );
 });
 

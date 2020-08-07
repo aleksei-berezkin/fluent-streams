@@ -4,7 +4,7 @@ import { appendReturned, matchGenerator } from '../streamGenerator';
 import './testUtil/extendExpect';
 import { forInputCombinations } from './testUtil/forInputCombinations';
 
-function forInput<T>(input: T[], run: (base: BaseImpl<unknown, T>, getMessage: () => string) => void) {
+function forInput<T>(input: T[], run: (base: BaseImpl<unknown, T>, inputHint: () => string) => void) {
     return forInputCombinations(
         input,
         (head, tail) => new BaseImpl(undefined, function* () {
@@ -20,19 +20,19 @@ function forInput<T>(input: T[], run: (base: BaseImpl<unknown, T>, getMessage: (
 test('BaseImpl size', () => {
      forInput(
          ['a', 'a', 'a'],
-         b => twice(() => expect(b.size()).toEqual(3))
+         (b, inputHint) => twice(runHint => expect(b.size()).toEqualWithHint(3, inputHint, runHint))
      );
 });
 
 test('BaseImpl composition', () => {
     forInput(
         ['a', 'b', 'c'],
-        b => {
+        (b, inputHint) => {
             const bb = new BaseImpl(b, function* (gen) {
                 yield* appendReturned(gen);
                 yield 'd';
             });
-            twice(() => expect([...bb]).toEqual(['a', 'b', 'c', 'd']));
+            twice(runHint => expect([...bb]).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint));
         }
     );
 });
@@ -40,7 +40,7 @@ test('BaseImpl composition', () => {
 test('BaseImpl composition match', () => {
     forInput(
         ['a', 'b', 'c'],
-        (b, getMessage) => {
+        (b, inputHint) => {
             const bb = new BaseImpl(b, function* (gen) {
                 const {head, tail} = matchGenerator(gen);
                 yield* head;
@@ -49,7 +49,7 @@ test('BaseImpl composition match', () => {
                     canModify: true,
                 }
             });
-            twice(msg => expect([...bb]).toEqualWithMsg(['a', 'b', 'c', 'd'], `${msg} ${getMessage()}`));
+            twice(runHint => expect([...bb]).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint));
         }
     )
 });
@@ -57,7 +57,7 @@ test('BaseImpl composition match', () => {
 test('BaseImpl composition to other', () => {
     forInput(
         ['a', 'b', 'c'],
-        b => {
+        (b, inputHint) => {
             const bb1 = new BaseImpl(b, function* (gen) {
                 yield* appendReturned(gen);
                 yield 'd';
@@ -68,9 +68,9 @@ test('BaseImpl composition to other', () => {
                 }
             });
             
-            twice(() => {
-                expect([...bb1]).toEqual(['a', 'b', 'c', 'd']);
-                expect([...bb2]).toEqual(['A', 'B', 'C']);
+            twice(runHint => {
+                expect([...bb1]).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint);
+                expect([...bb2]).toEqualWithHint(['A', 'B', 'C'], inputHint, runHint);
             });
         }
     );

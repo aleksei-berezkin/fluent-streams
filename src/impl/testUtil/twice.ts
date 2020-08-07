@@ -1,10 +1,13 @@
-export function twice(run: (message: string) => void) {
-    run('First run');
-    run('Second run');
+const hint1 = 'Run 1 of 2';
+const hint2 = 'Run 2 of 2'
+
+export function twice(run: (runHint: string) => void) {
+    run(hint1);
+    run(hint2);
 }
 
-export function twiceAsync(doneTest: () => void, run: (doneRun: () => void, message: string) => void) {
-    run(() => {}, 'First run');
+export function twiceAsync(doneTest: () => void, run: (doneRun: () => void, runHint: string) => void) {
+    run(() => {}, hint1);
     let isDone = false;
     run(() => {
         if (isDone) {
@@ -12,5 +15,5 @@ export function twiceAsync(doneTest: () => void, run: (doneRun: () => void, mess
         }
         doneTest();
         isDone = true;
-    }, 'Second run');
+    }, hint2);
 }
