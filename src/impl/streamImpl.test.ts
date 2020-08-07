@@ -1,34 +1,19 @@
 import { twice, twiceAsync } from './testUtil/twice';
 import { Stream } from '../stream';
 import { StreamImpl } from './streamImpl';
+import { forInputCombinations } from './testUtil/forInputCombinations';
 
-function forInput<T>(input: T[], run: (base: Stream<T>, msg: string) => void) {
-    for (let headSize = 0; headSize <= input.length; headSize++) {
-        const head = input.slice(0, headSize);
-        const tail = input.slice(headSize);
-        for (const modifiableTail of [false, true]) {
-            run(createStream(head, tail, modifiableTail), `head: ${head}, tail: ${tail}, modifiableTail: ${modifiableTail}`);
-        }
-    }
-    run(createStream(input), `head: ${input}`);
-}
-
-function createStream<T>(head: T[], tail?: T[], modifiableTail?: boolean) {
-    return new StreamImpl(undefined, function* () {
-        yield* head;
-        if (tail) {
-            if (modifiableTail) {
-                return {
-                    array: [...tail],
-                    canModify: true,
-                }
+function forInput<T>(input: T[], run: (base: Stream<T>, getMessage: () => string) => void) {
+    return forInputCombinations(
+        input,
+        (head, tail) => new StreamImpl(undefined, function* () {
+            yield* head;
+            if (tail) {
+                return tail;
             }
-            return {
-                array: tail,
-                canModify: false,
-            }
-        }
-    });
+        }),
+        run,
+    )
 }
 
 test('all', () => {
