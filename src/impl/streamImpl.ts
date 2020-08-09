@@ -87,7 +87,7 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
 
     appendAllIf(condition: boolean, newItems: Iterable<T>): Stream<T> {
         return new StreamImpl(this, function* (gen) {
-            yield* gen;
+            yield* appendReturned(gen);
             if (condition) {
                 if (Array.isArray(newItems)) {
                     return {

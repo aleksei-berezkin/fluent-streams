@@ -108,6 +108,22 @@ test('awaitAll mix', doneTest => {
     );
 });
 
+test('append', () => {
+    forInput(
+        ['a', 'b'],
+        (s, inputHint) => twice(runHint => expect(s.append('c').toArray()).toEqualWithHint(['a', 'b', 'c'], inputHint, runHint)),
+    );
+});
+
+test('appendAll', () => {
+    forInput(
+        ['a', 'b'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.appendAll(['c', 'd']).toArray()).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint),
+        ),
+    )
+});
+
 test('long chain', () => {
     forInput(
         ['a', 'b'],
