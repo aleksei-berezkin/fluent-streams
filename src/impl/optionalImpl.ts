@@ -58,13 +58,13 @@ export class OptionalImpl<P, T> extends BaseImpl<P, T> implements Optional<T> {
         return n.value;
     }
 
-    hasValue() {
-        return !this[Symbol.iterator]().next().done;
-    }
-
     is(item: T) {
         const n = this[Symbol.iterator]().next();
         return !n.done && n.value === item;
+    }
+
+    isPresent() {
+        return !this[Symbol.iterator]().next().done;
     }
 
     map<U>(mapper: (item: T) => U) {

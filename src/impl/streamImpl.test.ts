@@ -124,6 +124,225 @@ test('appendAll', () => {
     )
 });
 
+test('appendAll array copied', () => {
+    const appended = ['a', 'b'];
+    forInput(
+        [] as string[],
+        (s, inputHint) => twice(runHint => {
+            const a = s.appendAll(appended).toArray();
+            expect(a).toEqualWithHint(appended, inputHint, runHint);
+            expect(a).not.toBeWithHint(appended, inputHint, runHint);
+        }),
+    );
+});
+
+test('appendAllIf', () =>
+    forInput(
+        ['a', 'b'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.appendAllIf(true, ['c', 'd']).toArray()).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint)
+        ),
+    )
+);
+
+test('appendAllIf neg', () =>
+    forInput(
+        ['a', 'b'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.appendAllIf(false, ['c', 'd']).toArray()).toEqualWithHint(['a', 'b'], inputHint, runHint)
+        ),
+    )
+);
+
+test('butLast empty', () =>
+    forInput(
+        [],
+        (s, inputHint) => twice(runHint =>
+            expect(s.butLast().toArray()).toEqualWithHint([], inputHint, runHint)
+        ),
+    )
+);
+
+test('butLast single', () =>
+    forInput(
+        ['a'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.butLast().toArray()).toEqualWithHint([], inputHint, runHint)
+        ),
+    )
+);
+
+test('butLast some', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.butLast().toArray()).toEqualWithHint(['a', 'b'], inputHint, runHint)
+        ),
+    )
+);
+
+test('distinctBy', () =>
+    forInput(
+        [{k: 'a', v: 1}, {k: 'b', v: 2}, {k: 'a', v: 3}],
+        (s, inputHint) => twice(runHint =>
+            expect(s.distinctBy(i => i.k).toArray()).toEqualWithHint([{k: 'a', v: 1}, {
+                k: 'b',
+                v: 2
+            }], inputHint, runHint)
+        ),
+    )
+);
+
+test('equals', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint1) => twice(runHint1 =>
+            forInput(
+                ['a', 'b', 'c'],
+                (t, inputHint2) => twice(runHint2 => {
+                    expect(s.equals(t)).toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                    expect(t.equals(s)).toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                }),
+            )
+        ),
+    )
+);
+
+test('equals neg', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint1) => twice(runHint1 =>
+            forInput(
+                ['a', 'b', 'c', 'd'],
+                (t, inputHint2) => twice(runHint2 => {
+                    expect(s.equals(t)).not.toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                    expect(t.equals(s)).not.toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                }),
+            )
+        ),
+    )
+);
+
+test('filter', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.filter(s => s !== 'b').toArray()).toEqualWithHint(['a', 'c'], inputHint, runHint),
+        ),
+    )
+);
+
+test('filterWithAssertion', () => {
+    function isString(s: string | number): s is string {
+        return typeof s === 'string';
+    }
+    forInput(
+        ['a', 1, 'c'],
+        (s, inputHint) => twice(runHint => {
+            const r: string[] = s.filterWithAssertion(isString).toArray();
+            expect(r).toEqualWithHint(['a', 'c'], inputHint, runHint);
+        }),
+    );
+});
+
+test('find', () =>
+    forInput(
+        [['a', 1] as const, ['b', 2] as const, ['b', 3] as const],
+        (s, inputHint) => twice(runHint =>
+            expect(s.find(i => i[0] === 'b').get()[1]).toBeWithHint(2, inputHint, runHint)
+        ),
+    )
+);
+
+test('find none', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.find(i => i === 'd').isPresent()).toBeWithHint(false, inputHint, runHint)
+        ),
+    )
+);
+
+test('flatMap', () =>
+    forInput(
+        [['a'], [], ['b', 'c']],
+        (s, inputHint) => twice(runHint =>
+            expect(s.flatMap(i => i).toArray()).toEqualWithHint(['a', 'b', 'c'], inputHint, runHint)
+        ),
+    )
+);
+
+test('forEach', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint => {
+            const trace: string[] = [];
+            s.forEach(i => trace.push(i));
+            expect(trace).toEqualWithHint(['a', 'b', 'c'], inputHint, runHint);
+        }),
+    )
+);
+
+test('groupBy', () =>
+    forInput(
+        [{k: 'a', v: 1}, {k: 'a', v: 2}, {k: 'b', v: 3}],
+        (s, inputHint) => twice(runHint =>
+            expect(s.groupBy(i => i.k).toArray()).toEqualWithHint(
+                [['a', [{k: 'a', v: 1}, {k: 'a', v: 2}]], ['b', [{k: 'b', v: 3}]]],
+                inputHint,
+                runHint,
+            )
+        ),
+    )
+);
+
+test('head', () =>
+    forInput(
+        ['a', 'b'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.head().get()).toBeWithHint('a', inputHint, runHint)
+        ),
+    )
+);
+
+test('head empty', () =>
+    forInput(
+        [],
+        (s, inputHint) => twice(runHint =>
+            expect(s.head().isPresent()).toBeWithHint(false, inputHint, runHint)
+        ),
+    )
+);
+
+test('join empty', () =>
+    forInput(
+        [],
+        (s, inputHint) => twice(runHint =>
+            expect(s.join(', ')).toBeWithHint('', inputHint, runHint)
+        ),
+    )
+);
+
+test('join', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.join(', ')).toBeWithHint('a, b, c', inputHint, runHint)
+        ),
+    )
+);
+
+test('joinBy', () =>
+    forInput(
+        ['a', 'b', 'c', 'd', 'e', 'b'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.joinBy((l, r) => (l === 'b' || r === 'e') ? '; ' : ', ')).toBeWithHint(
+                'a, b; c, d; e, b', inputHint, runHint
+            )
+        ),
+    )
+);
+
 test('long chain', () => {
     forInput(
         ['a', 'b'],

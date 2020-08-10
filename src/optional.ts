@@ -13,9 +13,9 @@ export interface Optional<T> extends Iterable<T> {
 
     hasNot(predicate: (item: T) => boolean): boolean;
 
-    hasValue(): boolean;
-
     is(item: T): boolean;
+
+    isPresent(): boolean;
 
     map<U>(mapper: (item: T) => U): Optional<U>;
 
