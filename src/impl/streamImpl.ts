@@ -308,6 +308,15 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         return current;
     }
 
+    reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U {
+        const a = toAnyArray(this.createGenerator());
+        let current = zero;
+        for (let i = a.length - 1; i >= 0; i--) {
+            current = reducer(a[i], current);
+        }
+        return current;
+    }
+
     shuffle(): Stream<T> {
         return new StreamImpl(this, function* (gen) {
             const a = toModifiableArray(gen);

@@ -51,6 +51,8 @@ export interface Stream<T> extends Iterable<T> {
 
     reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U;
 
+    reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U;
+
     shuffle(): Stream<T>;
 
     single(): Optional<T>;

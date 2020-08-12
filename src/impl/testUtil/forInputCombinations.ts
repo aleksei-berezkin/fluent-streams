@@ -1,8 +1,8 @@
 import { StreamGeneratorResult } from '../../streamGenerator';
 
 export function forInputCombinations<T, Out>(
-    input: T[],
-    create: (head: T[], tail?: StreamGeneratorResult<T>) => Out,
+    input: readonly T[],
+    create: (head: readonly T[], tail?: StreamGeneratorResult<T>) => Out,
     run: (base: Out, inputHint: () => string) => void
 ) {
     for (let headSize = 0; headSize <= input.length; headSize++) {

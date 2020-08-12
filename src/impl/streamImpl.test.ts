@@ -4,7 +4,7 @@ import { StreamImpl } from './streamImpl';
 import { forInputCombinations } from './testUtil/forInputCombinations';
 import './testUtil/extendExpect';
 
-function forInput<T>(input: T[], run: (base: Stream<T>, inputHint: () => string) => void) {
+function forInput<T>(input: readonly T[], run: (base: Stream<T>, inputHint: () => string) => void) {
     return forInputCombinations(
         input,
         (head, tail) => new StreamImpl(undefined, function* () {
@@ -339,6 +339,114 @@ test('joinBy', () =>
             expect(s.joinBy((l, r) => (l === 'b' || r === 'e') ? '; ' : ', ')).toBeWithHint(
                 'a, b; c, d; e, b', inputHint, runHint
             )
+        ),
+    )
+);
+
+test('last', () => {
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.last().get()).toBeWithHint('c', inputHint, runHint)
+        ),
+    )
+});
+
+test('last single', () => {
+    forInput(
+        ['a'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.last().get()).toBeWithHint('a', inputHint, runHint)
+        ),
+    )
+});
+
+test('last empty', () => {
+    forInput(
+        [],
+        (s, inputHint) => twice(runHint =>
+            expect(s.last().isPresent()).toBeWithHint(false, inputHint, runHint)
+        ),
+    )
+});
+
+test('map', () => {
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.map(i => i.toUpperCase()).toArray()).toEqualWithHint(['A', 'B', 'C'], inputHint, runHint)
+        ),
+    )
+});
+
+test('randomItem', () => {
+    const input = ['a', 'b', 'c'] as const;
+    const iterations = 3000;
+    forInput(
+        input,
+        (s, inputHint) => {
+            const collector: {[k in typeof input[number]]?: number} = {};
+            for (let i = 0; i < iterations; i++) {
+                const k = s.randomItem().get();
+                collector[k] = (collector[k] || 0) + 1;
+            }
+            for (const c of input) {
+                expect(collector[c]).toBeGreaterThanWithHint(800, inputHint, `${iterations} iterations`);
+            }
+        },
+    )
+});
+
+test('reduce', () =>
+    forInput(
+        [2, 3, 4, 5],
+        (s, inputHint) => twice(runHint =>
+            expect(s.reduce((a, b) => a * b).get()).toBeWithHint(120, inputHint, runHint)
+        ),
+    )
+);
+
+test('reduce single', () =>
+    forInput(
+        ['a'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.reduce(() => { throw new Error() }).get()).toBeWithHint('a', inputHint, runHint)
+        ),
+    )
+);
+
+test('reduce empty', () =>
+    forInput(
+        [],
+        (s, inputHint) => twice(runHint =>
+            expect(s.reduce(() => { throw new Error() }).isPresent()).toBeWithHint(false, inputHint, runHint)
+        ),
+    )
+);
+
+test('reduceLeft', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.reduceLeft('0', (l, r) => l + r)).toBeWithHint('0abc', inputHint, runHint)
+        ),
+    )
+);
+
+test('reduceLeft empty',() =>
+    forInput(
+        [],
+        (s, inputHint) => twice(runHint =>
+            expect(s.reduceLeft('0', () => { throw new Error() })).toBeWithHint('0', inputHint, runHint)
+        ),
+    )
+);
+
+test('reduceRight', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.reduceRight('0', (l, r) => l + r)).toBeWithHint('abc0', inputHint, runHint)
         ),
     )
 );
