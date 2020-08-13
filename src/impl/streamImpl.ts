@@ -38,6 +38,10 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         return false;
     }
 
+    applyStream<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Stream<U> {
+        return new StreamImpl(this, operator);
+    }
+
     at(index: number): Optional<T> {
         return new OptionalImpl(this, function* (gen) {
             if (index < 0) {
@@ -334,10 +338,10 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
 
     single(): Optional<T> {
         return new OptionalImpl(this, function* (gen) {
-            const itr = gen[Symbol.iterator]();
+            const itr = appendReturned(gen)[Symbol.iterator]();
             const n = itr.next();
             if (n.done) {
-                if (assertResult(n.value) && n.value.array.length === 1) {
+                if (assertResult<T>(n.value) && n.value.array.length === 1) {
                     yield n.value.array[0];
                 }
             } else {
@@ -380,6 +384,9 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
                 } else {
                     chunk.push(item);
                 }
+            }
+            if (chunk) {
+                yield chunk;
             }
         });
     }

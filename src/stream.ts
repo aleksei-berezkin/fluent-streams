@@ -1,9 +1,12 @@
 import { Optional } from './optional';
+import { StreamGenerator } from './streamGenerator';
 
 export interface Stream<T> extends Iterable<T> {
     all(predicate: (item: T) => boolean): boolean;
 
     any(predicate: (item: T) => boolean): boolean;
+
+    applyStream<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Stream<U>;
 
     at(index: number): Optional<T>;
 

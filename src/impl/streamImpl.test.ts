@@ -3,6 +3,8 @@ import { Stream } from '../stream';
 import { StreamImpl } from './streamImpl';
 import { forInputCombinations } from './testUtil/forInputCombinations';
 import './testUtil/extendExpect';
+import { permutations } from './testUtil/permutations';
+import { stream } from '../factories';
 
 function forInput<T>(input: readonly T[], run: (base: Stream<T>, inputHint: () => string) => void) {
     return forInputCombinations(
@@ -450,6 +452,96 @@ test('reduceRight', () =>
         ),
     )
 );
+
+test('shuffle', () => {
+    const input = ['a', 'b', 'c', 'd'];
+    const perm = permutations(input);
+
+    const s = stream(input);
+    const iter = 10000;
+    const collector: {[k: string]: number | undefined } = {};
+    for (let i = 0; i < iter; i++) {
+        const res = s.shuffle().join('');
+        collector[res] = (collector[res] || 0) + 1;
+    }
+
+    const expectedEachPermutation = iter / perm.length;
+    for (const p of perm) {
+        expect(collector[p]).toBeGreaterThanWithHint(expectedEachPermutation * .8, () => p, '');
+    }
+});
+
+test('single empty', () => forInput(
+    [],
+    (s, inputHint) => twice(runHint =>
+        expect(s.single().isPresent()).toBeWithHint(false, inputHint, runHint)
+    ),
+));
+
+test('single', () => forInput(
+    ['a'],
+    (s, inputHint) => twice(runHint =>
+        expect(s.single().resolve()).toEqualWithHint({has: true, val: 'a'}, inputHint, runHint)
+    ),
+));
+
+test('single not', () => forInput(
+    ['a', 'b'],
+    (s, inputHint) => twice(runHint =>
+        expect(s.single().isPresent()).toBeWithHint(false, inputHint, runHint)
+    ),
+));
+
+test('sortOn empty', () => forInput(
+    [],
+    (s, inputHint) => twice(runHint =>
+        expect(s.sortOn(() => { throw new Error() }).toArray()).toEqualWithHint([], inputHint, runHint)
+    ),
+));
+
+test('sortOn single', () => forInput(
+    ['a'],
+    (s, inputHint) => twice(runHint =>
+        expect(s.sortOn(() => { throw new Error() }).toArray()).toEqualWithHint(['a'], inputHint, runHint)
+    ),
+));
+
+test('sortOn multiple', () => forInput(
+    ['3', '0', '2', '1', '2'],
+    (s, inputHint) => twice(runHint =>
+        expect(s.sortOn(Number.parseInt).toArray()).toEqualWithHint(['0', '1', '2', '2', '3'], inputHint, runHint)
+    ),
+));
+
+test('splitWhen empty', () => forInput(
+    [],
+    (s, inputHint) => twice(runHint =>
+        expect(s.splitWhen(() => { throw new Error() }).toArray()).toEqualWithHint([], inputHint, runHint)
+    ),
+));
+
+test('splitWhen single', () => forInput(
+    ['a'],
+    (s, inputHint) => twice(runHint =>
+        expect(s.splitWhen(() => { throw new Error() }).toArray()).toEqualWithHint([['a']], inputHint, runHint)
+    ),
+));
+
+test('splitWhen each', () => forInput(
+    ['a', 'b', 'c'],
+    (s, inputHint) => twice(runHint =>
+        expect(s.splitWhen(() => true).toArray()).toEqualWithHint([['a'], ['b'], ['c']], inputHint, runHint)
+    ),
+));
+
+test('splitWhen some', () => forInput(
+    ['a', 'b', 'c', 'd', 'e'],
+    (s, inputHint) => twice(runHint =>
+        expect(s.splitWhen((l, r) => r === 'a' || l === 'b' || r === 'd' || l === 'e').toArray()).toEqualWithHint(
+            [['a', 'b'], ['c'], ['d', 'e']], inputHint, runHint
+        )
+    ),
+));
 
 test('long chain', () => {
     forInput(
