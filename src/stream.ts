@@ -70,9 +70,9 @@ export interface Stream<T> extends Iterable<T> {
 
     take(n: number): Stream<T>;
 
-    takeRandom(n: number): Stream<T>;
-
     takeLast(n: number): Stream<T>;
+
+    takeRandom(n: number): Stream<T>;
 
     transform<U>(transformer: (s: Stream<T>) => U): U;
 

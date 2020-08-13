@@ -438,24 +438,12 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         });
     }
 
-    takeRandom(n: number): Stream<T> {
-        return new StreamImpl(this, function* (gen) {
-            const a = toModifiableArray(gen);
-            for (let i = 0; i < Math.min(a.length - 1, n); i++) {
-                const j = i + Math.floor(Math.random() * (a.length - i));
-                if (i !== j) {
-                    [a[i], a[j]] = [a[j], a[i]];
-                }
-            }
-            return {
-                array: a.slice(0, Math.min(a.length, n)),
-                canModify: true,
-            };
-        });
-    }
-
     takeLast(n: number) {
         return new StreamImpl(this, function* (gen) {
+            if (n <= 0) {
+                return;
+            }
+
             const {head, tail} = matchGenerator(gen);
             const buffer = new RingBuffer<T>(n);
             for (const i of head) {
@@ -475,6 +463,22 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
                     canModify: true,
                 }
             }
+        });
+    }
+
+    takeRandom(n: number): Stream<T> {
+        return new StreamImpl(this, function* (gen) {
+            const a = toModifiableArray(gen);
+            for (let i = 0; i < Math.min(a.length - 1, n); i++) {
+                const j = i + Math.floor(Math.random() * (a.length - i));
+                if (i !== j) {
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+            }
+            return {
+                array: a.slice(0, Math.min(a.length, n)),
+                canModify: true,
+            };
         });
     }
 

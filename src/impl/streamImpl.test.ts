@@ -156,30 +156,18 @@ test('appendAllIf neg', () =>
     )
 );
 
-test('butLast empty', () =>
-    forInput(
-        [],
-        (s, inputHint) => twice(runHint =>
-            expect(s.butLast().toArray()).toEqualWithHint([], inputHint, runHint)
-        ),
-    )
-);
-
-test('butLast single', () =>
-    forInput(
-        ['a'],
-        (s, inputHint) => twice(runHint =>
-            expect(s.butLast().toArray()).toEqualWithHint([], inputHint, runHint)
-        ),
-    )
-);
-
-test('butLast some', () =>
-    forInput(
-        ['a', 'b', 'c'],
-        (s, inputHint) => twice(runHint =>
-            expect(s.butLast().toArray()).toEqualWithHint(['a', 'b'], inputHint, runHint)
-        ),
+test('butLast', () =>
+    [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
+        forInput(
+            input,
+            (s, inputHint) => twice(runHint =>
+                expect(s.butLast().toArray()).toEqualWithHint(
+                    input.length <= 1 ? [] : input.slice(0, input.length - 1),
+                    inputHint,
+                    runHint,
+                )
+            ),
+        )
     )
 );
 
@@ -345,32 +333,20 @@ test('joinBy', () =>
     )
 );
 
-test('last', () => {
-    forInput(
-        ['a', 'b', 'c'],
-        (s, inputHint) => twice(runHint =>
-            expect(s.last().get()).toBeWithHint('c', inputHint, runHint)
-        ),
+test('last', () =>
+    [[], ['c'], ['a', 'b', 'c']].forEach(input =>
+        forInput(
+            input,
+            (s, inputHint) => twice(runHint =>
+                expect(s.last().resolve()).toEqualWithHint(
+                    input.length ? {has: true, val: input[input.length - 1]} : {has: false},
+                    inputHint,
+                    runHint,
+                )
+            ),
+        )
     )
-});
-
-test('last single', () => {
-    forInput(
-        ['a'],
-        (s, inputHint) => twice(runHint =>
-            expect(s.last().get()).toBeWithHint('a', inputHint, runHint)
-        ),
-    )
-});
-
-test('last empty', () => {
-    forInput(
-        [],
-        (s, inputHint) => twice(runHint =>
-            expect(s.last().isPresent()).toBeWithHint(false, inputHint, runHint)
-        ),
-    )
-});
+);
 
 test('map', () => {
     forInput(
@@ -471,26 +447,20 @@ test('shuffle', () => {
     }
 });
 
-test('single empty', () => forInput(
-    [],
-    (s, inputHint) => twice(runHint =>
-        expect(s.single().isPresent()).toBeWithHint(false, inputHint, runHint)
-    ),
-));
-
-test('single', () => forInput(
-    ['a'],
-    (s, inputHint) => twice(runHint =>
-        expect(s.single().resolve()).toEqualWithHint({has: true, val: 'a'}, inputHint, runHint)
-    ),
-));
-
-test('single not', () => forInput(
-    ['a', 'b'],
-    (s, inputHint) => twice(runHint =>
-        expect(s.single().isPresent()).toBeWithHint(false, inputHint, runHint)
-    ),
-));
+test('single', () =>
+    [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
+        forInput(
+            input,
+            (s, inputHint) => twice(runHint =>
+                expect(s.single().resolve()).toEqualWithHint(
+                    input.length === 1 ? {has: true, val: input[0]} : {has: false},
+                    inputHint,
+                    runHint,
+                )
+            )
+        )
+    )
+);
 
 test('sortOn empty', () => forInput(
     [],
@@ -542,6 +512,40 @@ test('splitWhen some', () => forInput(
         )
     ),
 ));
+
+test('tail', () => {
+    for (const input of [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']]) {
+        forInput(
+            input,
+            (s, inputHint) => twice(runHint =>
+                expect(s.tail().toArray()).toEqualWithHint(input.slice(1), inputHint, runHint)
+            ),
+        );
+    }
+});
+
+test('take, takeLast', () => {
+    for (const input of [[], ['a'], ['a', 'b'], ['a', 'b', 'c']]) {
+        for (const n of [-1, 0, 1, input.length - 1, input.length, input.length + 1]) {
+            forInput(
+                input,
+                (s, inputHint) => twice(runHint => {
+                    const _runHint = `${ runHint } -- n=${ n }`;
+                    expect(s.take(n).toArray()).toEqualWithHint(
+                        n < 0 ? [] : input.slice(0, n),
+                        inputHint,
+                        _runHint,
+                    );
+                    expect(s.takeLast(n).toArray()).toEqualWithHint(
+                        input.slice(Math.max(0, input.length - n)),
+                        inputHint,
+                        _runHint,
+                    );
+                })
+            )
+        }
+    }
+});
 
 test('long chain', () => {
     forInput(

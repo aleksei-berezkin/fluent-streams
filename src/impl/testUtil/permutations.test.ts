@@ -1,4 +1,5 @@
 import { permutations } from './permutations';
+import { factorial } from './factorial';
 
 test('empty', () => expect(permutations([])).toEqual([]));
 
@@ -12,4 +13,4 @@ test('three', () => expect(permutations(['a', 'b', 'c'])).toEqual([
     'abc', 'acb', 'bac', 'bca', 'cab', 'cba'
 ]));
 
-test('seven', () => expect(permutations(['0', '1', '2', '3', '4', '5', '6']).length).toEqual(5040));
+test('seven', () => expect(permutations(['0', '1', '2', '3', '4', '5', '6']).length).toEqual(factorial(7)));
