@@ -1,5 +1,6 @@
 import { StreamGeneratorResult } from '../../streamGenerator';
 
+// TODO simplified version
 export function forInputCombinations<T, Out>(
     input: readonly T[],
     create: (head: readonly T[], tail?: StreamGeneratorResult<T>) => Out,

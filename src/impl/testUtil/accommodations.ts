@@ -1,5 +1,5 @@
 export function accommodations(items: string[], n: number): string[] {
-    if (n === 0 || items.length === 0) {
+    if (n <= 0 || items.length === 0) {
         return [];
     }
 

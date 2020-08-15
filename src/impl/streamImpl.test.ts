@@ -5,6 +5,7 @@ import { forInputCombinations } from './testUtil/forInputCombinations';
 import './testUtil/extendExpect';
 import { permutations } from './testUtil/permutations';
 import { stream } from '../factories';
+import { accommodations } from './testUtil/accommodations';
 
 function forInput<T>(input: readonly T[], run: (base: Stream<T>, inputHint: () => string) => void) {
     return forInputCombinations(
@@ -544,6 +545,30 @@ test('take, takeLast', () => {
                 })
             )
         }
+    }
+});
+
+test('takeRandom', () => {
+    // TODO longer input + simplified forInput
+    const input = ['a', 'b', 'c', 'd'];
+    const iterPerAccommodation = 200;
+    for (const n of [-1, 0, 1, 2, 3, 4, 5]) {
+        forInput(
+            input,
+            (s, inputHint) => {
+                const allAccommodations = accommodations(input, n);
+                const collector = new Map<string, number>();
+                for (let i = 0; i < Math.max(1, iterPerAccommodation * allAccommodations.length); i++) {
+                    const accommodation = s.takeRandom(n).join('');
+                    if (accommodation) {
+                        collector.set(accommodation, (collector.get(accommodation) || 0) + 1);
+                    }
+                }
+
+                expect(collector.size).toBeWithHint(allAccommodations.length, inputHint, `n=${n}`);
+                allAccommodations.forEach(a => expect(collector.get(a)).toBeGreaterThanWithHint(iterPerAccommodation * .6, inputHint, a))
+            }
+        )
     }
 });
 

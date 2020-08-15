@@ -468,6 +468,10 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
 
     takeRandom(n: number): Stream<T> {
         return new StreamImpl(this, function* (gen) {
+            if (n <= 0) {
+                return;
+            }
+
             const a = toModifiableArray(gen);
             for (let i = 0; i < Math.min(a.length - 1, n); i++) {
                 const j = i + Math.floor(Math.random() * (a.length - i));
