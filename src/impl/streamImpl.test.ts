@@ -1,13 +1,13 @@
 import { twice, twiceAsync } from './testUtil/twice';
 import { Stream } from '../stream';
 import { StreamImpl } from './streamImpl';
-import { forInputCombinations } from './testUtil/forInputCombinations';
+import { CombinationsMode, forInputCombinations } from './testUtil/forInputCombinations';
 import './testUtil/extendExpect';
 import { permutations } from './testUtil/permutations';
 import { stream } from '../factories';
-import { accommodations } from './testUtil/accommodations';
+import { variations } from './testUtil/variations';
 
-function forInput<T>(input: readonly T[], run: (base: Stream<T>, inputHint: () => string) => void) {
+function forInput<T>(input: T[], run: (base: Stream<T>, inputHint: () => string) => void, mode: CombinationsMode = 'all') {
     return forInputCombinations(
         input,
         (head, tail) => new StreamImpl(undefined, function* () {
@@ -17,6 +17,7 @@ function forInput<T>(input: readonly T[], run: (base: Stream<T>, inputHint: () =
             }
         }),
         run,
+        mode,
     )
 }
 
@@ -359,18 +360,19 @@ test('map', () => {
 });
 
 test('randomItem', () => {
-    const input = ['a', 'b', 'c'] as const;
+    const input = ['a', 'b', 'c'];
     const iterations = 3000;
     forInput(
         input,
         (s, inputHint) => {
-            const collector: {[k in typeof input[number]]?: number} = {};
+            const collector = new Map<string, number>();
             for (let i = 0; i < iterations; i++) {
                 const k = s.randomItem().get();
-                collector[k] = (collector[k] || 0) + 1;
+                collector.set(k, (collector.get(k) || 0) + 1);
             }
+            expect(collector.size).toBeWithHint(input.length, inputHint, '');
             for (const c of input) {
-                expect(collector[c]).toBeGreaterThanWithHint(800, inputHint, `${iterations} iterations`);
+                expect(collector.get(c)).toBeGreaterThanWithHint(800, inputHint, `${iterations} iterations`);
             }
         },
     )
@@ -431,20 +433,19 @@ test('reduceRight', () =>
 );
 
 test('shuffle', () => {
-    const input = ['a', 'b', 'c', 'd'];
+    const input = ['a', 'b', 'c', 'd', 'e'];
     const perm = permutations(input);
 
     const s = stream(input);
-    const iter = 10000;
+    const iterPerPermutation = 500;
     const collector: {[k: string]: number | undefined } = {};
-    for (let i = 0; i < iter; i++) {
+    for (let i = 0; i < perm.length * iterPerPermutation; i++) {
         const res = s.shuffle().join('');
         collector[res] = (collector[res] || 0) + 1;
     }
 
-    const expectedEachPermutation = iter / perm.length;
     for (const p of perm) {
-        expect(collector[p]).toBeGreaterThanWithHint(expectedEachPermutation * .8, () => p, '');
+        expect(collector[p]).toBeGreaterThanWithHint(iterPerPermutation * .7, () => p, '');
     }
 });
 
@@ -515,19 +516,19 @@ test('splitWhen some', () => forInput(
 ));
 
 test('tail', () => {
-    for (const input of [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']]) {
+    [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']].forEach(input =>
         forInput(
             input,
             (s, inputHint) => twice(runHint =>
                 expect(s.tail().toArray()).toEqualWithHint(input.slice(1), inputHint, runHint)
             ),
-        );
-    }
+        )
+    );
 });
 
 test('take, takeLast', () => {
-    for (const input of [[], ['a'], ['a', 'b'], ['a', 'b', 'c']]) {
-        for (const n of [-1, 0, 1, input.length - 1, input.length, input.length + 1]) {
+    [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
+        [-1, 0, 1, input.length - 1, input.length, input.length + 1].forEach(n =>
             forInput(
                 input,
                 (s, inputHint) => twice(runHint => {
@@ -544,33 +545,62 @@ test('take, takeLast', () => {
                     );
                 })
             )
-        }
-    }
+        )
+    );
 });
 
 test('takeRandom', () => {
-    // TODO longer input + simplified forInput
-    const input = ['a', 'b', 'c', 'd'];
-    const iterPerAccommodation = 200;
-    for (const n of [-1, 0, 1, 2, 3, 4, 5]) {
+    const input = ['a', 'b', 'c', 'd', 'e'];
+    const iterPerVariation = 200;
+    [-1, 0, 1, 2, 5].forEach(k =>
         forInput(
             input,
             (s, inputHint) => {
-                const allAccommodations = accommodations(input, n);
+                const allVariations = variations(input, k);
                 const collector = new Map<string, number>();
-                for (let i = 0; i < Math.max(1, iterPerAccommodation * allAccommodations.length); i++) {
-                    const accommodation = s.takeRandom(n).join('');
-                    if (accommodation) {
-                        collector.set(accommodation, (collector.get(accommodation) || 0) + 1);
+                for (let i = 0; i < Math.max(1, iterPerVariation * allVariations.length); i++) {
+                    const variation = s.takeRandom(k).join('');
+                    if (variation) {
+                        collector.set(variation, (collector.get(variation) || 0) + 1);
                     }
                 }
 
-                expect(collector.size).toBeWithHint(allAccommodations.length, inputHint, `n=${n}`);
-                allAccommodations.forEach(a => expect(collector.get(a)).toBeGreaterThanWithHint(iterPerAccommodation * .6, inputHint, a))
-            }
+                expect(collector.size).toBeWithHint(allVariations.length, inputHint, `n=${k}`);
+                allVariations.forEach(a => expect(collector.get(a)).toBeGreaterThanWithHint(iterPerVariation * .6, inputHint, a))
+            },
+            'some',
         )
-    }
+    );
 });
+
+test('toObject', () => {
+    const sym: unique symbol = Symbol('test');
+    forInput(
+        [['a', 1] as const, ['b', 2] as const, [sym, 3] as const, ['b', 4] as const, [99, 5]],
+        (s, inputHint) => twice(runHint =>
+            expect(s.toObject()).toEqualWithHint({'a': 1, 'b': 4, [sym]: 3, 99: 5}, inputHint, runHint)
+        ),
+    );
+});
+
+test('toObject throw', () =>
+    forInput(
+        ['a', 'b'],
+        s => twice(() => expect(() => s.toObject()).toThrow()),
+    )
+);
+
+test('zip', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => {
+            twice(runHint => expect(s.zip(['i', 'j']).toArray()).toEqualWithHint([['a', 'i'], ['b', 'j']], inputHint, runHint));
+            [['i', 'j', 'k'], ['i', 'j', 'k', 'l']].forEach(z =>
+                twice(runHint => expect(s.zip(z).toArray()).toEqualWithHint([['a', 'i'], ['b', 'j'], ['c', 'k']], inputHint, runHint))
+            );
+        },
+    )
+);
 
 test('long chain', () => {
     forInput(

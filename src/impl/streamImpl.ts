@@ -503,10 +503,6 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         return obj;
     }
 
-    transform<U>(transformer: (s: Stream<T>) => U): U {
-        return transformer(this);
-    }
-
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]> {
         return new StreamImpl(this, function* (gen) {
             const oItr = other[Symbol.iterator]();

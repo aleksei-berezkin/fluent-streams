@@ -74,8 +74,6 @@ export interface Stream<T> extends Iterable<T> {
 
     takeRandom(n: number): Stream<T>;
 
-    transform<U>(transformer: (s: Stream<T>) => U): U;
-
     toArray(): T[];
 
     toObject(): T extends readonly [string, any] ? { [key in T[0]]: T[1] } : unknown;
