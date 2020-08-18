@@ -614,6 +614,22 @@ test('zipStrict', () =>
     )
 );
 
+test('zipWithIndex', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint => expect(s.zipWithIndex().toArray()).toEqualWithHint([['a', 0], ['b', 1], ['c', 2]], inputHint, runHint))
+    )
+);
+
+test('zipWithIndexAndLen', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint => expect(s.zipWithIndexAndLen().toArray()).toEqualWithHint(
+            [['a', 0, 3], ['b', 1, 3], ['c', 2, 3]], inputHint, runHint
+        ))
+    )
+);
+
 test('long chain', () => {
     forInput(
         ['a', 'b'],
