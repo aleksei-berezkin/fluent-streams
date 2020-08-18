@@ -1,4 +1,4 @@
-import { appendReturned, matchGenerator, StreamGenerator, toModifiableArray } from '../streamGenerator';
+import { appendReturned, matchGenerator, StreamGenerator, StreamOperator, toModifiableArray } from '../streamGenerator';
 
 export interface Base<T> {
     createGenerator(): StreamGenerator<T>;
@@ -6,7 +6,7 @@ export interface Base<T> {
 
 export class BaseImpl<P, T> implements Base<T>, Iterable<T> {
     public constructor(private parent: Base<P> | undefined,
-                          private readonly operation: (input: StreamGenerator<P>) => StreamGenerator<T>) {
+                       private readonly operator: StreamOperator<P, T>) {
     }
 
     [Symbol.iterator](): Iterator<T> {
@@ -18,7 +18,7 @@ export class BaseImpl<P, T> implements Base<T>, Iterable<T> {
             ? this.parent.createGenerator()
             : undefined as any as StreamGenerator<P>;
 
-        return this.operation(resultParent);
+        return this.operator(resultParent);
     }
 
     size(): number {

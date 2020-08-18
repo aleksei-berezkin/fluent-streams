@@ -8,15 +8,15 @@ import {
     appendReturned,
     assertVoid,
     matchGenerator,
-    StreamGenerator, StreamOperator,
+    StreamOperator,
     toAnyArray,
     toModifiableArray
 } from '../streamGenerator';
 
 export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
     constructor(parent: Base<P> | undefined,
-                operation: (input: StreamGenerator<P>) => StreamGenerator<T>) {
-        super(parent, operation);
+                operator: StreamOperator<P, T>) {
+        super(parent, operator);
     }
 
     all(predicate: (item: T) => boolean): boolean {

@@ -2,12 +2,12 @@ import { Base, BaseImpl } from './base';
 import { Optional } from '../optional';
 import { Stream } from '../stream';
 import { StreamImpl } from './streamImpl';
-import { appendReturned, StreamGenerator } from '../streamGenerator';
+import { appendReturned, StreamOperator } from '../streamGenerator';
 
 export class OptionalImpl<P, T> extends BaseImpl<P, T> implements Optional<T> {
     constructor(parent: Base<P> | undefined,
-                operation: (input: StreamGenerator<P>) => StreamGenerator<T>) {
-        super(parent, operation);
+                operator: StreamOperator<P, T>) {
+        super(parent, operator);
     }
 
     filter(predicate: (item: T) => boolean) {
