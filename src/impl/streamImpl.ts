@@ -517,8 +517,19 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
     }
 
     zipStrict<U>(other: Iterable<U>): Stream<readonly [T, U]> {
-        // TODO strict
-        return this.zip(other);
+        return new StreamImpl(this, function* (gen) {
+            const oItr = other[Symbol.iterator]();
+            for (const i of appendReturned(gen)) {
+                const oNext = oItr.next();
+                if (oNext.done) {
+                    throw new Error('Too few elements in other');
+                }
+                yield [i, oNext.value] as const;
+            }
+            if (!oItr.next().done) {
+                throw new Error('Too much elements in other');
+            }
+        });
     }
 
     zipWithIndex(): Stream<readonly [T, number]> {

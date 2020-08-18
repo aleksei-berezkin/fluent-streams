@@ -602,6 +602,18 @@ test('zip', () =>
     )
 );
 
+test('zipStrict', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => {
+            twice(runHint => expect(s.zipStrict(['i', 'j', 'k']).toArray()).toEqualWithHint([['a', 'i'], ['b', 'j'], ['c', 'k']], inputHint, runHint));
+            [['i', 'j'], ['i', 'j', 'k', 'l']].forEach(zipped =>
+                twice(() => expect(() => s.zipStrict(zipped).toArray()).toThrow())
+            );
+        }
+    )
+);
+
 test('long chain', () => {
     forInput(
         ['a', 'b'],
