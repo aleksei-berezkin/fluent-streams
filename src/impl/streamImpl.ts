@@ -8,7 +8,7 @@ import {
     appendReturned,
     assertVoid,
     matchGenerator,
-    StreamGenerator,
+    StreamGenerator, StreamOperator,
     toAnyArray,
     toModifiableArray
 } from '../streamGenerator';
@@ -256,7 +256,7 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         });
     }
 
-    optionalOperator<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Optional<U> {
+    optionalOperator<U>(operator: StreamOperator<T, U>): Optional<U> {
         return new OptionalImpl(this, operator);
     }
 
@@ -386,7 +386,7 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         });
     }
 
-    streamOperator<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Stream<U> {
+    streamOperator<U>(operator: StreamOperator<T, U>): Stream<U> {
         return new StreamImpl(this, operator);
     }
 

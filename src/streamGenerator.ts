@@ -13,6 +13,8 @@ export function assertResult<T>(r: StreamGeneratorResult<T> | void): r is Stream
 
 export type StreamGenerator<T> = Generator<T, StreamGeneratorResult<T> | void, undefined>;
 
+export type StreamOperator<T, U> = (input: StreamGenerator<T>) => StreamGenerator<U>;
+
 export function appendReturned<T>(items: StreamGenerator<T>): Iterable<T> {
     return {
         *[Symbol.iterator]() {

@@ -1,5 +1,5 @@
 import { Optional } from './optional';
-import { StreamGenerator } from './streamGenerator';
+import { StreamOperator } from './streamGenerator';
 
 export interface Stream<T> extends Iterable<T> {
     all(predicate: (item: T) => boolean): boolean;
@@ -46,7 +46,7 @@ export interface Stream<T> extends Iterable<T> {
 
     map<U>(mapper: (item: T) => U): Stream<U>;
 
-    optionalOperator<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Optional<U>;
+    optionalOperator<U>(operator: StreamOperator<T, U>): Optional<U>;
 
     randomItem(): Optional<T>
 
@@ -66,7 +66,7 @@ export interface Stream<T> extends Iterable<T> {
 
     splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]>;
 
-    streamOperator<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Stream<U>;
+    streamOperator<U>(operator: StreamOperator<T, U>): Stream<U>;
 
     tail(): Stream<T>;
 

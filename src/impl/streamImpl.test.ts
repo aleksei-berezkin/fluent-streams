@@ -7,6 +7,7 @@ import { permutations } from './testUtil/permutations';
 import { stream } from '../factories';
 import { variations } from './testUtil/variations';
 import { appendReturned, toAnyArray } from '../streamGenerator';
+import { appendWithModification } from './testUtil/appendWithModification';
 
 function forInput<T>(input: T[], run: (base: Stream<T>, inputHint: () => string) => void, mode: CombinationsMode = 'all') {
     return forInputCombinations(
@@ -182,6 +183,19 @@ test('appendAllIf neg', () =>
     )
 );
 
+test('appendAllIf appendWithModification', () => {
+    const input = ['a', 'b'];
+    const appended = ['c', 'd'];
+    forInput(
+        input,
+        (s, inputHint) => {
+            s.appendAll(appended).streamOperator(appendWithModification('x')).forEach(() => {});
+            expect(input).toEqualWithHint(['a', 'b'], inputHint, '');
+            expect(appended).toEqualWithHint(['c', 'd'], inputHint, '');
+        }
+    );
+});
+
 test('butLast', () =>
     [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
         forInput(
@@ -193,6 +207,19 @@ test('butLast', () =>
                     runHint,
                 )
             ),
+        )
+    )
+);
+
+test('butLast appendWithModification', () =>
+    [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
+        forInput(
+            input,
+            (s, inputHint) => {
+                const inputCopy = [...input];
+                s.butLast().streamOperator(appendWithModification('x')).forEach(() => {});
+                expect(input).toEqualWithHint(inputCopy, inputHint, '');
+            }
         )
     )
 );
@@ -495,6 +522,13 @@ test('shuffle', () => {
     }
 });
 
+test('shuffle appendWithModification', () => {
+    const input = ['a', 'b', 'c', 'd'];
+    const inputCopy = [...input];
+    stream(input).shuffle().streamOperator(appendWithModification('x')).forEach(() => {});
+    expect(input).toEqual(inputCopy);
+});
+
 test('single', () =>
     [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
         forInput(
@@ -530,6 +564,13 @@ test('sortOn multiple', () => forInput(
         expect(s.sortOn(Number.parseInt).toArray()).toEqualWithHint(['0', '1', '2', '2', '3'], inputHint, runHint)
     ),
 ));
+
+test('sortOn appendWithModification', () => {
+    const input = ['c', 'a', 'b'];
+    const inputCopy = [...input];
+    stream(input).sortOn(i => i).streamOperator(appendWithModification('x')).forEach(() => {});
+    expect(input).toEqual(inputCopy);
+});
 
 test('splitWhen empty', () => forInput(
     [],
@@ -576,7 +617,7 @@ test('streamOperator', () =>
     )
 );
 
-test('tail', () => {
+test('tail', () =>
     [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']].forEach(input =>
         forInput(
             input,
@@ -584,7 +625,19 @@ test('tail', () => {
                 expect(s.tail().toArray()).toEqualWithHint(input.slice(1), inputHint, runHint)
             ),
         )
-    );
+    )
+);
+
+test('tail appendWithModification', () => {
+    const input = ['a', 'b', 'c', 'd'];
+    const inputCopy = [...input];
+    forInput(
+        input,
+        (s, inputHint) => {
+            s.tail().streamOperator(appendWithModification('x')).forEach(() => {});
+            expect(input).toEqualWithHint(inputCopy, inputHint, '');
+        },
+    )
 });
 
 test('take, takeLast', () => {
@@ -607,6 +660,20 @@ test('take, takeLast', () => {
                 })
             )
         )
+    );
+});
+
+test('take, takeLast, takeRandom appendWithModification', () => {
+    const input = ['a', 'b', 'c'];
+    const inputCopy = [...input];
+    forInput(
+        input,
+        (s, inputHint) => [0, 1, 2, 3, 4].forEach(k => {
+            s.take(k).streamOperator(appendWithModification('x')).forEach(() => {});
+            s.takeLast(k).streamOperator(appendWithModification('x')).forEach(() => {});
+            s.takeRandom(k).streamOperator(appendWithModification('x')).forEach(() => {});
+            expect(input).toEqualWithHint(inputCopy, inputHint, '');
+        }),
     );
 });
 
