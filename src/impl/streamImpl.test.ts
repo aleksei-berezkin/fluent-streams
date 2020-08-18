@@ -113,12 +113,26 @@ test('awaitAll mix', doneTest => {
     );
 });
 
-test('append', () => {
+test('append', () =>
     forInput(
         ['a', 'b'],
         (s, inputHint) => twice(runHint => expect(s.append('c').toArray()).toEqualWithHint(['a', 'b', 'c'], inputHint, runHint)),
-    );
-});
+    )
+);
+
+test('appendIf', () =>
+    forInput(
+        ['a', 'b'],
+        (s, inputHint) => twice(runHint => expect(s.appendIf(true, 'c').toArray()).toEqualWithHint(['a', 'b', 'c'], inputHint, runHint)),
+    )
+);
+
+test('appendIf neg', () =>
+    forInput(
+        ['a', 'b'],
+        (s, inputHint) => twice(runHint => expect(s.appendIf(false, 'c').toArray()).toEqualWithHint(['a', 'b'], inputHint, runHint)),
+    )
+);
 
 test('appendAll', () => {
     forInput(
@@ -146,6 +160,15 @@ test('appendAllIf', () =>
         ['a', 'b'],
         (s, inputHint) => twice(runHint =>
             expect(s.appendAllIf(true, ['c', 'd']).toArray()).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint)
+        ),
+    )
+);
+
+test('appendAllIf set', () =>
+    forInput(
+        ['a', 'b'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.appendAllIf(true, new Set(['c', 'd', 'e'])).toArray()).toEqualWithHint(['a', 'b', 'c', 'd', 'e'], inputHint, runHint)
         ),
     )
 );
@@ -372,6 +395,13 @@ test('optionalOperator', () =>
                 }
             ).resolve()).toEqualWithHint({has: true, val: 42}, inputHint, runHint)
         ),
+    )
+);
+
+test('randomItem empty', () =>
+    forInput(
+        [],
+        (s, inputHint) => twice(runHint => expect(s.randomItem().isPresent()).toBeWithHint(false, inputHint, runHint)),
     )
 );
 
@@ -614,9 +644,16 @@ test('toObject', () => {
     );
 });
 
-test('toObject throw', () =>
+test('toObject bad item', () =>
     forInput(
         ['a', 'b'],
+        s => twice(() => expect(() => s.toObject()).toThrow()),
+    )
+);
+
+test('toObject bad key', () =>
+    forInput(
+        [[{}, 1]],
         s => twice(() => expect(() => s.toObject()).toThrow()),
     )
 );

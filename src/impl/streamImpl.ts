@@ -6,7 +6,6 @@ import { OptionalImpl } from './optionalImpl';
 import { collectToMap } from './util';
 import {
     appendReturned,
-    assertResult,
     assertVoid,
     matchGenerator,
     StreamGenerator,
@@ -340,11 +339,7 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         return new OptionalImpl(this, function* (gen) {
             const itr = appendReturned(gen)[Symbol.iterator]();
             const n = itr.next();
-            if (n.done) {
-                if (assertResult<T>(n.value) && n.value.array.length === 1) {
-                    yield n.value.array[0];
-                }
-            } else {
+            if (!n.done) {
                 const nn = itr.next();
                 if (nn.done && assertVoid(nn.value)) {
                     yield n.value;
