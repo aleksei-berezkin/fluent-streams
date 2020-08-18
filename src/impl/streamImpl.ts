@@ -452,10 +452,7 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
             const nFromBuffer = n - tail().array.length;
             if (nFromBuffer >= 0) {
                 yield* buffer.takeLast(nFromBuffer);
-                return {
-                    array: tail().array,
-                    canModify: tail().canModify,
-                }
+                return tail();
             } else {
                 return {
                     array: tail().array.slice(tail().array.length - n),
