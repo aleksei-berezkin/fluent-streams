@@ -38,10 +38,6 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         return false;
     }
 
-    applyStream<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Stream<U> {
-        return new StreamImpl(this, operator);
-    }
-
     at(index: number): Optional<T> {
         return new OptionalImpl(this, function* (gen) {
             if (index < 0) {
@@ -261,6 +257,10 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         });
     }
 
+    optionalOperator<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Optional<U> {
+        return new OptionalImpl(this, operator);
+    }
+
     map<U>(mapper: (item: T) => U) {
         return new StreamImpl(this, function* (gen) {
             for (const i of appendReturned(gen)) {
@@ -389,6 +389,10 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
                 yield chunk;
             }
         });
+    }
+
+    streamOperator<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Stream<U> {
+        return new StreamImpl(this, operator);
     }
 
     tail(): Stream<T> {

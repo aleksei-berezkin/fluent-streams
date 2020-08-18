@@ -6,6 +6,7 @@ import './testUtil/extendExpect';
 import { permutations } from './testUtil/permutations';
 import { stream } from '../factories';
 import { variations } from './testUtil/variations';
+import { appendReturned, toAnyArray } from '../streamGenerator';
 
 function forInput<T>(input: T[], run: (base: Stream<T>, inputHint: () => string) => void, mode: CombinationsMode = 'all') {
     return forInputCombinations(
@@ -359,6 +360,21 @@ test('map', () => {
     )
 });
 
+test('optionalOperator', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.optionalOperator(
+                function* (gen) {
+                    if (toAnyArray(gen).includes('b')) {
+                        yield 42;
+                    }
+                }
+            ).resolve()).toEqualWithHint({has: true, val: 42}, inputHint, runHint)
+        ),
+    )
+);
+
 test('randomItem', () => {
     const input = ['a', 'b', 'c'];
     const iterations = 3000;
@@ -514,6 +530,21 @@ test('splitWhen some', () => forInput(
         )
     ),
 ));
+
+test('streamOperator', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        (s, inputHint) => twice(runHint =>
+            expect(s.streamOperator(
+                function* (gen) {
+                    for (const c of (appendReturned(gen))) {
+                        yield c.toUpperCase();
+                    }
+                }
+            ).toArray()).toEqualWithHint(['A', 'B', 'C'], inputHint, runHint)
+        ),
+    )
+);
 
 test('tail', () => {
     [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']].forEach(input =>

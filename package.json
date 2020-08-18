@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist ; jest --clearCache",
     "test": "jest",
     "compile": "tsc --project tsconfig.build.json",
     "rm-impl-typedef": "rm -f dist/impl/*.d.ts",

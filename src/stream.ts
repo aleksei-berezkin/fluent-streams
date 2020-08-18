@@ -6,8 +6,6 @@ export interface Stream<T> extends Iterable<T> {
 
     any(predicate: (item: T) => boolean): boolean;
 
-    applyStream<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Stream<U>;
-
     at(index: number): Optional<T>;
 
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]>;
@@ -48,6 +46,8 @@ export interface Stream<T> extends Iterable<T> {
 
     map<U>(mapper: (item: T) => U): Stream<U>;
 
+    optionalOperator<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Optional<U>;
+
     randomItem(): Optional<T>
 
     reduce(reducer: (l: T, r: T) => T): Optional<T>;
@@ -65,6 +65,8 @@ export interface Stream<T> extends Iterable<T> {
     sortOn(getComparable: (item: T) => number | string | boolean): Stream<T>
 
     splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]>;
+
+    streamOperator<U>(operator: (input: StreamGenerator<T>) => StreamGenerator<U>): Stream<U>;
 
     tail(): Stream<T>;
 
