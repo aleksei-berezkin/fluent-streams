@@ -256,10 +256,6 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         });
     }
 
-    optionalOperator<U>(operator: StreamOperator<T, U>): Optional<U> {
-        return new OptionalImpl(this, operator);
-    }
-
     map<U>(mapper: (item: T) => U) {
         return new StreamImpl(this, function* (gen) {
             for (const i of appendReturned(gen)) {
@@ -386,10 +382,6 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         });
     }
 
-    streamOperator<U>(operator: StreamOperator<T, U>): Stream<U> {
-        return new StreamImpl(this, operator);
-    }
-
     tail(): Stream<T> {
         return new StreamImpl(this, function* (gen) {
             const {head, tail} = matchGenerator(gen);
@@ -497,6 +489,14 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
             }
         }
         return obj;
+    }
+
+    transformToOptional<U>(operator: StreamOperator<T, U>): Optional<U> {
+        return new OptionalImpl(this, operator);
+    }
+
+    transformToStream<U>(operator: StreamOperator<T, U>): Stream<U> {
+        return new StreamImpl(this, operator);
     }
 
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]> {

@@ -189,7 +189,7 @@ test('appendAllIf appendWithModification', () => {
     forInput(
         input,
         (s, inputHint) => {
-            s.appendAll(appended).streamOperator(appendWithModification('x')).forEach(() => {});
+            s.appendAll(appended).transformToStream(appendWithModification('x')).forEach(() => {});
             expect(input).toEqualWithHint(['a', 'b'], inputHint, '');
             expect(appended).toEqualWithHint(['c', 'd'], inputHint, '');
         }
@@ -217,7 +217,7 @@ test('butLast appendWithModification', () =>
             input,
             (s, inputHint) => {
                 const inputCopy = [...input];
-                s.butLast().streamOperator(appendWithModification('x')).forEach(() => {});
+                s.butLast().transformToStream(appendWithModification('x')).forEach(() => {});
                 expect(input).toEqualWithHint(inputCopy, inputHint, '');
             }
         )
@@ -410,11 +410,11 @@ test('map', () => {
     )
 });
 
-test('optionalOperator', () =>
+test('transformToOptional', () =>
     forInput(
         ['a', 'b', 'c'],
         (s, inputHint) => twice(runHint =>
-            expect(s.optionalOperator(
+            expect(s.transformToOptional(
                 function* (gen) {
                     if (toAnyArray(gen).includes('b')) {
                         yield 42;
@@ -525,7 +525,7 @@ test('shuffle', () => {
 test('shuffle appendWithModification', () => {
     const input = ['a', 'b', 'c', 'd'];
     const inputCopy = [...input];
-    stream(input).shuffle().streamOperator(appendWithModification('x')).forEach(() => {});
+    stream(input).shuffle().transformToStream(appendWithModification('x')).forEach(() => {});
     expect(input).toEqual(inputCopy);
 });
 
@@ -568,7 +568,7 @@ test('sortOn multiple', () => forInput(
 test('sortOn appendWithModification', () => {
     const input = ['c', 'a', 'b'];
     const inputCopy = [...input];
-    stream(input).sortOn(i => i).streamOperator(appendWithModification('x')).forEach(() => {});
+    stream(input).sortOn(i => i).transformToStream(appendWithModification('x')).forEach(() => {});
     expect(input).toEqual(inputCopy);
 });
 
@@ -602,11 +602,11 @@ test('splitWhen some', () => forInput(
     ),
 ));
 
-test('streamOperator', () =>
+test('transformToStream', () =>
     forInput(
         ['a', 'b', 'c'],
         (s, inputHint) => twice(runHint =>
-            expect(s.streamOperator(
+            expect(s.transformToStream(
                 function* (gen) {
                     for (const c of (appendReturned(gen))) {
                         yield c.toUpperCase();
@@ -634,7 +634,7 @@ test('tail appendWithModification', () => {
     forInput(
         input,
         (s, inputHint) => {
-            s.tail().streamOperator(appendWithModification('x')).forEach(() => {});
+            s.tail().transformToStream(appendWithModification('x')).forEach(() => {});
             expect(input).toEqualWithHint(inputCopy, inputHint, '');
         },
     )
@@ -669,9 +669,9 @@ test('take, takeLast, takeRandom appendWithModification', () => {
     forInput(
         input,
         (s, inputHint) => [0, 1, 2, 3, 4].forEach(k => {
-            s.take(k).streamOperator(appendWithModification('x')).forEach(() => {});
-            s.takeLast(k).streamOperator(appendWithModification('x')).forEach(() => {});
-            s.takeRandom(k).streamOperator(appendWithModification('x')).forEach(() => {});
+            s.take(k).transformToStream(appendWithModification('x')).forEach(() => {});
+            s.takeLast(k).transformToStream(appendWithModification('x')).forEach(() => {});
+            s.takeRandom(k).transformToStream(appendWithModification('x')).forEach(() => {});
             expect(input).toEqualWithHint(inputCopy, inputHint, '');
         }),
     );

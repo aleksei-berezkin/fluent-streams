@@ -19,7 +19,7 @@ test('stream', () => {
 
 test('stream appendWithModification', () => {
     const input = ['a', 'b', 'c'];
-    stream(input).streamOperator(appendWithModification('x')).forEach(() => {});
+    stream(input).transformToStream(appendWithModification('x')).forEach(() => {});
     expect(input).toEqual(['a', 'b', 'c']);
 });
 
@@ -54,7 +54,7 @@ test('streamOf', () => {
 
 test('streamOf appendWithModification', () => {
     const input = ['a', 'b'];
-    streamOf(...input).streamOperator(appendWithModification('x')).forEach(() => {});
+    streamOf(...input).transformToStream(appendWithModification('x')).forEach(() => {});
     expect(input).toEqual(['a', 'b']);
 })
 

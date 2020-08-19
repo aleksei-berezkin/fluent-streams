@@ -46,8 +46,6 @@ export interface Stream<T> extends Iterable<T> {
 
     map<U>(mapper: (item: T) => U): Stream<U>;
 
-    optionalOperator<U>(operator: StreamOperator<T, U>): Optional<U>;
-
     randomItem(): Optional<T>
 
     reduce(reducer: (l: T, r: T) => T): Optional<T>;
@@ -66,8 +64,6 @@ export interface Stream<T> extends Iterable<T> {
 
     splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]>;
 
-    streamOperator<U>(operator: StreamOperator<T, U>): Stream<U>;
-
     tail(): Stream<T>;
 
     take(n: number): Stream<T>;
@@ -79,6 +75,10 @@ export interface Stream<T> extends Iterable<T> {
     toArray(): T[];
 
     toObject(): T extends readonly [string, any] ? { [key in T[0]]: T[1] } : unknown;
+
+    transformToOptional<U>(operator: StreamOperator<T, U>): Optional<U>;
+
+    transformToStream<U>(operator: StreamOperator<T, U>): Stream<U>;
 
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]>;
 
