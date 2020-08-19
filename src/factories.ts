@@ -16,6 +16,15 @@ export function stream<T>(input: Iterable<T>): Stream<T> {
     });
 }
 
+export function streamFromModifiable<T>(input: T[]): Stream<T> {
+    return new StreamImpl<never, T>(undefined, function* () {
+        return {
+            array: input,
+            canModify: true,
+        }
+    });
+}
+
 export function streamOf<T>(...input: T[]): Stream<T> {
     return new StreamImpl<never, T>(undefined, function* () {
         return {
