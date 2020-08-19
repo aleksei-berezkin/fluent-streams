@@ -3,9 +3,9 @@ import { Stream } from './stream';
 export interface Optional<T> extends Iterable<T> {
     filter(predicate: (item: T) => boolean): Optional<T>;
 
-    flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U>;
+    flatMap<U>(mapper: (item: T) => Iterable<U>): Optional<U>;
 
-    flatMapOptional<U>(mapper: (item: T) => Optional<U>): Optional<U>;
+    flatMapToStream<U>(mapper: (item: T) => Iterable<U>): Stream<U>;
 
     get(): T;
 

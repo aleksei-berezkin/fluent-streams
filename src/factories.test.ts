@@ -141,32 +141,50 @@ test('continually', () => {
 
 test('optional iterable empty', () => {
     const o = optional([]);
-    twice(() => expect(o.toArray()).toEqual([]));
+    twice(() => {
+        expect(o.toArray()).toEqual([]);
+        expect(o.resolve()).toEqual({has: false});
+    });
 });
 
 test('optional iterable nonempty', () => {
     const o = optional(['a']);
-    twice(() => expect(o.toArray()).toEqual(['a']));
+    twice(() => {
+        expect(o.toArray()).toEqual(['a']);
+        expect(o.resolve()).toEqual({has: true, val: 'a'});
+    });
 });
 
 test('optional trims array', () => {
     const o = optional(['a', 'b', 'c']);
-    twice(() => expect(o.toArray()).toEqual(['a']));
+    twice(() => {
+        expect(o.toArray()).toEqual(['a']);
+        expect(o.resolve()).toEqual({has: true, val: 'a'});
+    });
 });
 
 test('optionalOfNullable null', () => {
     const o = optionalOfNullable(() => null);
-    twice(() => expect(o.toArray()).toEqual([]));
+    twice(() => {
+        expect(o.toArray()).toEqual([]);
+        expect(o.resolve()).toEqual({has: false});
+    });
 });
 
 test('optionalOfNullable undefined', () => {
     const o = optionalOfNullable(() => undefined);
-    twice(() => expect(o.toArray()).toEqual([]));
+    twice(() => {
+        expect(o.toArray()).toEqual([]);
+        expect(o.resolve()).toEqual({has: false});
+    });
 });
 
 test('optionalOfNullable nonempty', () => {
     const o = optionalOfNullable(() => 'a');
-    twice(() => expect(o.toArray()).toEqual(['a']));
+    twice(() => {
+        expect(o.toArray()).toEqual(['a']);
+        expect(o.resolve()).toEqual({has: true, val: 'a'});
+    });
 });
 
 test('optionalOfNullable alternate', () => {

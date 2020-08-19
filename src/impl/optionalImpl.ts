@@ -30,22 +30,22 @@ export class OptionalImpl<P, T> extends BaseImpl<P, T> implements Optional<T> {
     }
 
     flatMap<U>(mapper: (item: T) => Iterable<U>) {
-        return new StreamImpl(this, function* (gen) {
+        return new OptionalImpl(this, function* (gen) {
             const n = appendReturned(gen)[Symbol.iterator]().next();
             if (!n.done) {
-                yield* mapper(n.value);
+                const nn = mapper(n.value)[Symbol.iterator]().next();
+                if (!nn.done) {
+                    yield nn.value;
+                }
             }
         });
     }
 
-    flatMapOptional<U>(mapper: (item: T) => Optional<U>) {
-        return new OptionalImpl(this, function* (gen) {
+    flatMapToStream<U>(mapper: (item: T) => Iterable<U>) {
+        return new StreamImpl(this, function* (gen) {
             const n = appendReturned(gen)[Symbol.iterator]().next();
             if (!n.done) {
-                const res = mapper(n.value).resolve();
-                if (res.has) {
-                    yield res.val;
-                }
+                yield* mapper(n.value);
             }
         });
     }
