@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "declaration": true,
+    "esModuleInterop": true,
     "module": "CommonJS",
     "moduleResolution": "node",
     "noUnusedLocals": true,
@@ -9,6 +10,5 @@
     "sourceMap": true,
     "strict": true,
     "target": "esnext"
-  },
-  "include": ["src"]
+  }
 }

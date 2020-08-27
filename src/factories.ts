@@ -2,6 +2,7 @@ import { Stream } from './stream';
 import { Optional } from './optional';
 import { StreamImpl } from './impl/streamImpl';
 import { OptionalImpl } from './impl/optionalImpl';
+import { InputArrayStream, IteratorStream } from './impl/optimized/Stream2';
 
 export function stream<T>(input: Iterable<T>): Stream<T> {
     return new StreamImpl<never, T>(undefined, function* () {
@@ -14,6 +15,12 @@ export function stream<T>(input: Iterable<T>): Stream<T> {
             yield* input;
         }
     });
+}
+
+export function stream2<T>(input: Iterable<T>): Stream<T> {
+    return Array.isArray(input)
+        ? new InputArrayStream(input as T[])
+        : new IteratorStream(() => input[Symbol.iterator]());
 }
 
 export function streamFromModifiable<T>(input: T[]): Stream<T> {

@@ -22,6 +22,14 @@ export class RingBuffer<T> implements Iterable<T>{
         }
     }
 
+    toArray(): T[] {
+        const arr: T[] = [];
+        for (let i = 0; i < this.size; i++) {
+            arr.push(this.a[(this.start + i) % this.capacity]);
+        }
+        return arr;
+    }
+
     *[Symbol.iterator]() {
         yield* this.takeLast(this.size);
     }
