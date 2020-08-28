@@ -1,10 +1,12 @@
-import {
-    StreamOperator,
-} from '../../streamGenerator';
+import { StreamOperator, } from '../../streamGenerator';
 import { Stream } from '../../stream';
 import { Optional } from '../../optional';
 import { DelegateStream } from './DelegateStream';
 import { RingBuffer } from '../ringBuffer';
+import { RandomAccessIterator } from './RandomAccessIterator';
+import { MapIterator } from './MapIterator';
+import { FlatMapIterator } from './FlatMapIterator';
+import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 
 abstract class AbstractStream<T> implements Stream<T> {
     abstract [Symbol.iterator](): Iterator<T>;
@@ -27,12 +29,37 @@ abstract class AbstractStream<T> implements Stream<T> {
         return false;
     }
 
-    append(_item: T): Stream<T> {
-        throw new Error('Not implemented');
+    append(item: T): Stream<T> {
+        return new IteratorStream(() => {
+            const inner = this[Symbol.iterator]();
+            let fullDone = false;
+            return {
+                next(): IteratorResult<T> {
+                    const n = inner.next();
+                    if (!n.done) return n;
+                    if (!fullDone) {
+                        fullDone = true;
+                        return {done: false, value: item};
+                    }
+                    return {done: true, value: undefined};
+                }
+            }
+        });
     }
 
-    appendAll(_items: Iterable<T>): Stream<T> {
-        throw new Error('Not implemented');
+    appendAll(items: Iterable<T>): Stream<T> {
+        return new IteratorStream(() => {
+            const left = this[Symbol.iterator]();
+            let right: Iterator<T> | undefined = undefined;
+            return {
+                next(): IteratorResult<T> {
+                    const l = left.next();
+                    if (!l.done) return l;
+                    if (!right) right = items[Symbol.iterator]();
+                    return right.next();
+                }
+            }
+        })
     }
 
     appendAllIf(_condition: boolean, _items: Iterable<T>): Stream<T> {
@@ -106,7 +133,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     map<U>(mapper: (item: T) => U): Stream<U> {
-        return new IteratorStream(() => new MappedIterator(this[Symbol.iterator](), mapper))
+        return new IteratorStream(() => new MapIterator(this[Symbol.iterator](), mapper))
     }
 
     randomItem(): Optional<T> {
@@ -233,80 +260,6 @@ export class IteratorStream<T> extends AbstractStream<T> {
     }
     [Symbol.iterator](): Iterator<T> {
         return this.createIterator();
-    }
-}
-
-class RandomAccessIterator<T> implements Iterator<T> {
-    private pos = -1;
-
-    constructor(private readonly get: (i: number) => T, private readonly length: number) {
-    }
-
-    next(): IteratorResult<T> {
-        if (++this.pos == this.length) {
-            return {done: true, value: undefined};
-        }
-        return {done: false, value: this.get(this.pos)};
-    }
-}
-
-class MappedIterator<T, U> implements Iterator<U> {
-    constructor(private input: Iterator<T>, private readonly mapper: (item: T) => U) {
-    }
-    next(): IteratorResult<U> {
-        const n = this.input.next();
-        if (n.done) {
-            return {done: true, value: undefined};
-        }
-        return {done: false, value: this.mapper(n.value)};
-    }
-
-}
-
-class FlatMapIterator<T, U> implements Iterator<U> {
-    private inner: Iterator<U> = undefined as any;
-    private inInner = false;
-
-    constructor(private input: Iterator<T>, private readonly mapper: (item: T) => Iterable<U>) {
-    }
-
-    next(): IteratorResult<U> {
-        for ( ; ; ) {
-            if (this.inInner) {
-                const i = this.inner.next();
-                if (!i.done) return i;
-            }
-
-            const o = this.input.next();
-
-            if (o.done) {
-                return {done: true, value: undefined};
-            }
-
-            this.inner = this.mapper(o.value)[Symbol.iterator]();
-            this.inInner = true;
-        }
-    }
-}
-
-class RandomAccessFlatMapIterator<T> implements Iterator<T> {
-    private inner: Iterator<T> = undefined as any;
-    private pos = -1;
-
-    constructor(private readonly get: (i: number) => Iterable<T>, private readonly length: number) {
-    }
-
-    next(): IteratorResult<T> {
-        for ( ; ; ) {
-            if (this.pos >= 0) {
-                const i = this.inner.next();
-                if (!i.done) return i;
-            }
-            if (this.pos === this.length - 1) {
-                return {done: true, value: undefined};
-            }
-            this.inner = this.get(++this.pos)[Symbol.iterator]();
-        }
     }
 }
 
