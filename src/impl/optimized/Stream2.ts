@@ -375,10 +375,9 @@ export class ArrayStream<T> extends RandomAccessStream<T> {
     }
 }
 
-// TODO extends RandomAccessStream
-export class MappedArrayStream<T, U> extends AbstractStream<U> {
+export class MappedArrayStream<T, U> extends RandomAccessStream<U> {
     constructor(private readonly array: T[], private readonly mapper: (item: T) => U) {
-        super();
+        super(i => mapper(array[i]), array.length);
     }
 
     toArray(): U[] {
@@ -390,14 +389,6 @@ export class MappedArrayStream<T, U> extends AbstractStream<U> {
             arr.push(m(a[i]));
         }
         return arr;
-    }
-
-    map<V>(mapper: (item: U) => V): Stream<V> {
-        return new RandomAccessStream(i => mapper(this.mapper(this.array[i])), this.array.length);
-    }
-
-    [Symbol.iterator](): Iterator<U> {
-        return new RandomAccessIterator(i => this.mapper(this.array[i]), this.array.length);
     }
 }
 
