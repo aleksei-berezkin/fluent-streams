@@ -1,11 +1,11 @@
 import { stream, stream2 } from '../src';
-import { benchmark } from './benchmarkHelper';
+import { benchmark } from './util/benchmark';
 import { asSequence } from 'sequency';
 import Lazy from 'lazy.js';
-import { genInputs } from './genInput';
-import { sink } from './sink';
+import { genInputs } from './util/genInput';
+import { sink } from './util/sink';
 
-genInputs('flatMap').forEach(([input, getName]) => {
+genInputs('flatMap').forEach(([input, getName]) =>
     benchmark(
         {
             name: getName('St1'),
@@ -47,5 +47,5 @@ genInputs('flatMap').forEach(([input, getName]) => {
                     .toArray()
             ),
         }
-    );
-});
+    )
+);
