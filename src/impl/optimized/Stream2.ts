@@ -263,13 +263,17 @@ export class IteratorStream<T> extends AbstractStream<T> {
     }
 }
 
-class RandomAccessStream<T> extends AbstractStream<T>  {
+export class RandomAccessStream<T> extends AbstractStream<T>  {
     constructor(private readonly get: (i: number) => T, private readonly length: number) {
         super();
     }
 
     [Symbol.iterator](): Iterator<T> {
         return new RandomAccessIterator(this.get, this.length);
+    }
+
+    append(item: T): Stream<T> {
+        return new RandomAccessStream(i => i === this.length ? item : this.get(i), this.length + 1);
     }
 
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
