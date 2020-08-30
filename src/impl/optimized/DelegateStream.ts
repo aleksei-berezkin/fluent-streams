@@ -36,7 +36,7 @@ export class DelegateStream<T> implements Stream<T> {
     }
 
     at(index: number): Optional<T> {
-        return new DelegateOptional(() => this.at(index));
+        return new DelegateOptional(() => this.getDelegate().at(index));
     }
 
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]> {
