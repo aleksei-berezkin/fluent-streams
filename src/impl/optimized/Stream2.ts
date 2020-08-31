@@ -140,8 +140,16 @@ abstract class AbstractStream<T> implements Stream<T> {
         });
     }
 
-    equals(_other: Iterable<T>): boolean {
-        throw new Error('Not implemented');
+    equals(other: Iterable<T>): boolean {
+        const itr = other[Symbol.iterator]();
+        for (const i of this) {
+            const n = itr.next();
+            if (n.done || i !== n.value) {
+                return false;
+            }
+        }
+        // noinspection PointlessBooleanExpressionJS
+        return !!itr.next().done;
     }
 
     filter(_predicate: (item: T) => boolean): Stream<T> {

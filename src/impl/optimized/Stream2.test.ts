@@ -188,6 +188,40 @@ test('distinctBy empty', () => forInput(
     (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint([], inputHint, runHint)),
 ));
 
+test('equals', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        s => s,
+        (s, inputHint1) => twice(runHint1 =>
+            forInput(
+                ['a', 'b', 'c'],
+                t => t,
+                (t, inputHint2) => twice(runHint2 => {
+                    expect(s.equals(t)).toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                    expect(t.equals(s)).toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                }),
+            )
+        ),
+    )
+);
+
+test('equals neg', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        s => s,
+        (s, inputHint1) => twice(runHint1 =>
+            forInput(
+                ['a', 'b', 'c', 'd'],
+                t => t,
+                (t, inputHint2) => twice(runHint2 => {
+                    expect(s.equals(t)).not.toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                    expect(t.equals(s)).not.toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                }),
+            )
+        ),
+    )
+);
+
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s.map(c => c.toUpperCase()),
