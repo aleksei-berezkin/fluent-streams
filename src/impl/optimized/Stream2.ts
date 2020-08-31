@@ -7,6 +7,7 @@ import { RandomAccessIterator } from './RandomAccessIterator';
 import { MapIterator } from './MapIterator';
 import { FlatMapIterator } from './FlatMapIterator';
 import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
+import { RandomAccessSpec } from './RandomAccessSpec';
 
 abstract class AbstractStream<T> implements Stream<T> {
     abstract [Symbol.iterator](): Iterator<T>;
@@ -301,65 +302,90 @@ export class IteratorStream<T> extends AbstractStream<T> {
 }
 
 export class RandomAccessStream<T> extends AbstractStream<T>  {
-    constructor(private readonly get: (i: number) => T, private readonly getLength: () => number) {
+    constructor(private readonly spec: () => RandomAccessSpec<T>) {
         super();
     }
 
     [Symbol.iterator](): Iterator<T> {
-        return new RandomAccessIterator(this.get, this.getLength());
+        return new RandomAccessIterator(this.spec());
     }
 
     append(item: T): Stream<T> {
-        return new RandomAccessStream(i => i === this.getLength() ? item : this.get(i), () => this.getLength() + 1);
+        return new RandomAccessStream(() => {
+            const {get, length} = this.spec();
+            return {
+                get: i => i === length ? item : get(i),
+                length: length + 1,
+            }
+        });
     }
 
     at(index: number): Optional<T> {
         return new SimpleOptional<T>(() => {
-            if (0 <= index && index < this.getLength()) {
-                return {done: false, value: this.get(index)};
+            const {get, length} = this.spec();
+            if (0 <= index && index < length) {
+                return {done: false, value: get(index)};
             }
             return {done: true, value: undefined};
         });
     }
 
     butLast(): Stream<T> {
-        return new RandomAccessStream(this.get, () => Math.max(this.getLength(), 0));
+        return new RandomAccessStream(() => {
+            const {get, length} = this.spec();
+            return {
+                get,
+                length: Math.max(length - 1, 0),
+            }
+        });
     }
 
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
-        return new IteratorStream(() => new RandomAccessFlatMapIterator(i => mapper(this.get(i)), this.getLength()));
+        return new IteratorStream(() => {
+            const {get, length} = this.spec();
+            return new RandomAccessFlatMapIterator({
+                get: (i: number) => mapper(get(i)),
+                length,
+            })
+        });
     }
 
     size(): number {
-        return this.getLength();
+        return this.spec().length;
     }
 
     takeLast(n: number): Stream<T> {
         return new DelegateStream(() => {
+            const {get, length} = this.spec();
             const a: T[] = [];
-            const s = this.size();
-            for (let i = Math.max(s - n, 0); i < s; i++) {
-                a.push(this.get(i));
+            for (let i = Math.max(length - n, 0); i < length; i++) {
+                a.push(get(i));
             }
             return new ArrayStream(a);
         });
     }
 
     map<U>(mapper: (item: T) => U): Stream<U> {
-        return new RandomAccessStream(i => mapper(this.get(i)), this.getLength);
+        return new RandomAccessStream(() => {
+            const {get, length} = this.spec();
+            return {
+                get: i => mapper(get(i)),
+                length,
+            }
+        });
     }
 
     forEach(effect: (i: T) => void) {
-        const l = this.getLength()
-        for (let i = 0; i < l; i++) {
-            effect(this.get(i));
+        const {get, length} = this.spec();
+        for (let i = 0; i < length; i++) {
+            effect(get(i));
         }
     }
 }
 
 export class ArrayStream<T> extends RandomAccessStream<T> {
     constructor(private readonly array: T[]) {
-        super(i => array[i], () => array.length);
+        super(() => ({get: i => array[i], length: array.length}));
     }
 
     [Symbol.iterator](): Iterator<T> {
@@ -385,7 +411,7 @@ export class ArrayStream<T> extends RandomAccessStream<T> {
 
 export class MappedArrayStream<T, U> extends RandomAccessStream<U> {
     constructor(private readonly array: T[], private readonly mapper: (item: T) => U) {
-        super(i => mapper(array[i]), () => array.length);
+        super(() => ({get: i => mapper(array[i]), length: array.length}));
     }
 
     toArray(): U[] {
@@ -442,7 +468,7 @@ export class SimpleOptional<T> implements Optional<T> {
     flatMapToStream<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
         return new IteratorStream(() => {
             const r = this.getResult();
-            if (r.done) return new RandomAccessIterator(undefined as any, 0);
+            if (r.done) return new RandomAccessIterator({get: undefined as any, length: 0});
             return mapper(r.value)[Symbol.iterator]();
         })
     }

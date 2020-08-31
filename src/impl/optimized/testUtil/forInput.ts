@@ -23,7 +23,7 @@ export function forInput<T, Out extends Stream<T> | Optional<T>>(
         [
             a => new IteratorStream(() => a[Symbol.iterator]()),
             a => new InputArrayStream(a),
-            a => new RandomAccessStream(i => a[i], () => a.length),
+            a => new RandomAccessStream(() => ({get: i => a[i], length: a.length})),
             a => new DelegateStream(() => new ArrayStream([...a])),
         ];
     creators.forEach(step);

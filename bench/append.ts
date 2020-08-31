@@ -1,36 +1,32 @@
 import { genInputs } from './util/genInput';
 import { benchmark } from './util/benchmark';
 import { sink } from './util/sink';
-import { stream2 } from '../src';
 import { asSequence } from 'sequency';
 import Lazy from 'lazy.js';
+import { stream2 } from '../src';
 
-genInputs('sort.map').forEach(([input, getName]) =>
+genInputs('append').forEach(([input, getName]) =>
     benchmark(
         {
             name: getName('Str'),
             run: () => sink(
                 stream2(input)
-                    .sortOn(i => i)
-                    .map(i => i + .2)
+                    .append(9.1)
                     .toArray()
             ),
         },
         {
             name: getName('Arr'),
             run: () => sink(
-                // Array.sort sorts in place, so to be fair input needs to be copied
-                [...input]
-                    .sort(i => i)
-                    .map(i => i + .2)
+                input
+                    .concat(9.1)
             ),
         },
         {
             name: getName('Seq'),
             run: () => sink(
                 asSequence(input)
-                    .sortedBy(i => i)
-                    .map(i => i + .2)
+                    .plus(9.1)
                     .toArray()
             ),
         },
@@ -38,8 +34,7 @@ genInputs('sort.map').forEach(([input, getName]) =>
             name: getName('Laz'),
             run: () => sink(
                 Lazy(input)
-                    .sortBy(i => i)
-                    .map(i => i + .2)
+                    .concat([9.1])
                     .toArray()
             ),
         },

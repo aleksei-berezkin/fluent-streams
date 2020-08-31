@@ -115,3 +115,11 @@ test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
         expect(s.toArray()).toEqualWithHint(input.map(c => c.toUpperCase()), inputHint, runHint)
     ),
 )));
+
+test('toArray', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
+    input,
+    s => s,
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(input, inputHint, runHint)
+    ),
+)));
