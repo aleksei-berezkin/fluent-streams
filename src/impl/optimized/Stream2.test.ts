@@ -222,6 +222,30 @@ test('equals neg', () =>
     )
 );
 
+test('filter', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        s => s.filter(s => s !== 'b'),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(['a', 'c'], inputHint, runHint),
+        ),
+    )
+);
+
+test('filterWithAssertion', () => {
+    function isString(s: string | number): s is string {
+        return typeof s === 'string';
+    }
+    forInput(
+        ['a', 1, 'c'],
+        s => s.filterWithAssertion(isString),
+        (s, inputHint) => twice(runHint => {
+            const r: string[] = s.filterWithAssertion(isString).toArray();
+            expect(r).toEqualWithHint(['a', 'c'], inputHint, runHint);
+        }),
+    );
+});
+
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s.map(c => c.toUpperCase()),

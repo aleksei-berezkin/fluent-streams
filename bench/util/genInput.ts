@@ -5,7 +5,7 @@ export function genInputs(name: string): [number[], (s: string) => string][] {
 function genInput(n: number) {
     const a = [];
     for (let i = 0; i < n; i++) {
-        a.push(i + Date.now() * Math.random());
+        a.push((Date.now() - i) * (Math.random() - .5));
     }
     return a;
 }

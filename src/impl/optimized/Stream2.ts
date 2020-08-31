@@ -152,12 +152,34 @@ abstract class AbstractStream<T> implements Stream<T> {
         return !!itr.next().done;
     }
 
-    filter(_predicate: (item: T) => boolean): Stream<T> {
-        throw new Error('Not implemented');
+    filter(predicate: (item: T) => boolean): Stream<T> {
+        return new IteratorStream(() => {
+            const itr = this[Symbol.iterator]();
+            return {
+                next(): IteratorResult<T> {
+                    for ( ; ; ) {
+                        const n = itr.next();
+                        if (n.done) return {done: true, value: undefined};
+                        if (predicate(n.value)) return n;
+                    }
+                }
+            };
+        })
     }
 
-    filterWithAssertion<U extends T>(_assertion: (item: T) => item is U): Stream<U> {
-        throw new Error('Not implemented');
+    filterWithAssertion<U extends T>(assertion: (item: T) => item is U): Stream<U> {
+        return new IteratorStream(() => {
+            const itr = this[Symbol.iterator]();
+            return {
+                next(): IteratorResult<U> {
+                    for ( ; ; ) {
+                        const n = itr.next();
+                        if (n.done) return {done: true, value: undefined};
+                        if (assertion(n.value)) return n as IteratorResult<U>;
+                    }
+                }
+            };
+        })
     }
 
     find(_predicate: (item: T) => boolean): Optional<T> {
@@ -360,6 +382,22 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
             return {
                 get,
                 length: Math.max(length - 1, 0),
+            }
+        });
+    }
+
+    filter(predicate: (item: T) => boolean): Stream<T> {
+        return new IteratorStream(() => {
+            const {get, length} = this.spec();
+            let pos = 0;
+            return {
+                next(): IteratorResult<T> {
+                    for ( ; ; ) {
+                        if (pos === length) return {done: true, value: undefined};
+                        const value = get(pos++);
+                        if (predicate(value)) return {done: false, value};
+                    }
+                }
             }
         });
     }
