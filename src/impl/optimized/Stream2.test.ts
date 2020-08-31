@@ -153,6 +153,41 @@ test('awaitAll mix', doneTest => {
     );
 });
 
+test('butLast', () =>  [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
+    forInput(
+        input,
+        s => s.butLast(),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(
+                input.length <= 1 ? [] : input.slice(0, input.length - 1),
+                inputHint,
+                runHint,
+            )
+        ),
+    )
+));
+
+test('distinctBy', () => forInput(
+    [{k: 'a', v: 1}, {k: 'b', v: 2}, {k: 'a', v: 3}],
+    s => s.distinctBy(i => i.k),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(
+            [
+                {k: 'a', v: 1},
+                {k: 'b', v: 2},
+            ],
+            inputHint,
+            runHint,
+        )
+    ),
+));
+
+test('distinctBy empty', () => forInput(
+    [],
+    s => s.distinctBy(() => {throw new Error()}),
+    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint([], inputHint, runHint)),
+));
+
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s.map(c => c.toUpperCase()),

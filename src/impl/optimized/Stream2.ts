@@ -120,8 +120,24 @@ abstract class AbstractStream<T> implements Stream<T> {
         });
     }
 
-    distinctBy(_getKey: (item: T) => any): Stream<T> {
-        throw new Error('Not implemented');
+    distinctBy(getKey: (item: T) => any): Stream<T> {
+        return new IteratorStream(() => {
+            const itr = this[Symbol.iterator]();
+            const set = new Set<T>();
+            return {
+                next(): IteratorResult<T> {
+                    for ( ; ; ) {
+                        const n = itr.next();
+                        if (n.done) return {done: true, value: undefined};
+                        const k = getKey(n.value);
+                        if (!set.has(k)) {
+                            set.add(k);
+                            return n;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     equals(_other: Iterable<T>): boolean {
