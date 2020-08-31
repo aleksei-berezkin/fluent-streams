@@ -1,5 +1,5 @@
-export function genInputs(name: string): [number[], (s: string) => string][] {
-    return [10, 100, 1000, 10000, 1, 0].map(n => [genInput(n), s => `${s}[${n}].${name}`]);
+export function genInputs(): number[][] {
+    return [10, 100, 1000, 10000, 1, 0].map(n => genInput(n));
 }
 
 function genInput(n: number) {
