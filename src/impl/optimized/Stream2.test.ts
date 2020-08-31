@@ -1,6 +1,6 @@
 import '../testUtil/extendExpect';
 import { forInput } from './testUtil/forInput';
-import { twice } from '../testUtil/twice';
+import { twice, twiceAsync } from '../testUtil/twice';
 
 
 test('all', () =>  forInput(
@@ -107,6 +107,51 @@ test('at out of', () => forInput(
     s => s.at(3),
     (o, inputHint) =>  twice(runHint => expect(o.resolve()).toEqualWithHint({has: false}, inputHint, runHint)),
 ));
+
+test('awaitAll const', doneTest => {
+    forInput(
+        ['a', 'b'],
+        s => s,
+        (s, inputHint) => twiceAsync(doneTest, (doneRun, runHint) =>
+            s.awaitAll().then(items => {
+                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
+                doneRun();
+            })
+        )
+    );
+});
+
+test('awaitAll promise', doneTest => {
+    forInput(
+        [
+            new Promise(resolve => setTimeout(() => resolve('a'), 100)),
+            new Promise(resolve => setTimeout(() => resolve('b'), 200))
+        ],
+        s => s,
+        (s, inputHint) => twiceAsync(doneTest, (doneRun, runHint) =>
+            s.awaitAll().then(items => {
+                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
+                doneRun();
+            })
+        )
+    )
+});
+
+test('awaitAll mix', doneTest => {
+    forInput(
+        [
+            new Promise(resolve => setTimeout(() => resolve('a'), 100)),
+            'b',
+        ],
+        s => s,
+        (s, inputHint) => twiceAsync(doneTest, (doneRun, runHint) =>
+            s.awaitAll().then(items => {
+                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
+                doneRun();
+            })
+        ),
+    );
+});
 
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
