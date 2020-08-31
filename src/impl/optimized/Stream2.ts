@@ -100,11 +100,23 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]> {
-        throw new Error('Not implemented');
+        return Promise.all(this) as any;
     }
 
     butLast(): Stream<T> {
-        throw new Error('Not implemented');
+        return new IteratorStream(() => {
+            const itr = this[Symbol.iterator]();
+            let p = itr.next();
+            return {
+                next(): IteratorResult<T> {
+                    const n = itr.next();
+                    if (n.done) return {done: true, value: undefined};
+                    const r = p;
+                    p = n;
+                    return r;
+                }
+            }
+        });
     }
 
     distinctBy(_getKey: (item: T) => any): Stream<T> {
@@ -308,6 +320,10 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
             }
             return {done: true, value: undefined};
         });
+    }
+
+    butLast(): Stream<T> {
+        return new RandomAccessStream(this.get, () => Math.max(this.getLength(), 0));
     }
 
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U> {

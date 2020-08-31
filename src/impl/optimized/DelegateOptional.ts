@@ -75,7 +75,7 @@ export class DelegateOptional<T> implements Optional<T> {
     }
 
     toArray(): T[] {
-        return [];
+        return this.getDelegate().toArray();
     }
 
     toStream(): Stream<T> {

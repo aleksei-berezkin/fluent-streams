@@ -1,8 +1,10 @@
 import { Stream } from '../../../stream';
 import { ArrayStream, InputArrayStream, IteratorStream, RandomAccessStream } from '../Stream2';
 import { DelegateStream } from '../DelegateStream';
+import { Optional } from '../../../optional';
+import { testIterator } from './testIterator';
 
-export function forInput<T, Out>(
+export function forInput<T, Out extends Stream<T> | Optional<T>>(
     input: T[],
     build: (base: Stream<T>) => Out,
     sink: (out: Out, inputHint: () => string) => void,
@@ -12,7 +14,9 @@ export function forInput<T, Out>(
         const base = create(_input);
         const output = build(base);
         _input.push(...input);
-        sink(output, () => (base as any).constructor.name);
+        const inputHint = () => (base as any).constructor.name;
+        sink(output, inputHint);
+        testIterator(output, inputHint);
     }
 
     const creators: ((a: T[]) => Stream<T>)[] =
