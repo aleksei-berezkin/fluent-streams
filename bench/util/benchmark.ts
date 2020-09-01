@@ -5,32 +5,36 @@ import { sink } from './sink';
 import { Stream, stream2 } from '../../src';
 import Sequence, { asSequence } from 'sequency';
 import Lazy from 'lazy.js';
+import { asIterable } from './asIterable';
+import { LazyGen } from './lazyGen';
 
+const inputAsItr = [false, true];
 const runs = [0, 1];
 
 export function benchmark(
     name: string,
     fns: {
-        str: (input: Stream<number>, n: number) => Stream<number>,
-        arr?: (input: number[], n: number) => number[],
-        seq?: (input: Sequence<number>, n: number) => Sequence<number>,
+        str: (input: Stream<number>, n: number) => Stream<number> | number | undefined,
+        arr?: (input: number[], n: number, canModify: boolean) => number[] | number | undefined,
+        seq?: (input: Sequence<number>, n: number) => Sequence<number> | number | undefined,
         laz?: (input: ReturnType<typeof Lazy>, n: number) => any,
     },
 ) {
     let suite = new Benchmark.Suite();
     let collector = 0;
 
-    genInputs().forEach(input => runs.forEach(run => (Object.keys(fns) as (keyof typeof fns)[]).forEach(key => {
-        const runFn = key === 'str' ? () => fns[key]!(stream2(input), input.length).toArray()
-            : key === 'arr' ? () => fns[key]!(input, input.length)
-            : key === 'seq' ? () => fns[key]!(asSequence(input), input.length).toArray()
-            : key === 'laz' ? () => fns[key]!(Lazy(input) as any, input.length).toArray()
+    genInputs().forEach(a => inputAsItr.forEach(asItr => runs.forEach(run => (Object.keys(fns) as (keyof typeof fns)[]).forEach(key => {
+        const runFn
+            = key === 'str' ? () => fns[key]!(stream2(asItr ? asIterable(a) : a), a.length)
+            : key === 'arr' ? () => fns[key]!(asItr ? [...asIterable(a)] : a, a.length, asItr)
+            : key === 'seq' ? () => fns[key]!(asSequence(asItr ? asIterable(a) : a), a.length)
+            : key === 'laz' ? () => fns[key]!(asItr ? LazyGen(a) : Lazy(a), a.length)
             : undefined as any;
         return suite = suite.add(
-            `${ capitalize(key) }(Arr[${ input.length }]).${ name } #${ run }`,
+            `${ capitalize(key) }(${ asItr ? 'Itr' : 'Arr' }[${ a.length }]).${ name } #${ run }`,
             () => collector += sink(runFn()),
         );
-    })));
+    }))));
 
     suite
         .on('cycle', (event: Event) => console.log(String(event.target)))

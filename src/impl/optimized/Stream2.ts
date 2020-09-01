@@ -595,7 +595,11 @@ export class SimpleOptional<T> implements Optional<T> {
     }
 
     orElseUndefined(): T | undefined {
-        throw new Error('Not implemented');
+        const r = this.getResult();
+        if (r.done) {
+            return undefined;
+        }
+        return r.value;
     }
 
     resolve(): {has: true; val: T} | {has: false} {
