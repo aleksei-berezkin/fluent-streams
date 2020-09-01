@@ -1,15 +1,12 @@
 import { benchmark } from './util/benchmark';
-import { stream2 } from '../src';
-import { asSequence } from 'sequency';
-import Lazy from 'lazy.js';
 
 benchmark(
     'sort.map',
     {
-        str: input => stream2(input).sortOn(i => i).map(i => i + .2).toArray(),
+        str: s => s.sortOn(i => i).map(i => i + .2),
         // Array.sort sorts in place, so to be fair input needs to be copied
-        arr: input => [...input].sort(i => i).map(i => i + .2),
-        seq: input => asSequence(input).sortedBy(i => i).map(i => i + .2).toArray(),
-        laz: input => Lazy(input).sortBy(i => i).map(i => i + .2).toArray(),
+        arr: a => [...a].sort(i => i).map(i => i + .2),
+        seq: q => q.sortedBy(i => i).map(i => i + .2),
+        laz: l => l.sortBy(i => i).map(i => i + .2),
     },
 );
