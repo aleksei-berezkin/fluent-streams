@@ -286,6 +286,18 @@ test('forEach', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
     }),
 )));
 
+test('groupBy', () => forInput(
+    [{k: 'a', v: 1}, {k: 'a', v: 2}, {k: 'b', v: 3}],
+    s => s.groupBy(i => i.k),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(
+            [['a', [{k: 'a', v: 1}, {k: 'a', v: 2}]], ['b', [{k: 'b', v: 3}]]],
+            inputHint,
+            runHint,
+        )
+    ),
+));
+
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s.map(c => c.toUpperCase()),

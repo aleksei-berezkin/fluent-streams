@@ -8,6 +8,7 @@ import { MapIterator } from './MapIterator';
 import { FlatMapIterator } from './FlatMapIterator';
 import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 import { RandomAccessSpec } from './RandomAccessSpec';
+import { collectToMap } from '../util';
 
 abstract class AbstractStream<T> implements Stream<T> {
     abstract [Symbol.iterator](): Iterator<T>;
@@ -203,8 +204,11 @@ abstract class AbstractStream<T> implements Stream<T> {
         }
     }
 
-    groupBy<K>(_getKey: (item: T) => K): Stream<readonly [K, T[]]> {
-        throw new Error('Not implemented');
+    groupBy<K>(getKey: (item: T) => K): Stream<readonly [K, T[]]> {
+        return new IteratorStream<readonly [K, T[]]>(() => {
+            const map = collectToMap(this, getKey);
+            return map[Symbol.iterator]();
+        });
     }
 
     head(): Optional<T> {
