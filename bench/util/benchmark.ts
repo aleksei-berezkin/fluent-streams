@@ -16,7 +16,7 @@ export function benchmark(
     fns: {
         str: (input: Stream<number>, n: number) => Stream<number> | number | undefined,
         arr?: (input: number[], n: number, canModify: boolean) => number[] | number | undefined,
-        seq?: (input: Sequence<number>, n: number) => Sequence<number> | number | undefined,
+        seq?: (input: Sequence<number>, n: number) => Sequence<number> | number | null | undefined,
         laz?: (input: ReturnType<typeof Lazy>, n: number) => any,
     },
 ) {
