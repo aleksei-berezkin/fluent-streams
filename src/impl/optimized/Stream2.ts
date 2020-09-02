@@ -219,12 +219,30 @@ abstract class AbstractStream<T> implements Stream<T> {
         });
     }
 
-    join(_delimiter: string): string {
-        throw new Error('Not implemented');
+    join(delimiter: string): string {
+        return this.joinBy(() => delimiter);
     }
 
-    joinBy(_getDelimiter: (l: T, r: T) => string): string {
-        throw new Error('Not implemented');
+    joinBy(getDelimiter: (l: T, r: T) => string): string {
+        let result = '';
+        let prev: T = undefined as any;
+        let first = true;
+        const itr = this[Symbol.iterator]();
+        for ( ; ; ) {
+            const n = itr.next();
+            if (n.done) {
+                break;
+            }
+
+            if (first) {
+                result = String(n.value);
+                first = false;
+            } else {
+                result += getDelimiter(prev, n.value) + String(n.value);
+            }
+            prev = n.value;
+        }
+        return result;
     }
 
     last(): Optional<T> {
@@ -486,6 +504,10 @@ export class ArrayStream<T> extends RandomAccessStream<T> {
 
     map<U>(mapper: (item: T) => U): Stream<U> {
         return new MappedArrayStream(this.array, mapper);
+    }
+
+    join(delimiter: string): string {
+        return this.array.join(delimiter);
     }
 
     toArray(): T[] {

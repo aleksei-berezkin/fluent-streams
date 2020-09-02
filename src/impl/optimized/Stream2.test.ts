@@ -306,6 +306,31 @@ test('head', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
     ),
 )));
 
+test('join empty', () => forInput(
+    [],
+    s => s,
+    (s, inputHint) => twice(runHint =>
+        expect(s.join(', ')).toBeWithHint('', inputHint, runHint)
+    ),
+));
+
+test('join', () => forInput(
+    ['a', 'b', 'c'],
+    s => s,
+    (s, inputHint) => twice(runHint =>
+        expect(s.join(', ')).toBeWithHint('a, b, c', inputHint, runHint)
+    ),
+));
+
+test('joinBy', () => forInput(
+    ['a', 'b', 'c', 'd', 'e', 'b'],
+    s => s,
+    (s, inputHint) => twice(runHint =>
+        expect(s.joinBy((l, r) => (l === 'b' || r === 'e') ? '; ' : ', ')).toBeWithHint(
+            'a, b; c, d; e, b', inputHint, runHint
+        )
+    ),
+));
 
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
