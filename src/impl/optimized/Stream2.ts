@@ -182,8 +182,15 @@ abstract class AbstractStream<T> implements Stream<T> {
         })
     }
 
-    find(_predicate: (item: T) => boolean): Optional<T> {
-        throw new Error('Not implemented');
+    find(predicate: (item: T) => boolean): Optional<T> {
+        return new SimpleOptional(() => {
+            const itr = this[Symbol.iterator]();
+            for ( ; ; ) {
+                const n = itr.next();
+                if (n.done) return {done: true, value: undefined};
+                if (predicate(n.value)) return n;
+            }
+        });
     }
 
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
@@ -402,6 +409,17 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
         });
     }
 
+    find(predicate: (item: T) => boolean): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            const {get, length} = this.spec();
+            for (let i = 0; i < length; i++) {
+                const value = get(i);
+                if (predicate(value)) return {done: false, value};
+            }
+            return {done: true, value: undefined};
+        });
+    }
+
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
         return new IteratorStream(() => {
             const {get, length} = this.spec();
@@ -499,15 +517,14 @@ export class SimpleOptional<T> implements Optional<T> {
     }
 
     [Symbol.iterator](): Iterator<T> {
-        let done = false;
-        const r = this.getResult();
+        let r = this.getResult();
         return {
             next(): IteratorResult<T> {
-                if (!done) {
-                    done = true;
-                    return r;
-                }
-                return {done: true, value: undefined};
+                if (r.done) return r;
+
+                let _r = r;
+                r = {done: true, value: undefined};
+                return _r;
             }
         };
     }

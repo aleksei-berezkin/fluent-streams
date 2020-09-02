@@ -4,6 +4,7 @@ import './appendAll';
 import './butLast';
 import './distinct';
 import './filter';
+import './find';
 import './flatMap';
 import './map';
 import './sort.at';

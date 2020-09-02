@@ -246,6 +246,46 @@ test('filterWithAssertion', () => {
     );
 });
 
+test('find', () => [[], ['a'], ['a', 'b'], ['b', 'a']].forEach(input => forInput(
+    input,
+    s => s.find(i => i === 'b'),
+    (o, inputHint) => twice(runHint =>
+        expect(o.resolve()).toEqualWithHint(
+            input.includes('b')
+                ? {has: true, val: 'b'}
+                : {has: false},
+            inputHint,
+            runHint,
+        )
+    ),
+)));
+
+test('flatMap', () =>
+    [
+        [[]],
+        [['a']],
+        [[], [], ['a']],
+        [['a'], [], []],
+        [['a'], [], ['b', 'c', 'd'], [], [], ['e', 'f'], ['g']]
+    ].forEach(input => forInput(
+        input,
+        s => s.flatMap(i => i),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(input.flatMap(i => i), inputHint, runHint)
+        ),
+    ))
+);
+
+test('forEach', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
+    input,
+    s => s,
+    (s, inputHint) => twice(runHint => {
+        const o: string[] = [];
+        s.forEach(i => o.push(i));
+        expect(o).toEqualWithHint(input, inputHint, runHint);
+    }),
+)));
+
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s.map(c => c.toUpperCase()),

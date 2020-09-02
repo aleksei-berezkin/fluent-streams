@@ -4,7 +4,7 @@ import { DelegateStream } from '../DelegateStream';
 import { Optional } from '../../../optional';
 import { testIterator } from './testIterator';
 
-export function forInput<T, Out extends Stream<T> | Optional<T>>(
+export function forInput<T, Out extends Stream<unknown> | Optional<unknown>>(
     input: T[],
     build: (base: Stream<T>) => Out,
     sink: (out: Out, inputHint: () => string) => void,
