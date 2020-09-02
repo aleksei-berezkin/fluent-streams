@@ -212,7 +212,11 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     head(): Optional<T> {
-        throw new Error('Not implemented');
+        return new SimpleOptional(() => {
+            const n = this[Symbol.iterator]().next();
+            if (!n.done) return n;
+            return {done: true, value: undefined};
+        });
     }
 
     join(_delimiter: string): string {

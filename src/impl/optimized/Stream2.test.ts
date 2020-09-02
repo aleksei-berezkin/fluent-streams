@@ -298,6 +298,15 @@ test('groupBy', () => forInput(
     ),
 ));
 
+test('head', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
+    input,
+    s => s.head(),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(input.slice(0, 1), inputHint, runHint)
+    ),
+)));
+
+
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s.map(c => c.toUpperCase()),
