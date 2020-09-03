@@ -354,6 +354,27 @@ test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     ),
 )));
 
+test('randomItem', () => {
+    const input = ['a', 'b', 'c'];
+    const iterations = 3000;
+    forInput(
+        input,
+        s => s.randomItem(),
+        (s, inputHint) => {
+            const collector = new Map<string, number>();
+            for (let i = 0; i < iterations; i++) {
+                const k = s.get();
+                collector.set(k, (collector.get(k) || 0) + 1);
+            }
+            expect(collector.size).toBeWithHint(input.length, inputHint, '');
+            for (const c of input) {
+                expect(collector.get(c)).toBeGreaterThanWithHint(800, inputHint, `${iterations} iterations`);
+            }
+        },
+        false,
+    )
+});
+
 test('toArray', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s,

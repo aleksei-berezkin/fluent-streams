@@ -8,6 +8,7 @@ export function forInput<T, Out extends Stream<unknown> | Optional<unknown>>(
     input: T[],
     build: (base: Stream<T>) => Out,
     sink: (out: Out, inputHint: () => string) => void,
+    testItr = true,
 ) {
     function step(create: (a: T[]) => Stream<T>) {
         const _input: T[] = [];
@@ -16,7 +17,9 @@ export function forInput<T, Out extends Stream<unknown> | Optional<unknown>>(
         _input.push(...input);
         const inputHint = () => (base as any).constructor.name;
         sink(output, inputHint);
-        testIterator(output, inputHint);
+        if (testItr) {
+            testIterator(output, inputHint);
+        }
     }
 
     const creators: ((a: T[]) => Stream<T>)[] =

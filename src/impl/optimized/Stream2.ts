@@ -263,7 +263,12 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     randomItem(): Optional<T> {
-        throw new Error('Not implemented');
+        return new SimpleOptional<T>(() => {
+            const a = this.toArray();
+            return a.length
+                ? {done: false, value: a[Math.floor(Math.random() * a.length)]}
+                : {done: true, value: undefined};
+        })
     }
 
     reduce(_reducer: (l: T, r: T) => T): Optional<T> {
@@ -495,6 +500,15 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
                 get: i => mapper(get(i)),
                 length,
             }
+        });
+    }
+
+    randomItem(): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            const {get, length} = this.spec();
+            return length
+                ? {done: false, value: get(Math.floor(Math.random() * length))}
+                : {done: true, value: undefined};
         });
     }
 
