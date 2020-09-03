@@ -332,6 +332,20 @@ test('joinBy', () => forInput(
     ),
 ));
 
+test('last', () => [[], ['c'], ['a', 'b', 'c']].forEach(input =>
+    forInput(
+        input,
+        s => s.last(),
+        (s, inputHint) => twice(runHint =>
+            expect(s.resolve()).toEqualWithHint(
+                input.length ? {has: true, val: input[input.length - 1]} : {has: false},
+                inputHint,
+                runHint,
+            )
+        ),
+    )
+));
+
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s.map(c => c.toUpperCase()),

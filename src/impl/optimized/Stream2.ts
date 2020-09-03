@@ -246,7 +246,16 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     last(): Optional<T> {
-        throw new Error('Not implemented');
+        return new SimpleOptional<T>(() => {
+            let value: T = undefined as any;
+            let found = false;
+            for (const i of this) {
+                value = i;
+                found = true;
+            }
+            if (found) return {done: false, value};
+            return {done: true, value: undefined};
+        })
     }
 
     map<U>(mapper: (item: T) => U): Stream<U> {
@@ -453,6 +462,14 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
                 get: (i: number) => mapper(get(i)),
                 length,
             })
+        });
+    }
+
+    last(): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            const {get, length} = this.spec();
+            if (length > 0) return {done: false, value: get(length - 1)};
+            return {done: true, value: undefined};
         });
     }
 
