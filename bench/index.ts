@@ -6,6 +6,8 @@ import './distinct';
 import './filter';
 import './find';
 import './flatMap';
+import './join';
 import './map';
+import './reduce';
 import './sort.at';
 import './sort.map';

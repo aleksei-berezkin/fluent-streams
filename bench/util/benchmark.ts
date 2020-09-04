@@ -14,10 +14,10 @@ const runs = [0, 1];
 export function benchmark(
     name: string,
     fns: {
-        str: (input: Stream<number>, n: number) => Stream<number> | number | undefined,
-        arr?: (input: number[], n: number, canModify: boolean) => number[] | number | undefined,
-        seq?: (input: Sequence<number>, n: number) => Sequence<number> | number | null | undefined,
-        laz?: (input: ReturnType<typeof Lazy>, n: number) => any,
+        str: (input: Stream<number>, n: number) => Stream<number> | number | string | undefined,
+        arr?: (input: number[], n: number, canModify: boolean) => number[] | number | string | undefined,
+        seq?: (input: Sequence<number>, n: number) => Sequence<number> | number | null | string | undefined,
+        laz?: (input: ReturnType<typeof Lazy>, n: number) => {toArray: () => number[]} | number | string | undefined,
     },
 ) {
     let suite = new Benchmark.Suite();
