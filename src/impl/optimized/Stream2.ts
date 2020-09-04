@@ -1,4 +1,4 @@
-import { StreamOperator, } from '../../streamGenerator';
+import { StreamOperator } from '../../streamGenerator';
 import { Stream } from '../../stream';
 import { Optional } from '../../optional';
 import { DelegateStream } from './DelegateStream';
@@ -271,16 +271,37 @@ abstract class AbstractStream<T> implements Stream<T> {
         })
     }
 
-    reduce(_reducer: (l: T, r: T) => T): Optional<T> {
-        throw new Error('Not implemented');
+    reduce(reducer: (l: T, r: T) => T): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            let found = false;
+            let value: T = undefined as any;
+            for (const i of this) {
+                if (!found) {
+                    value = i;
+                    found = true;
+                } else {
+                    value = reducer(value, i);
+                }
+            }
+            return found ? {done: false, value} : {done: true, value: undefined};
+        });
     }
 
-    reduceLeft<U>(_zero: U, _reducer: (l: U, r: T) => U): U {
-        throw new Error('Not implemented');
+    reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U {
+        let current = zero;
+        for (const i of this) {
+            current = reducer(current, i);
+        }
+        return current;
     }
 
-    reduceRight<U>(_zero: U, _reducer: (l: T, r: U) => U): U {
-        throw new Error('Not implemented');
+    reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U {
+        const a = this.toArray();
+        let current = zero;
+        for (let i = a.length - 1; i >= 0; i--) {
+            current = reducer(a[i], current);
+        }
+        return current;
     }
 
     shuffle(): Stream<T> {
@@ -510,6 +531,37 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
                 ? {done: false, value: get(Math.floor(Math.random() * length))}
                 : {done: true, value: undefined};
         });
+    }
+
+    reduce(reducer: (l: T, r: T) => T): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            const {get, length} = this.spec();
+            if (!length) return {done: true, value: undefined};
+
+            let value: T = get(0);
+            for (let i = 1; i < length; i++) {
+                value = reducer(value, get(i));
+            }
+            return {done: false, value};
+        });
+    }
+
+    reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U {
+        const {get, length} = this.spec();
+        let current = zero;
+        for (let i = 0; i < length; i++) {
+            current = reducer(current, get(i));
+        }
+        return current;
+    }
+
+    reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U {
+        const {get, length} = this.spec();
+        let current = zero;
+        for (let i = length - 1; i >= 0; i--) {
+            current = reducer(get(i), current);
+        }
+        return current;
     }
 
     forEach(effect: (i: T) => void) {

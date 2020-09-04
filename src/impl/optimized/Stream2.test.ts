@@ -375,6 +375,38 @@ test('randomItem', () => {
     )
 });
 
+test('reduce', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
+    input,
+    s => s.reduce((l, r) => l + r),
+    (s, inputHint) => twice(runHint => expect(s.resolve()).toEqualWithHint(
+        input.length
+            ? {has: true, val: input.reduce((prev, curr) => prev + curr)}
+            : {has: false},
+        inputHint,
+        runHint,
+    )),
+)));
+
+test('reduceLeft', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
+    input,
+    s => s,
+    (s, inputHint) => twice(runHint => expect(s.reduceLeft('x', (l, r) => l + r)).toEqualWithHint(
+        input.reduce((l, r) => l + r, 'x'),
+        inputHint,
+        runHint,
+    )),
+)));
+
+test('reduceRight', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
+    input,
+    s => s,
+    (s, inputHint) => twice(runHint => expect(s.reduceRight('x', (l, r) => l + r)).toEqualWithHint(
+        input.reduceRight((r, l) => l + r, 'x'),
+        inputHint,
+        runHint,
+    )),
+)));
+
 test('toArray', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s,
