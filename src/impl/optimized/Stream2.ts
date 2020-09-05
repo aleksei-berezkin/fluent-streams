@@ -318,11 +318,25 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     single(): Optional<T> {
-        throw new Error('Not implemented');
+        return new SimpleOptional(() => {
+            const itr = this[Symbol.iterator]();
+            const n = itr.next();
+            if (!n.done) {
+                const nn = itr.next();
+                if (nn.done) {
+                    return n;
+                }
+            }
+            return {done: true, value: undefined};
+        });
     }
 
     size(): number {
-        throw new Error('Not implemented');
+        let s = 0;
+        for (const _ of this) {
+            s++;
+        }
+        return s;
     }
 
     sortOn(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
@@ -499,12 +513,21 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
         });
     }
 
+    single(): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            const {get, length} = this.spec();
+            if (length === 1) return {done: false, value: get(0)};
+            return {done: true, value: undefined};
+        })
+    }
+
     size(): number {
         return this.spec().length;
     }
 
     takeLast(n: number): Stream<T> {
         return new DelegateStream(() => {
+            // FIXME must only transform indices
             const {get, length} = this.spec();
             const a: T[] = [];
             for (let i = Math.max(length - n, 0); i < length; i++) {
@@ -602,6 +625,7 @@ export class ArrayStream<T> extends RandomAccessStream<T> {
     }
 }
 
+// FIXME Is there really a performance gain?
 export class MappedArrayStream<T, U> extends RandomAccessStream<U> {
     constructor(private readonly array: T[], private readonly mapper: (item: T) => U) {
         super(() => ({get: i => mapper(array[i]), length: array.length}));
@@ -747,6 +771,7 @@ export class SimpleOptional<T> implements Optional<T> {
             const r = this.getResult();
             return {
                 next(): IteratorResult<T> {
+                    // FIXME endless
                     return r;
                 }
             }

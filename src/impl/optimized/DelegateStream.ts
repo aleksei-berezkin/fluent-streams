@@ -124,7 +124,7 @@ export class DelegateStream<T> implements Stream<T> {
     }
 
     size(): number {
-        return 0;
+        return this.getDelegate().size();
     }
 
     sortOn(getComparable: (item: T) => (number | string | boolean)): Stream<T> {

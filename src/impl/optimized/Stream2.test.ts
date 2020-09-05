@@ -407,6 +407,26 @@ test('reduceRight', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd
     )),
 )));
 
+test('single', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input => forInput(
+    input,
+    s => s.single(),
+    (s, inputHint) => twice(runHint => expect(s.resolve()).toEqualWithHint(
+        input.length === 1 ? {has: true, val: input[0]} : {has: false},
+        inputHint,
+        runHint,
+    ))
+)));
+
+test('size', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input => forInput(
+    input,
+    s => s,
+    (s, inputHint) => twice(runHint => expect(s.size()).toEqualWithHint(
+        input.length,
+        inputHint,
+        runHint,
+    ))
+)));
+
 test('toArray', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s,
