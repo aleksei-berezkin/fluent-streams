@@ -1,6 +1,7 @@
 import '../testUtil/extendExpect';
 import { forInput } from './testUtil/forInput';
 import { twice, twiceAsync } from '../testUtil/twice';
+import { permutations } from '../testUtil/permutations';
 
 
 test('all', () =>  forInput(
@@ -406,6 +407,29 @@ test('reduceRight', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd
         runHint,
     )),
 )));
+
+test('shuffle', () => {
+    const input = ['a', 'b', 'c', 'd', 'e'];
+    const perm = permutations(input);
+    const iterPerPermutation = 500;
+
+    forInput(
+        input,
+        s => s.shuffle(),
+        (s, inputHint) => {
+            const collector: {[k: string]: number | undefined } = {};
+            for (let i = 0; i < perm.length * iterPerPermutation; i++) {
+                const res = s.join('');
+                collector[res] = (collector[res] || 0) + 1;
+            }
+
+            for (const p of perm) {
+                expect(collector[p]).toBeGreaterThanWithHint(iterPerPermutation * .7, inputHint, p);
+            }
+        },
+        false,
+    );
+});
 
 test('single', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
