@@ -489,6 +489,48 @@ test('splitWhen some', () => forInput(
     ),
 ));
 
+test('tail', () =>
+    [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']].forEach(input =>
+        forInput(
+            input,
+            s => s.tail(),
+            (s, inputHint) => twice(runHint =>
+                expect(s.toArray()).toEqualWithHint(input.slice(1), inputHint, runHint)
+            ),
+        )
+    )
+);
+
+test('take, takeLast', () => {
+    [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e', 'f']].forEach(input =>
+        [-1, 0, 1, input.length - 1, input.length, input.length + 1].forEach(n => {
+            const nHint = (runHint: string) => `${ runHint } -- n=${ n }`;
+            forInput(
+                input,
+                s => s.take(n),
+                (s, inputHint) => twice(runHint => {
+                    expect(s.toArray()).toEqualWithHint(
+                        n < 0 ? [] : input.slice(0, n),
+                        inputHint,
+                        nHint(runHint),
+                    );
+                }),
+            );
+            forInput(
+                input,
+                s => s.takeLast(n),
+                (s, inputHint) => twice(runHint => {
+                    expect(s.toArray()).toEqualWithHint(
+                        input.slice(Math.max(0, input.length - n)),
+                        inputHint,
+                        nHint(runHint),
+                    );
+                }),
+            );
+        })
+    );
+});
+
 test('toArray', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s,

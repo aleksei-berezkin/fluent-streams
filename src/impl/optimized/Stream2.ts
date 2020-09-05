@@ -390,19 +390,55 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     tail(): Stream<T> {
-        throw new Error('Not implemented');
+        return new IteratorStream(() => {
+            const itr = this[Symbol.iterator]();
+            let first = true;
+            return {
+                next(): IteratorResult<T> {
+                    let n = itr.next();
+                    if (first) {
+                        first = false;
+                        n = itr.next();
+                    }
+                    if (!n.done) return n;
+                    return {done: true, value: undefined};
+                }
+            }
+        });
     }
 
-    take(_n: number): Stream<T> {
-        throw new Error('Not implemented');
+    take(n: number): Stream<T> {
+        if (n <= 0) {
+            return new ArrayStream<T>([]);
+        }
+
+        return new IteratorStream(() => {
+            const itr = this[Symbol.iterator]();
+            let i = 0;
+            return {
+                next(): IteratorResult<T> {
+                    if (i < n) {
+                        const n = itr.next();
+                        i++;
+                        if (!n.done) return {done: false, value: n.value};
+                    }
+                    return {done: true, value: undefined};
+                }
+            };
+        });
     }
 
     takeLast(n: number): Stream<T> {
+        if (n <= 0) {
+            return new ArrayStream<T>([]);
+        }
+
         return new DelegateStream(() => {
             const buffer = new RingBuffer<T>(n);
             for (const i of this) {
                 buffer.add(i);
             }
+            // FIXME IteratorStream
             return new ArrayStream(buffer.toArray());
         })
     }
@@ -553,15 +589,34 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
         return this.spec().length;
     }
 
-    takeLast(n: number): Stream<T> {
-        return new DelegateStream(() => {
-            // FIXME must only transform indices
+    tail(): Stream<T> {
+        return new RandomAccessStream<T>(() => {
             const {get, length} = this.spec();
-            const a: T[] = [];
-            for (let i = Math.max(length - n, 0); i < length; i++) {
-                a.push(get(i));
+            return {
+                get: i => get(i + 1),
+                length: Math.max(0, length - 1),
             }
-            return new ArrayStream(a);
+        })
+    }
+
+    take(n: number): Stream<T> {
+        return new RandomAccessStream(() => {
+            const {get, length} = this.spec();
+            return {
+                get,
+                length: Math.max(0, Math.min(n, length)),
+            }
+        });
+    }
+
+    takeLast(n: number): Stream<T> {
+        return new RandomAccessStream(() => {
+            const {get, length} = this.spec();
+            const actualN = Math.min(n, length);
+            return {
+                get: i => get(i + (length - actualN)),
+                length: Math.max(0, Math.min(actualN, length)),
+            }
         });
     }
 
@@ -630,10 +685,6 @@ export class ArrayStream<T> extends RandomAccessStream<T> {
 
     [Symbol.iterator](): Iterator<T> {
         return this.array[Symbol.iterator]();
-    }
-
-    takeLast(n: number): Stream<T> {
-        return new DelegateStream(() => new ArrayStream(this.array.slice(this.array.length - n, this.array.length)));
     }
 
     map<U>(mapper: (item: T) => U): Stream<U> {
