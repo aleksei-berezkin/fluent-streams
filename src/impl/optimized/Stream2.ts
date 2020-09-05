@@ -433,13 +433,12 @@ abstract class AbstractStream<T> implements Stream<T> {
             return new ArrayStream<T>([]);
         }
 
-        return new DelegateStream(() => {
+        return new IteratorStream(() => {
             const buffer = new RingBuffer<T>(n);
             for (const i of this) {
                 buffer.add(i);
             }
-            // FIXME IteratorStream
-            return new ArrayStream(buffer.toArray());
+            return buffer[Symbol.iterator]();
         })
     }
 

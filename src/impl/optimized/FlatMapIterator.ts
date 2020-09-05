@@ -6,7 +6,7 @@ export class FlatMapIterator<T, U> implements Iterator<U> {
     }
 
     next(): IteratorResult<U> {
-        for (; ;) {
+        for ( ; ; ) {
             if (this.inInner) {
                 const i = this.inner.next();
                 if (!i.done) return i;
