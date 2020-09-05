@@ -459,6 +459,36 @@ test('sortOn', () => [[] as string[], ['0'], ['1', '0'], ['4', '22', '1', '6', '
     ),
 )));
 
+test('splitWhen empty', () => forInput(
+    [],
+    s => s.splitWhen(() => { throw new Error() }),
+    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint([], inputHint, runHint)),
+));
+
+test('splitWhen single', () => forInput(
+    ['a'],
+    s => s.splitWhen(() => { throw new Error() }),
+    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint([['a']], inputHint, runHint)),
+));
+
+test('splitWhen each', () => forInput(
+    ['a', 'b', 'c'],
+    s => s.splitWhen(() => true),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint([['a'], ['b'], ['c']], inputHint, runHint)
+    ),
+));
+
+test('splitWhen some', () => forInput(
+    ['a', 'b', 'c', 'd', 'e'],
+    s => s.splitWhen((l, r) => r === 'a' || l === 'b' || r === 'd' || l === 'e'),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(
+            [['a', 'b'], ['c'], ['d', 'e']], inputHint, runHint
+        )
+    ),
+));
+
 test('toArray', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s,

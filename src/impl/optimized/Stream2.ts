@@ -357,8 +357,36 @@ abstract class AbstractStream<T> implements Stream<T> {
         });
     }
 
-    splitWhen(_isSplit: (l: T, r: T) => boolean): Stream<T[]> {
-        throw new Error('Not implemented');
+    splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]> {
+        return new IteratorStream(() => {
+            const itr = this[Symbol.iterator]();
+            let chunk: T[] | undefined = undefined;
+            return {
+                next(): IteratorResult<T[]> {
+                    for ( ; ; ) {
+                        const n = itr.next();
+                        if (n.done) {
+                            if (chunk) {
+                                const _chunk = chunk;
+                                chunk = undefined;
+                                return {done: false, value: _chunk};
+                            }
+                            return {done: true, value: undefined};
+                        }
+
+                        if (!chunk) {
+                            chunk = [n.value];
+                        } else if (isSplit(chunk[chunk.length - 1], n.value)) {
+                            const _chunk = chunk;
+                            chunk = [n.value];
+                            return {done: false, value: _chunk};
+                        } else {
+                            chunk.push(n.value);
+                        }
+                    }
+                }
+            }
+        })
     }
 
     tail(): Stream<T> {
