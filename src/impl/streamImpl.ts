@@ -474,7 +474,7 @@ export class StreamImpl<P, T> extends BaseImpl<P, T> implements Stream<T> {
         });
     }
 
-    toObject(): T extends readonly [string, any] ? { [key in T[0]]: T[1] } : never {
+    toObject(): T extends readonly [string | number | symbol, any] ? { [key in T[0]]: T[1] } : never {
         const obj: any = {};
         for (const i of this) {
             if (Array.isArray(i) && i.length === 2) {

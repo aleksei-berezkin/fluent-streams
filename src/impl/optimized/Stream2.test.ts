@@ -556,7 +556,6 @@ test('takeRandom', () => {
         )
     );
 });
-
 test('toArray', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s,
@@ -564,3 +563,14 @@ test('toArray', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
         expect(s.toArray()).toEqualWithHint(input, inputHint, runHint)
     ),
 )));
+
+test('toObject', () => {
+    const sym: unique symbol = Symbol('test');
+    forInput(
+        [['a', 1], ['b', 2], [sym, 3], ['b', 4], [99, 5]] as ['a' | 'b' | typeof sym | 99, number][],
+        s => s,
+        (s, inputHint) => twice(runHint =>
+            expect(s.toObject()).toEqualWithHint({'a': 1, 'b': 4, [sym]: 3, 99: 5}, inputHint, runHint)
+        ),
+    );
+});

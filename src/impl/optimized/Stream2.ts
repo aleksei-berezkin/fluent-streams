@@ -455,8 +455,21 @@ abstract class AbstractStream<T> implements Stream<T> {
         return a;
     }
 
-    toObject(): T extends readonly [string, any] ? { [key in T[0]]: T[1] } : unknown {
-        throw new Error('Not implemented');
+    toObject(): T extends readonly [string | number | symbol, any] ? { [key in T[0]]: T[1] } : unknown {
+        const obj: any = {};
+        for (const i of this) {
+            if (Array.isArray(i) && i.length === 2) {
+                const [k, v] = i;
+                if (typeof k === 'string' || typeof k === 'number' || typeof k === 'symbol') {
+                    obj[k] = v;
+                } else {
+                    throw Error('Not key: ' + k);
+                }
+            } else {
+                throw Error('Not 2-element array: ' + i);
+            }
+        }
+        return obj;
     }
 
     transformToOptional<U>(_operator: StreamOperator<T, U>): Optional<U> {

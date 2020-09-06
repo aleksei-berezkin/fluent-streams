@@ -152,11 +152,10 @@ export class DelegateStream<T> implements Stream<T> {
     }
 
     toArray(): T[] {
-        // console.log('DelegateStream.toArray()')
         return this.getDelegate().toArray();
     }
 
-    toObject(): T extends readonly [string, any] ? { [key in T[0]]: T[1] } : unknown {
+    toObject(): T extends readonly [string | number | symbol, any] ? { [key in T[0]]: T[1] } : unknown {
         return this.getDelegate().toObject();
     }
 

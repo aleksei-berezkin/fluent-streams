@@ -704,7 +704,7 @@ test('takeRandom', () => {
 test('toObject', () => {
     const sym: unique symbol = Symbol('test');
     forInput(
-        [['a', 1] as const, ['b', 2] as const, [sym, 3] as const, ['b', 4] as const, [99, 5]],
+        [['a', 1], ['b', 2], [sym, 3], ['b', 4], [99, 5]] as ['a' | 'b' | typeof sym | 99, number][],
         (s, inputHint) => twice(runHint =>
             expect(s.toObject()).toEqualWithHint({'a': 1, 'b': 4, [sym]: 3, 99: 5}, inputHint, runHint)
         ),
