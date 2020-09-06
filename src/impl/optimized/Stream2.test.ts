@@ -2,6 +2,7 @@ import '../testUtil/extendExpect';
 import { forInput } from './testUtil/forInput';
 import { twice, twiceAsync } from '../testUtil/twice';
 import { permutations } from '../testUtil/permutations';
+import { variations } from '../testUtil/variations';
 
 
 test('all', () =>  forInput(
@@ -528,6 +529,31 @@ test('take, takeLast', () => {
                 }),
             );
         })
+    );
+});
+
+test('takeRandom', () => {
+    const input = ['a', 'b', 'c', 'd', 'e'];
+    const iterPerVariation = 200;
+    [-1, 0, 1, 2, 5, 6].forEach(k =>
+        forInput(
+            input,
+            s => s.takeRandom(k),
+            (s, inputHint) => {
+                const allVariations = variations(input, k);
+                const collector = new Map<string, number>();
+                for (let i = 0; i < Math.max(1, iterPerVariation * allVariations.length); i++) {
+                    const variation = s.join('');
+                    if (variation) {
+                        collector.set(variation, (collector.get(variation) || 0) + 1);
+                    }
+                }
+
+                expect(collector.size).toBeWithHint(allVariations.length, inputHint, `k=${k}`);
+                allVariations.forEach(a => expect(collector.get(a)).toBeGreaterThanWithHint(iterPerVariation * .6, inputHint, a))
+            },
+            false,
+        )
     );
 });
 

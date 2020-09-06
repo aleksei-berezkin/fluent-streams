@@ -9,6 +9,7 @@ import { FlatMapIterator } from './FlatMapIterator';
 import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 import { RandomAccessSpec } from './RandomAccessSpec';
 import { collectToMap } from '../util';
+import { shuffle } from './shuffle';
 
 abstract class AbstractStream<T> implements Stream<T> {
     abstract [Symbol.iterator](): Iterator<T>;
@@ -307,12 +308,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     shuffle(): Stream<T> {
         return new DelegateStream(() => {
             const a = this.toArray();
-            for (let i = 0; i < a.length - 1; i++) {
-                const j = i + Math.floor(Math.random() * (a.length - i));
-                const t = a[i];
-                a[i] = a[j];
-                a[j] = t;
-            }
+            shuffle(a, a.length);
             return new ArrayStream(a);
         })
     }
@@ -442,8 +438,13 @@ abstract class AbstractStream<T> implements Stream<T> {
         })
     }
 
-    takeRandom(_n: number): Stream<T> {
-        throw new Error('Not implemented');
+    takeRandom(n: number): Stream<T> {
+        return new DelegateStream(() => {
+            const a = this.toArray();
+            const length = Math.max(0, Math.min(n, a.length));
+            shuffle(a, length);
+            return new RandomAccessStream(() => ({get: i => a[i], length}));
+        });
     }
 
     toArray(): T[] {
