@@ -872,20 +872,27 @@ export class SimpleOptional<T> implements Optional<T> {
         });
     }
 
-    orElse<U>(_other: U): T | U {
-        throw new Error('Not implemented');
+    orElse<U>(other: U): T | U {
+        const r = this.getResult();
+        return !r.done ? r.value : other;
     }
 
-    orElseGet<U>(_get: () => U): T | U {
-        throw new Error('Not implemented');
+    orElseGet<U>(get: () => U): T | U {
+        const r = this.getResult();
+        return !r.done ? r.value : get();
     }
 
     orElseNull(): T | null {
-        throw new Error('Not implemented');
+        const r = this.getResult();
+        return !r.done ? r.value : null;
     }
 
-    orElseThrow(_createError?: () => Error): T {
-        throw new Error('Not implemented');
+    orElseThrow(createError: () => Error): T {
+        const r = this.getResult();
+        if (r.done) {
+            throw createError();
+        }
+        return r.value;
     }
 
     orElseUndefined(): T | undefined {
@@ -908,11 +915,13 @@ export class SimpleOptional<T> implements Optional<T> {
 
     toStream(): Stream<T> {
         return new IteratorStream(() => {
-            const r = this.getResult();
+            let r = this.getResult();
             return {
                 next(): IteratorResult<T> {
-                    // FIXME endless
-                    return r;
+                    if (r.done) return r;
+                    const _r = r;
+                    r = {done: true, value: undefined};
+                    return _r;
                 }
             }
         });

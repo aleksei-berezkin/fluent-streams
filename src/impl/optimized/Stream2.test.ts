@@ -1,5 +1,5 @@
 import '../testUtil/extendExpect';
-import { forInput } from './testUtil/forInput';
+import { forStreamInput as forInput } from './testUtil/forInput';
 import { twice, twiceAsync } from '../testUtil/twice';
 import { permutations } from '../testUtil/permutations';
 import { variations } from '../testUtil/variations';

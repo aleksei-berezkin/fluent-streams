@@ -2,7 +2,7 @@ import { Stream } from './stream';
 import { Optional } from './optional';
 import { StreamImpl } from './impl/streamImpl';
 import { OptionalImpl } from './impl/optionalImpl';
-import { InputArrayStream, IteratorStream } from './impl/optimized/Stream2';
+import { InputArrayStream, IteratorStream, SimpleOptional } from './impl/optimized/Stream2';
 
 export function stream<T>(input: Iterable<T>): Stream<T> {
     return new StreamImpl<never, T>(undefined, function* () {
@@ -93,6 +93,10 @@ export function optional<T>(input: Iterable<T>): Optional<T> {
             yield n.value;
         }
     });
+}
+
+export function optional2<T>(input: Iterable<T>): Optional<T> {
+    return new SimpleOptional(() => input[Symbol.iterator]().next());
 }
 
 export function optionalOfNullable<T>(input: () => T | null | undefined): Optional<T> {

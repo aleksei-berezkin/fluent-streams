@@ -112,7 +112,7 @@ export class OptionalImpl<P, T> extends BaseImpl<P, T> implements Optional<T> {
         return null;
     }
 
-    orElseThrow(createError: () => Error = () => new Error('Empty optional')): T {
+    orElseThrow(createError: () => Error): T {
         const n = this[Symbol.iterator]().next();
         if (!n.done) {
             return n.value;
