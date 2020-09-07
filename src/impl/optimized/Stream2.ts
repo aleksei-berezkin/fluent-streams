@@ -480,20 +480,54 @@ abstract class AbstractStream<T> implements Stream<T> {
         throw new Error('Not implemented');
     }
 
-    zip<U>(_other: Iterable<U>): Stream<readonly [T, U]> {
-        throw new Error('Not implemented');
+    zip<U>(other: Iterable<U>): Stream<readonly [T, U]> {
+        return new IteratorStream(() => {
+            const it1 = this[Symbol.iterator]();
+            const it2 = other[Symbol.iterator]();
+            return {
+                next(): IteratorResult<readonly [T, U]> {
+                    const n = it1.next();
+                    const m = it2.next();
+                    if (!n.done && !m.done) return {done: false, value: [n.value, m.value] as const};
+                    return {done: true, value: undefined};
+                }
+            }
+        });
     }
 
-    zipStrict<U>(_other: Iterable<U>): Stream<readonly [T, U]> {
-        throw new Error('Not implemented');
+    zipStrict<U>(other: Iterable<U>): Stream<readonly [T, U]> {
+        return new IteratorStream(() => {
+            const it1 = this[Symbol.iterator]();
+            const it2 = other[Symbol.iterator]();
+            return {
+                next(): IteratorResult<readonly [T, U]> {
+                    const n = it1.next();
+                    const m = it2.next();
+                    if (n.done && !m.done) throw new Error('Too few elements in this');
+                    if (!n.done && m.done) throw new Error('Too few elements in other');
+                    if (!n.done && !m.done) return {done: false, value: [n.value, m.value] as const};
+                    return {done: true, value: undefined};
+                }
+            }
+        });
     }
 
     zipWithIndex(): Stream<readonly [T, number]> {
-        throw new Error('Not implemented');
+        return new IteratorStream(() => {
+            const it = this[Symbol.iterator]();
+            let i = 0;
+            return {
+                next(): IteratorResult<readonly [T, number]> {
+                    const n = it.next();
+                    if (n.done) return {done: true, value: undefined};
+                    return {done: false, value: [n.value, i++] as const};
+                }
+            }
+        })
     }
 
     zipWithIndexAndLen(): Stream<readonly [T, number, number]> {
-        throw new Error('Not implemented');
+        return new DelegateStream(() => new ArrayStream(this.toArray()).zipWithIndexAndLen());
     }
 }
 
@@ -580,6 +614,13 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
                 length,
             })
         });
+    }
+
+    forEach(effect: (i: T) => void) {
+        const {get, length} = this.spec();
+        for (let i = 0; i < length; i++) {
+            effect(get(i));
+        }
     }
 
     last(): Optional<T> {
@@ -682,13 +723,6 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
         }
         return current;
     }
-
-    forEach(effect: (i: T) => void) {
-        const {get, length} = this.spec();
-        for (let i = 0; i < length; i++) {
-            effect(get(i));
-        }
-    }
 }
 
 export class ArrayStream<T> extends RandomAccessStream<T> {
@@ -700,20 +734,34 @@ export class ArrayStream<T> extends RandomAccessStream<T> {
         return this.array[Symbol.iterator]();
     }
 
-    map<U>(mapper: (item: T) => U): Stream<U> {
-        return new MappedArrayStream(this.array, mapper);
+    forEach(effect: (i: T) => void) {
+        this.array.forEach(effect);
     }
 
     join(delimiter: string): string {
         return this.array.join(delimiter);
     }
 
+    map<U>(mapper: (item: T) => U): Stream<U> {
+        return new MappedArrayStream(this.array, mapper);
+    }
+
     toArray(): T[] {
         return this.array;
     }
 
-    forEach(effect: (i: T) => void) {
-        this.array.forEach(effect);
+    zipWithIndex(): Stream<readonly [T, number]> {
+        return new RandomAccessStream(() => ({
+            get: i => [this.array[i], i] as const,
+            length: this.array.length,
+        }));
+    }
+
+    zipWithIndexAndLen(): Stream<readonly [T, number, number]> {
+        return new RandomAccessStream(() => ({
+            get: i => [this.array[i], i, this.array.length] as const,
+            length: this.array.length,
+        }));
     }
 }
 

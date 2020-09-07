@@ -574,3 +574,33 @@ test('toObject', () => {
         ),
     );
 });
+
+test('zip', () => [[], ['i'], ['i', 'j'], ['i', 'j', 'k']].forEach(input => forInput(
+    ['a', 'b'],
+    s => s.zip(input),
+    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(
+        input.length === 0 ? []
+            : input.length === 1 ? [['a', 'i']]
+            : [['a', 'i'], ['b', 'j']],
+        inputHint,
+        runHint
+    )),
+)));
+
+test('zipWithIndex', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        s => s.zipWithIndex(),
+        (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint([['a', 0], ['b', 1], ['c', 2]], inputHint, runHint))
+    )
+);
+
+test('zipWithIndexAndLen', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        s => s.zipWithIndexAndLen(),
+        (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(
+            [['a', 0, 3], ['b', 1, 3], ['c', 2, 3]], inputHint, runHint
+        ))
+    )
+);
