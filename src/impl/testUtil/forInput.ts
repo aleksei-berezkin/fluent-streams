@@ -1,7 +1,7 @@
-import { Stream } from '../../../stream';
+import { Stream } from '../../stream';
 import { ArrayStream, InputArrayStream, IteratorStream, RandomAccessStream, SimpleOptional } from '../Stream2';
 import { DelegateStream } from '../DelegateStream';
-import { Optional } from '../../../optional';
+import { Optional } from '../../optional';
 import { testIterator } from './testIterator';
 import { DelegateOptional } from '../DelegateOptional';
 

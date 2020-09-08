@@ -1,13 +1,13 @@
-import { Stream } from '../../stream';
-import { Optional } from '../../optional';
+import { Stream } from '../stream';
+import { Optional } from '../optional';
 import { DelegateStream } from './DelegateStream';
-import { RingBuffer } from '../ringBuffer';
+import { RingBuffer } from './ringBuffer';
 import { RandomAccessIterator } from './RandomAccessIterator';
 import { MapIterator } from './MapIterator';
 import { FlatMapIterator } from './FlatMapIterator';
 import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 import { RandomAccessSpec } from './RandomAccessSpec';
-import { collectToMap } from '../util';
+import { collectToMap } from './util';
 import { shuffle } from './shuffle';
 
 abstract class AbstractStream<T> implements Stream<T> {

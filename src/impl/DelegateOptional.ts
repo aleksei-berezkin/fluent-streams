@@ -1,5 +1,5 @@
-import { Optional } from '../../optional';
-import { Stream } from '../../stream';
+import { Optional } from '../optional';
+import { Stream } from '../stream';
 import { DelegateStream } from './DelegateStream';
 
 export class DelegateOptional<T> implements Optional<T> {

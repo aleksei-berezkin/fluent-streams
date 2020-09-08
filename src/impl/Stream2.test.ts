@@ -1,8 +1,8 @@
-import '../testUtil/extendExpect';
+import './testUtil/extendExpect';
 import { forStreamInput as forInput } from './testUtil/forInput';
-import { twice, twiceAsync } from '../testUtil/twice';
-import { permutations } from '../testUtil/permutations';
-import { variations } from '../testUtil/variations';
+import { twice, twiceAsync } from './testUtil/twice';
+import { permutations } from './testUtil/permutations';
+import { variations } from './testUtil/variations';
 
 
 test('all', () =>  forInput(
