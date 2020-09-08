@@ -2,7 +2,7 @@ import * as Benchmark from 'benchmark';
 import { Event } from 'benchmark';
 import { genInputs } from './genInput';
 import { sink } from './sink';
-import { Stream, stream2 } from '../../src';
+import { Stream, stream } from '../../src';
 import Sequence, { asSequence } from 'sequency';
 import Lazy from 'lazy.js';
 import { asIterable } from './asIterable';
@@ -25,7 +25,7 @@ export function benchmark(
 
     genInputs().forEach(a => inputAsItr.forEach(asItr => runs.forEach(run => (Object.keys(fns) as (keyof typeof fns)[]).forEach(key => {
         const runFn
-            = key === 'str' ? () => fns[key]!(stream2(asItr ? asIterable(a) : a), a.length)
+            = key === 'str' ? () => fns[key]!(stream(asItr ? asIterable(a) : a), a.length)
             : key === 'arr' ? () => fns[key]!(asItr ? [...asIterable(a)] : a, a.length, asItr)
             : key === 'seq' ? () => fns[key]!(asSequence(asItr ? asIterable(a) : a), a.length)
             : key === 'laz' ? () => fns[key]!(asItr ? LazyGen(a) : Lazy(a), a.length)

@@ -136,7 +136,7 @@ test('continually', () => {
     let i = 0;
     const c = continually(() => i++).take(3);
     expect(c.toArray()).toEqual([0, 1, 2]);
-    expect(c.toArray()).toEqual([4, 5, 6]);
+    expect(c.toArray()).toEqual([3, 4, 5]);
 });
 
 test('optional iterable empty', () => {

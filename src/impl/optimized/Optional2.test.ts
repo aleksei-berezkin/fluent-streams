@@ -1,7 +1,7 @@
 import '../testUtil/extendExpect';
 import { forOptionalInput as forInput } from './testUtil/forInput';
 import { twice } from '../testUtil/twice';
-import { optional2 } from '../../factories';
+import { optional } from '../../factories';
 
 test('filter', () => [['a'], ['b'], []].forEach(input => forInput(
     input,
@@ -48,7 +48,7 @@ test('flatMap misc', () => forInput(
     o => o,
     (o, inputHint) => twice(runHint => {
         expect(o.flatMap(() => []).resolve()).toEqualWithHint({has: false}, inputHint, runHint);
-        expect(o.flatMap(() => optional2([])).resolve()).toEqualWithHint({has: false}, inputHint, runHint);
+        expect(o.flatMap(() => optional([])).resolve()).toEqualWithHint({has: false}, inputHint, runHint);
         expect(o.flatMap(() => ['b']).resolve()).toEqualWithHint({has: true, val: 'b'}, inputHint, runHint);
     }),
 ));
