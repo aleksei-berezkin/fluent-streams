@@ -864,10 +864,12 @@ export class SimpleOptional<T> implements Optional<T> {
         });
     }
 
-    mapNullable<U>(_mapper: (item: T) => (U | null | undefined)): Optional<U> {
-        return new SimpleOptional(() => {
+    mapNullable<U>(mapper: (item: T) => (U | null | undefined)): Optional<U> {
+        return new SimpleOptional<U>(() => {
             const r = this.getResult();
-            if (r.done && r.value != null) return r;
+            if (r.done) return r;
+            const value = mapper(r.value);
+            if (value != null) return {done: false, value};
             return {done: true, value: undefined};
         });
     }
