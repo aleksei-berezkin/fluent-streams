@@ -1,20 +1,4 @@
-import { collectToMap, trimIterable } from './util';
-import { twice } from './testUtil/twice';
-
-test('trimIterable empty', () => {
-    const i = trimIterable([]);
-    twice(() => expect([...i]).toEqual([]));
-});
-
-test('trimIterable single', () => {
-    const i = trimIterable(['a']);
-    twice(() => expect([...i]).toEqual(['a']));
-});
-
-test('trimIterable long', () => {
-    const i = trimIterable(['a', 'b']);
-    twice(() => expect([...i]).toEqual(['a']));
-});
+import { collectToMap } from './util';
 
 test('collectToMap empty', () => {
     const m = collectToMap([], () => undefined);

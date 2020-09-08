@@ -1,7 +1,6 @@
 import { Stream } from '../../stream';
 import { Optional } from '../../optional';
 import { DelegateOptional } from './DelegateOptional';
-import { StreamOperator } from '../../streamGenerator';
 
 export class DelegateStream<T> implements Stream<T> {
     constructor(private readonly getDelegate: () => Stream<T>) {
@@ -159,11 +158,11 @@ export class DelegateStream<T> implements Stream<T> {
         return this.getDelegate().toObject();
     }
 
-    transformToOptional<U>(operator: StreamOperator<T, U>): Optional<U> {
+    transformToOptional<U>(operator: (input: Iterable<T>) => Iterable<U>): Optional<U> {
         return new DelegateOptional(() => this.getDelegate().transformToOptional(operator));
     }
 
-    transformToStream<U>(operator: StreamOperator<T, U>): Stream<U> {
+    transformToStream<U>(operator: (input: Iterable<T>) => Iterable<U>): Stream<U> {
         return new DelegateStream(() => this.getDelegate().transformToStream(operator));
     }
 

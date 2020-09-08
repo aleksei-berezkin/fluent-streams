@@ -47,18 +47,3 @@ test('Add after iteration', () => {
     r.add('b');
     twice(() => expect([...r]).toEqual(['a', 'b']));
 });
-
-test('takeLast', () => {
-    const bufSize = 3;
-    const buf = new RingBuffer<string>(3);
-    const arr: string[] = [];
-
-    for (let i = 0; i < bufSize * 3; i++) {
-        for (let k = -1; k < bufSize + 3; k++) {
-            const tailSize = Math.min(Math.max(0, k), arr.length, bufSize);
-            expect([...buf.takeLast(k)]).toEqual(arr.slice(arr.length - tailSize, arr.length));
-        }
-        arr.push(String(i));
-        buf.add(String(i));
-    }
-});

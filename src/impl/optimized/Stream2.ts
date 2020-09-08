@@ -1,4 +1,3 @@
-import { StreamOperator } from '../../streamGenerator';
 import { Stream } from '../../stream';
 import { Optional } from '../../optional';
 import { DelegateStream } from './DelegateStream';
@@ -472,11 +471,11 @@ abstract class AbstractStream<T> implements Stream<T> {
         return obj;
     }
 
-    transformToOptional<U>(_operator: StreamOperator<T, U>): Optional<U> {
+    transformToOptional<U>(_operator: (input: Iterable<T>) => Iterable<U>): Optional<U> {
         throw new Error('Not implemented');
     }
 
-    transformToStream<U>(_operator: StreamOperator<T, U>): Stream<U> {
+    transformToStream<U>(_operator: (input: Iterable<T>) => Iterable<U>): Stream<U> {
         throw new Error('Not implemented');
     }
 

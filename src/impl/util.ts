@@ -1,16 +1,3 @@
-export function trimIterable<T>(items: Iterable<T>): Iterable<T> {
-    return {
-        [Symbol.iterator](): Iterator<T> {
-            return function* () {
-                const n = items[Symbol.iterator]().next();
-                if (!n.done) {
-                    yield n.value;
-                }
-            }();
-        }
-    };
-}
-
 export function collectToMap<K, T>(items: Iterable<T>, getKey: (item: T) => K) {
     const m = new Map<K, T[]>();
     for (const i of items) {

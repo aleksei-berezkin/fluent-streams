@@ -11,31 +11,15 @@ import {
     streamOf
 } from './factories';
 import { twice } from './impl/testUtil/twice';
-import { appendWithModification } from './impl/testUtil/appendWithModification';
 
 test('stream', () => {
     const s = stream(['a', 'b']);
     twice(() => expect(s.toArray()).toEqual(['a', 'b']));
 });
 
-test('stream appendWithModification', () => {
-    const input = ['a', 'b', 'c'];
-    stream(input).transformToStream(appendWithModification('x')).forEach(() => {});
-    expect(input).toEqual(['a', 'b', 'c']);
-});
-
 test('streamFromModifiable', () => {
     const s = streamFromModifiable(['a', 'b']);
     twice(() => expect(s.toArray()).toEqual(['a', 'b']));
-});
-
-test('streamFromModifiable appendWithModification' ,() => {
-    const input = ['a', 'b'];
-    const s = streamFromModifiable(input).transformToStream(appendWithModification('x'));
-    s.forEach(() => {});
-    expect(input).toEqual(['a', 'b', 'x']);
-    s.forEach(() => {});
-    expect(input).toEqual(['a', 'b', 'x', 'x']);
 });
 
 test('stream of iterable', () => {
@@ -66,12 +50,6 @@ test('stream of iterables alternate', () => {
 test('streamOf', () => {
     twice(() => expect(streamOf('a', 'b').toArray()).toEqual(['a' ,'b']));
 });
-
-test('streamOf appendWithModification', () => {
-    const input = ['a', 'b'];
-    streamOf(...input).transformToStream(appendWithModification('x')).forEach(() => {});
-    expect(input).toEqual(['a', 'b']);
-})
 
 test('entryStream', () => {
     const o = {

@@ -32,12 +32,4 @@ export class RingBuffer<T> implements Iterable<T>{
             }
         }
     }
-
-    *takeLast(n: number): IterableIterator<T> {
-        const m = Math.max(0, Math.min(n, this.size));
-
-        for (let i = this.size - m; i < this.size; i++) {
-            yield this.a[(this.start + i) % this.capacity];
-        }
-    }
 }
