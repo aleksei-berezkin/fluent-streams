@@ -587,6 +587,23 @@ test('zip', () => [[], ['i'], ['i', 'j'], ['i', 'j', 'k']].forEach(input => forI
     )),
 )));
 
+test('zipStrict', () =>
+    forInput(
+        ['a', 'b', 'c'],
+        s => s.zipStrict(['i', 'j', 'k']),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint([['a', 'i'], ['b', 'j'], ['c', 'k']], inputHint, runHint)
+        ),
+    )
+);
+
+test('zipStrict throws', () => [['i', 'j'], ['i', 'j', 'k', 'l']].forEach(input => forInput(
+    ['a', 'b', 'c'],
+    s => s.zipStrict(input),
+    s => twice(() => expect(() => s.toArray()).toThrow()),
+    false,
+)));
+
 test('zipWithIndex', () =>
     forInput(
         ['a', 'b', 'c'],
