@@ -621,3 +621,12 @@ test('zipWithIndexAndLen', () =>
         ))
     )
 );
+
+test('long chain', () => forInput(
+    ['a', 'b'],
+    s => s
+        .append('c')
+        .map(c => c.toUpperCase())
+        .filter(c => c !== 'B'),
+    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(['A', 'C'], inputHint, runHint)),
+));
