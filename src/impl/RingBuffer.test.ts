@@ -1,4 +1,4 @@
-import { RingBuffer } from './ringBuffer';
+import { RingBuffer } from './RingBuffer';
 import { twice } from './testUtil/twice';
 
 test('Bad capacity', () => {

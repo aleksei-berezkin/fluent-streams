@@ -1,5 +1,5 @@
 import { Stream } from '../../stream';
-import { ArrayStream, InputArrayStream, IteratorStream, RandomAccessStream, SimpleOptional } from '../Stream2';
+import { ArrayStream, InputArrayStream, IteratorStream, RandomAccessStream, SimpleOptional } from '../indexImpl';
 import { DelegateStream } from '../DelegateStream';
 import { Optional } from '../../optional';
 import { testIterator } from './testIterator';

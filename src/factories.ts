@@ -6,7 +6,7 @@ import {
     IteratorStream,
     RandomAccessStream,
     SimpleOptional
-} from './impl/Stream2';
+} from './impl/indexImpl';
 
 export function stream<T>(input: Iterable<T>): Stream<T> {
     return Array.isArray(input)

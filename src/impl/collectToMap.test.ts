@@ -1,4 +1,4 @@
-import { collectToMap } from './util';
+import { collectToMap } from './collectToMap';
 
 test('collectToMap empty', () => {
     const m = collectToMap([], () => undefined);
