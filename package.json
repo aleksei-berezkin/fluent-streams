@@ -1,6 +1,6 @@
 {
   "name": "fluent-streams",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "Fluent API for JavaScript iterables processing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
