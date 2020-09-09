@@ -471,14 +471,12 @@ abstract class AbstractStream<T> implements Stream<T> {
         return obj;
     }
 
-    transformToOptional<U>(_operator: (input: Iterable<T>) => Iterable<U>): Optional<U> {
-        // FIXME
-        throw new Error('Not implemented');
+    transform<U>(operator: (input: Iterable<T>) => Iterator<U>): Stream<U> {
+        return new IteratorStream<U>(() => operator(this));
     }
 
-    transformToStream<U>(_operator: (input: Iterable<T>) => Iterable<U>): Stream<U> {
-        // FIXME
-        throw new Error('Not implemented');
+    transformToOptional<U>(operator: (input: Iterable<T>) => Iterator<U>): Optional<U> {
+        return new SimpleOptional(() => operator(this).next());
     }
 
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]> {

@@ -158,12 +158,12 @@ export class DelegateStream<T> implements Stream<T> {
         return this.getDelegate().toObject();
     }
 
-    transformToOptional<U>(operator: (input: Iterable<T>) => Iterable<U>): Optional<U> {
-        return new DelegateOptional(() => this.getDelegate().transformToOptional(operator));
+    transform<U>(operator: (input: Iterable<T>) => Iterator<U>): Stream<U> {
+        return new DelegateStream(() => this.getDelegate().transform(operator));
     }
 
-    transformToStream<U>(operator: (input: Iterable<T>) => Iterable<U>): Stream<U> {
-        return new DelegateStream(() => this.getDelegate().transformToStream(operator));
+    transformToOptional<U>(operator: (input: Iterable<T>) => Iterator<U>): Optional<U> {
+        return new DelegateOptional(() => this.getDelegate().transformToOptional(operator));
     }
 
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]> {

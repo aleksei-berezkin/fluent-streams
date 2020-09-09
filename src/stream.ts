@@ -75,9 +75,9 @@ export interface Stream<T> extends Iterable<T> {
 
     toObject(): T extends readonly [string | number | symbol, any] ? { [key in T[0]]: T[1] } : unknown;
 
-    transformToOptional<U>(operator: (input: Iterable<T>) => Iterable<U>): Optional<U>;
+    transform<U>(operator: (input: Iterable<T>) => Iterator<U>): Stream<U>;
 
-    transformToStream<U>(operator: (input: Iterable<T>) => Iterable<U>): Stream<U>;
+    transformToOptional<U>(operator: (input: Iterable<T>) => Iterator<U>): Optional<U>;
 
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]>;
 

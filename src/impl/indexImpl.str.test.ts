@@ -575,6 +575,57 @@ test('toObject', () => {
     );
 });
 
+test('transform gen', () => forInput(
+    ['a', 'b', 'c'],
+    s => s.transform(function* (input) {
+        for (const i of input) {
+            if (i !== 'b') yield i + 'x';
+        }
+    }),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(['ax', 'cx'], inputHint, runHint)
+    ),
+));
+
+test('transform itr', () => forInput(
+    ['a', 'b', 'c'],
+    s => s.transform(input => {
+        const itr = input[Symbol.iterator]();
+        return {
+            next() {
+                for ( ; ; ) {
+                    const n = itr.next();
+                    if (n.done) return n;
+                    if (n.value !== 'b') {
+                        return {done: false, value: n.value + 'x'}
+                    }
+                }
+            }
+        }
+    }),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(['ax', 'cx'], inputHint, runHint)
+    ),
+));
+
+test('transformToOptional', () => forInput(
+    ['a', 'b', 'c'],
+    s => s.transformToOptional(function* (input) {
+        for (const i of input) {
+            if (i !== 'a') yield i + 'x';
+        }
+    }),
+    (o, inputHint) => twice(runHint =>
+        expect(o.resolve()).toEqualWithHint({has: true, val: 'bx'}, inputHint, runHint)
+    ),
+));
+
+test('transformToOptional empty', () => forInput(
+    ['a', 'b', 'c'],
+    s => s.transformToOptional(function* () {}),
+    (o, inputHint) => twice(runHint => expect(o.resolve()).toEqualWithHint({has: false}, inputHint, runHint)),
+));
+
 test('zip', () => [[], ['i'], ['i', 'j'], ['i', 'j', 'k']].forEach(input => forInput(
     ['a', 'b'],
     s => s.zip(input),
