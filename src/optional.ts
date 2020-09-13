@@ -10,14 +10,14 @@ import { Stream } from './stream';
  */
 export interface Optional<T> extends Iterable<T> {
     /**
-     * Returns new optional resolving to original item if this optional has an item and `predicate` evaluates
-     * to `true` for it; resolves to empty otherwise.
+     * Returns an optional resolving to original item if this optional has an item and `predicate` evaluates
+     * to `true` for it, or resolving to empty otherwise.
      * @param predicate A predicate to evaluate an item
      */
     filter(predicate: (item: T) => boolean): Optional<T>;
 
     /**
-     * Creates new optional with the following behavior:
+     * Creates an optional with the following behavior:
      * * If this optional contains an item, applies `mapper` to it, and tries to retrieve the first item from
      * the returned iterable. If there's an item, resolves to it, otherwise resolves to empty.
      * * It this optional is empty resolves to empty.
@@ -63,7 +63,7 @@ export interface Optional<T> extends Iterable<T> {
     isPresent(): boolean;
 
     /**
-     * Returns new optional with the following behavior:
+     * Returns an optional with the following behavior:
      * * If this optional has an item, invokes `mapper` passing this item as an argument, and resolves to
      * the value returned by `mapper`
      * * If this optional is empty, resolves to empty
@@ -72,7 +72,7 @@ export interface Optional<T> extends Iterable<T> {
     map<U>(mapper: (item: T) => U): Optional<U>;
 
     /**
-     * Returns new optional with the following behavior:
+     * Returns an optional with the following behavior:
      * * If this optional has an item, invokes `mapper` passing this item as an argument; if `mapper` returns
      * `null` or `undefined` resolves to empty; otherwise resolves to value returned by `mapper`
      * * If this optional is empty, resolves to empty
@@ -82,7 +82,7 @@ export interface Optional<T> extends Iterable<T> {
 
     /**
      * If this optional has an item returns this item; otherwise returns `other`
-     * @param other Value to return is this optional is empty
+     * @param other Value to return if this optional is empty
      */
     orElse<U>(other: U): T | U;
 
@@ -98,7 +98,7 @@ export interface Optional<T> extends Iterable<T> {
     orElseNull(): T | null;
 
     /**
-     * If this optional has an item returns this item; otherwise throws error created by `createError`
+     * If this optional has an item returns this item; otherwise throws an error created by `createError`
      * @param createError Function to create error if this optional is empty
      */
     orElseThrow(createError: () => Error): T;
@@ -114,17 +114,17 @@ export interface Optional<T> extends Iterable<T> {
     resolve(): {has: true, val: T} | {has: false}
 
     /**
-     * Returns array with single item if this optional has an item, empty array otherwise
+     * Returns an array with single item if this optional has an item, empty array otherwise
      */
     toArray(): T[];
 
     /**
-     * Creates new stream with an item provided by this optional if it has an item; otherwise the new stream is empty.
+     * Creates a stream with an item provided by this optional if it has an item; otherwise the new stream is empty.
      */
     toStream(): Stream<T>;
 
     /**
-     * Creates new iterator which yields an item if this optional has an item; otherwise iterator yields no items.
+     * Creates an iterator which yields an item if this optional has an item; otherwise iterator yields no items.
      */
     [Symbol.iterator](): Iterator<T>;
 }

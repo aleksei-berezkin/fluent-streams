@@ -60,14 +60,14 @@ export interface Stream<T> extends Iterable<T> {
 
     /**
      * Returns optional which resolves to an element of this stream at `index` position if there is such a position,
-     * otherwise resolves to empty.
+     * or resolves to empty otherwise.
      * @param index Zero-based position to return element at
      */
     at(index: number): Optional<T>;
 
     /**
      * Calls `Promise.all()` on this stream and returns the result. If this stream items are `Promise<E>`
-     * returns `Promise<E[]`; for more complex cases please refer to
+     * returns `Promise<E[]>`; for more complex cases please refer to
      * [MDN documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all).
      */
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]>;
@@ -106,8 +106,19 @@ export interface Stream<T> extends Iterable<T> {
      */
     butLast(): Stream<T>;
 
+    /**
+     * Creates a stream containing only elements of this stream for which `getKey` returns different keys.
+     * If multiple items produce the same key, only the first such item is included to the returned stream.
+     * Keys are checked using Set which means items are compared mostly in terms of `===`; there are exceptions though,
+     * see [MDN documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set).
+     * @param getKey Function to get key of items
+     */
     distinctBy(getKey: (item: T) => any): Stream<T>;
 
+    /**
+     * Returns true if `other` contains the same number of items and all corresponding items equal in terms of `===`.
+     * @param other Iterable to test for equality
+     */
     equals(other: Iterable<T>): boolean,
 
     /**
@@ -121,8 +132,10 @@ export interface Stream<T> extends Iterable<T> {
      * 
      * ```typescript
      * streamOf<string | null>('a', null, 'b')
-     *     .filterWithAssertion(function(item): item is string { return typeof item === 'string' })
-     *     .toArray()   // => ['a', 'b']: string[]
+     *   .filterWithAssertion(function(item): item is string {
+     *     return typeof item === 'string'
+     *   })
+     *   .toArray()   // => ['a', 'b']: string[]
      * ```
      * 
      * Makes sense only for TypeScript code; for JavaScript works exactly the same way as {@link filter}.
@@ -130,20 +143,60 @@ export interface Stream<T> extends Iterable<T> {
      */
     filterWithAssertion<U extends T>(assertion: (item: T) => item is U): Stream<U>;
 
+    /**
+     * Creates an optional which resolves to the first item to match predicate, or to empty if no such item found.
+     * @param predicate The predicate to test items
+     */
     find(predicate: (item: T) => boolean): Optional<T>;
 
+    /**
+     * Creates a stream with the following behavior:
+     * 1. Iterates this stream items
+     * 2. Applies `mapper` to each item
+     * 3. Chains together at the same level all results returned by `mapper`
+     * 
+     * The operation is also known as `chain`.
+     * @param mapper The function to transform items
+     */
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U>;
 
+    /**
+     * Invokes `effect` for each item
+     * @param effect An effect to apply to items
+     */
     forEach(effect: (item: T) => void): void;
 
+    /**
+     * Creates a stream whose elements are `[key, items[]]` pairs; `key`s are retrieved with `getKey` applied
+     * to this stream items; `items`s are arrays of this stream items which produced the same `key`.
+     * @param getKey Function to get item key with
+     */
     groupBy<K>(getKey: (item: T) => K): Stream<readonly [K, T[]]>;
 
+    /**
+     * Creates an optional which resolves to this stream first item if the stream has item(s), or resolves
+     * to empty otherwise.
+     */
     head(): Optional<T>;
 
+    /**
+     * Concatenates this stream items inserting `delimiter` between. Items are mapped to string using
+     * [String function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/String)
+     * (without `new`).
+     * @param delimiter A string to insert between items.
+     */
     join(delimiter: string): string;
 
+    /**
+     * Like {@link join} but retrieves delimiter calling `getDelimiter` for each adjacent items.
+     * @param getDelimiter A function to get delimiter for adjacent items pair
+     */
     joinBy(getDelimiter: (l: T, r: T) => string): string;
 
+    /**
+     * Creates an optional resolving to the last item of this stream if it contains item(s), or resolving to empty
+     * otherwise.
+     */
     last(): Optional<T>;
 
     map<U>(mapper: (item: T) => U): Stream<U>;
