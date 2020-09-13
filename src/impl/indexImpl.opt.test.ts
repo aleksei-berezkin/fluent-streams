@@ -152,7 +152,7 @@ test('orElse', () => forInput(
         expect(o.orElse('b')).toBeWithHint('a', inputHint, runHint);
         expect(o.orElseGet(() => 'b')).toBeWithHint('a', inputHint, runHint);
         expect(o.orElseNull()).toBeWithHint('a', inputHint, runHint);
-        expect(o.orElseThrow()).toBeWithHint('a', inputHint, runHint);
+        expect(o.orElseThrow(() => new Error())).toBeWithHint('a', inputHint, runHint);
         expect(o.orElseUndefined()).toBeWithHint('a', inputHint, runHint);
     }),
 ));
@@ -164,7 +164,7 @@ test('orElse empty', () => forInput(
         expect(o.orElse(42)).toBeWithHint(42, inputHint, runHint);
         expect(o.orElseGet(() => 42)).toBeWithHint(42, inputHint, runHint);
         expect(o.orElseNull()).toBeWithHint(null, inputHint, runHint);
-        expect(() => o.orElseThrow()).toThrow();
+        expect(() => o.orElseThrow(() => new Error())).toThrow();
         expect(o.orElseUndefined()).toBeWithHint(undefined, inputHint, runHint);
     }),
 ));

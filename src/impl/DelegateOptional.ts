@@ -62,7 +62,7 @@ export class DelegateOptional<T> implements Optional<T> {
         return this.getDelegate().orElseNull();
     }
 
-    orElseThrow(createError?: () => Error): T {
+    orElseThrow(createError: () => Error): T {
         return this.getDelegate().orElseThrow(createError);
     }
 

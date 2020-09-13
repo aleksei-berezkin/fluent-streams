@@ -452,9 +452,9 @@ test('size', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(
     ))
 )));
 
-test('sortOn', () => [[] as string[], ['0'], ['1', '0'], ['4', '22', '1', '6', '2']].forEach(input => forInput(
+test('sortBy', () => [[] as string[], ['0'], ['1', '0'], ['4', '22', '1', '6', '2']].forEach(input => forInput(
     input,
-    s => s.sortOn(i => Number.parseInt(i)),
+    s => s.sortBy(i => Number.parseInt(i)),
     (s, inputHint) => twice(runHint =>
         expect(s.toArray()).toEqualWithHint(input.sort((a, b) => Number.parseInt(a) - Number.parseInt(b)), inputHint, runHint)
     ),

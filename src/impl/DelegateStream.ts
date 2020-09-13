@@ -126,8 +126,8 @@ export class DelegateStream<T> implements Stream<T> {
         return this.getDelegate().size();
     }
 
-    sortOn(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
-        return new DelegateStream(() => this.getDelegate().sortOn(getComparable));
+    sortBy(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
+        return new DelegateStream(() => this.getDelegate().sortBy(getComparable));
     }
 
     splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]> {

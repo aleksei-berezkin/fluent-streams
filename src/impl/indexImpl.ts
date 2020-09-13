@@ -334,7 +334,7 @@ abstract class AbstractStream<T> implements Stream<T> {
         return s;
     }
 
-    sortOn(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
+    sortBy(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
         return new DelegateStream(() => {
             const arr = this.toArray();
             arr.sort((a, b) => {
