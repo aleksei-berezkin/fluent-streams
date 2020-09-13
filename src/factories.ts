@@ -9,10 +9,10 @@ import {
 } from './impl/indexImpl';
 
 /**
- * Creates a stream from an iterable. Streams created with this function never modify `input`; if you want the opposite
- * use {@link streamFromModifiable}.
+ * Creates a stream from an iterable (for example, array, set etc). Streams created with this function never
+ * modify `input`; if you want the opposite use {@link streamFromModifiable}.
  * @typeParam T Elements type
- * @param input Input to create the stream from. May be array, set, or any other iterable, including user-defined,
+ * @param input Input to create the stream from. Can be array, set, or any other iterable, including user-defined,
  * as long as it correctly implements [iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols).
  */
 export function stream<T>(input: Iterable<T>): Stream<T> {

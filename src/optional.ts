@@ -1,11 +1,12 @@
 import { Stream } from './stream';
 
 /**
- * An optional is a {@link Stream}-like construct containing no more than one item.
+ * An optional is just like {@link Stream} but containing no more than one item. All streams properties
+ * (lazy evaluation, statelessness) fully apply to optionals.
  * 
  * Like stream, optional has intermediate and terminal operations. When a terminal operation is executed,
  * the result value is computed — this process is described as “an optional resolves to a value”
- * if there is an item, or ”an optional resolves to empty” if there's no one.
+ * if there is an item, or “an optional resolves to empty” if there's no one.
  */
 export interface Optional<T> extends Iterable<T> {
     /**

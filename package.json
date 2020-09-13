@@ -13,7 +13,7 @@
     "bench-compile": "tsc --project tsconfig.bench.json",
     "bench-run": "node dist/bench/index.js",
     "bench": "npm-run-all bench-compile bench-run",
-    "doc": "typedoc src --tsconfig tsconfig.build.json --excludeNotDocumented --mode file --theme default1",
+    "doc": "typedoc src --tsconfig tsconfig.build.json --excludeNotDocumented --mode file --theme default",
     "serve": "serve -n docs"
   },
   "files": [

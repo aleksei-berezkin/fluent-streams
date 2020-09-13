@@ -2,13 +2,44 @@ import { Optional } from './optional';
 
 /**
  * A stream is a thin wrapper over iterable, providing intermediate and terminal operations to manipulate data.
+ * Streams are lazy: all computations are triggered only on terminal operations.
  * 
  * Stream can be understood as a function over an iterable. Intermediate operations return new functions containing
- * current stream as an input; terminal operations evaluate function and return data.
+ * current stream as an input; terminal operations capture input, evaluate functions chain and return data.
+ * 
+ * ```typescript
+ * stream(1, 2, 3, 4)       // factory
+ *   .filter(i => i%2===0)  // intermediate
+ *   .map(i => -i)          // intermediate
+ *   .toArray()             // terminal => [-2, -4]
+ * ```
  * 
  * Streams are stateless: they don't store anything except reference to an input. This means streams may be iterated
  * multiple times, and each time the stream is evaluated against input as it was on the moment of invoking terminal
  * operation.
+ * 
+ * ```typescript
+ * const input = [10, 20, 30]
+ * const s = stream(input)
+ *   .map(i => i + 1)
+ * s.toArray()   // => [11, 21, 31]
+ *   
+ * input.push(40)
+ * s.toArray()   // => [11, 21, 31, 41]
+ * ```
+ * 
+ * During evaluation streams produce as little intermediate data as possible. For example, {@link map} does
+ * not copy input data; instead, it retrieves upstream data one by one, and pushes mapped items downstream also
+ * value by value. Some operations do require creating intermediate data structures, examples are {@link shuffle}
+ * and {@link sortBy}; in this case downstream steps reuse intermediate data as much as possible.
+ * 
+ * ```typescript
+ * stream(30, 20, 10, 0)
+ *     .map(i => i + 1) // does not copy data, maps on evaluation
+ *     .sortBy(i => i)  // copies data to the new array and sorts it
+ *     .at(2)           // makes a[2] on array created upstream
+ *     .get()           // => 21
+ * ```
  * 
  * @typeParam T Input elements type
  */
@@ -28,19 +59,31 @@ export interface Stream<T> extends Iterable<T> {
     any(predicate: (item: T) => boolean): boolean;
 
     /**
-     * Returns optional which resolves to an element of this stream at `index` position if there is such a position.
+     * Returns optional which resolves to an element of this stream at `index` position if there is such a position,
+     * otherwise resolves to empty.
      * @param index Zero-based position to return element at
      */
     at(index: number): Optional<T>;
 
+    /**
+     * Calls `Promise.all()` on this stream and returns the result. If this stream items are `Promise<E>`
+     * returns `Promise<E[]`; for more complex cases please refer to
+     * [MDN documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all).
+     */
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]>;
 
     /**
-     * Creates new stream whose items are all items of this stream followed by provided `item`. 
+     * Creates a stream whose items are all items of this stream followed by provided `item`. 
      * @param item Item to append
      */
     append(item: T): Stream<T>;
 
+    /**
+     * Creates a stream whose items are all items of this stream optionally followed by provided `item` if `condition`
+     * is true, otherwise no data is appended.
+     * @param condition `true` or `false` to append or skip `item`
+     * @param item Item to append conditionally
+     */
     appendIf(condition: boolean, item: T): Stream<T>;
 
     /**
@@ -49,6 +92,12 @@ export interface Stream<T> extends Iterable<T> {
      */
     appendAll(items: Iterable<T>): Stream<T>;
 
+    /**
+     * Creates a stream whose items are all items of this stream optionally followed by all items provided by `items`
+     * iterable if `condition` is true, otherwise no data is appended.
+     * @param condition `true` or `false` to append or skip `items`
+     * @param items Items to append to this stream conditionally
+     */
     appendAllIf(condition: boolean, items: Iterable<T>): Stream<T>;
 
     /**
