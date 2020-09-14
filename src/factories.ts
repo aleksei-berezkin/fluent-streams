@@ -11,9 +11,11 @@ import {
 /**
  * Creates a stream from an iterable (for example, array, set etc). Streams created with this function never
  * modify `input`; if you want the opposite use {@link streamFromModifiable}.
- * @typeParam T Elements type
+ * @typeParam T Items type
  * @param input Input to create the stream from. Can be array, set, or any other iterable, including user-defined,
  * as long as it correctly implements [iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols).
+ * If you implement your own iterable please note: a) `next()` is not expected to take any arguments, and b)
+ * `value` returned with `{done: true}` is discarded.
  */
 export function stream<T>(input: Iterable<T>): Stream<T> {
     return Array.isArray(input)
@@ -94,7 +96,7 @@ export function same<T>(value: T): Stream<T> {
 
 /**
  * Creates an endless stream of values produced by `getItem`. Function return value is not cached; it's invoked
- * separately for each value.
+ * separately to get each item.
  * @typeParam T Items type
  * @param getItem Function that produces items.
  */
@@ -106,7 +108,7 @@ export function continually<T>(getItem: () => T): Stream<T> {
 
 /**
  * Creates an optional from given iterable. An empty iterable resolves to an empty optional; otherwise the optional
- * resolves to the first item produced by iterable, rest elements are discarded.
+ * resolves to the first item yielded by iterable, rest elements are discarded.
  * @typeParam T elements type.
  * @param input 
  */
@@ -115,8 +117,8 @@ export function optional<T>(input: Iterable<T>): Optional<T> {
 }
 
 /**
- * Creates an optional which resolves to the value returned by `getInput` if that value is not `null` or `undefined`,
- * otherwise resolves to empty.
+ * Creates an optional which resolves to a value returned by `getInput` if that value is not `null` or `undefined`,
+ * or which resolves to empty otherwise.
  * @typeParam T Non-nullable input value type
  * @param getInput Function which produces value or `null` or `undefined`
  */

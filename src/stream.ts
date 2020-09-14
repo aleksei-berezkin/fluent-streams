@@ -2,9 +2,10 @@ import { Optional } from './optional';
 
 /**
  * A stream is a thin wrapper over iterable, providing intermediate and terminal operations to manipulate data.
- * Streams are lazy: all computations are triggered only on terminal operations.
+ * Like iterables, streams respect items order; if not specified explicitly, operations consume and transform items
+ * in the original order. Streams are lazy: all computations are triggered only on terminal operations.
  * 
- * Stream can be understood as a function over an iterable. Intermediate operations return new functions containing
+ * Stream can be explained as a function over an iterable. Intermediate operations return new functions containing
  * current stream as an input; terminal operations capture input, evaluate functions chain and return data.
  * 
  * ```typescript
@@ -30,8 +31,9 @@ import { Optional } from './optional';
  * 
  * During evaluation streams produce as little intermediate data as possible. For example, {@link map} does
  * not copy input data; instead, it retrieves upstream data one by one, and pushes mapped items downstream also
- * value by value. Some operations do require creating intermediate data structures, examples are {@link shuffle}
- * and {@link sortBy}; in this case downstream steps reuse intermediate data as much as possible.
+ * value by value. Some operations do require creating intermediate data structures, for example {@link shuffle}
+ * and {@link sortBy}; in this case downstream steps maximize the benefit of having random-access array allowed
+ * for modifications.
  * 
  * ```typescript
  * stream(30, 20, 10, 0)
@@ -45,23 +47,23 @@ import { Optional } from './optional';
  */
 export interface Stream<T> extends Iterable<T> {
     /**
-     * Returns `true` if `predicate` returns `true` for all items; false otherwise. This is short-circuit operation
-     * which means it skips the rest items if some item produced `false`.
-     * @param predicate A function to evaluate each element
+     * Returns `true` if the `predicate` returns `true` for all items of this stream; returns false otherwise. This is
+     * short-circuiting operation which means it skips the rest items if the `predicate` returned `false` for some item.
+     * @param predicate A function to test each item
      */
     all(predicate: (item: T) => boolean): boolean;
 
     /**
-     * Returns `true` if `predicate` returns `true` for any element; false otherwise. This is short-circuit operation
-     * which means it skips the rest items if some item produced `true`.
-     * @param predicate A function to evaluate each element
+     * Returns `true` if the `predicate` returns `true` for any item of this stream; returns false otherwise. This is
+     * short-circuiting operation which means it skips the rest items if the `predicate` returned `true` for some item.
+     * @param predicate A function to test each item
      */
     any(predicate: (item: T) => boolean): boolean;
 
     /**
-     * Returns optional which resolves to an element of this stream at `index` position if there is such a position,
+     * Creates an optional which resolves to an element of this stream at `index` position if there is such a position,
      * or resolves to empty otherwise.
-     * @param index Zero-based position to return element at
+     * @param index Zero-based position to return an item at
      */
     at(index: number): Optional<T>;
 
@@ -116,7 +118,8 @@ export interface Stream<T> extends Iterable<T> {
     distinctBy(getKey: (item: T) => any): Stream<T>;
 
     /**
-     * Returns true if `other` contains the same number of items and all corresponding items equal in terms of `===`.
+     * Returns true if `other` contains the same number of items and all corresponding items are equal
+     * in terms of `===`.
      * @param other Iterable to test for equality
      */
     equals(other: Iterable<T>): boolean,
@@ -161,14 +164,15 @@ export interface Stream<T> extends Iterable<T> {
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U>;
 
     /**
-     * Invokes `effect` for each item
+     * Invokes `effect` for each item of this stream
      * @param effect An effect to apply to items
      */
     forEach(effect: (item: T) => void): void;
 
     /**
      * Creates a stream whose elements are `[key, items[]]` pairs; `key`s are retrieved with `getKey` applied
-     * to this stream items; `items`s are arrays of this stream items which produced the same `key`.
+     * to this stream items; `items`s are arrays of this stream items which produced the same `key`. Order of items
+     * is the same as in this stream.
      * @param getKey Function to get item key with
      */
     groupBy<K>(getKey: (item: T) => K): Stream<readonly [K, T[]]>;
@@ -194,19 +198,48 @@ export interface Stream<T> extends Iterable<T> {
     joinBy(getDelimiter: (l: T, r: T) => string): string;
 
     /**
-     * Creates an optional resolving to the last item of this stream if it contains item(s), or resolving to empty
+     * Creates an optional resolving to the last item of this stream if it's nonempty, or resolving to empty
      * otherwise.
      */
     last(): Optional<T>;
 
+    /**
+     * Creates a stream whose items are all items of this stream transformed by `mapper`.
+     * @param mapper A function to transform items 
+     */
     map<U>(mapper: (item: T) => U): Stream<U>;
 
+    /**
+     * Creates an optional resolving to a random item of this stream, or resolving to emtpy if this stream is empty.
+     */
     randomItem(): Optional<T>
 
+    /**
+     * Creates an optional with the following behavior:
+     * * If this stream is empty resolves to empty
+     * * If this stream has one item resolves to that item
+     * * Otherwise applies `reducer` to the first and second items, then applies `reducer` to previously returned result
+     * and third item etc, and resolves to a value returned by the last `reducer` invocation.
+     * @param reducer The function to reduce items
+     */
     reduce(reducer: (l: T, r: T) => T): Optional<T>;
 
+    /**
+     * If this stream is empty returns `zero`; otherwise applies `reducer` to `zero` and the first item, then applies
+     * `reducer` to previously returned result and second item etc, and resolves to a value returned by the last
+     * `reducer` invocation.
+     * @param zero The starting value
+     * @param reducer The function to reduce items
+     */
     reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U;
 
+    /**
+     * If this stream is empty returns `zero`; otherwise applies `reducer` to the last item and `zero`, then applies
+     * `reducer` to last-but-one item and previously returned result etc, and resolves to a value returned by the last
+     * `reducer` invocation.
+     * @param zero The starting value
+     * @param reducer The function to reduce items
+     */
     reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U;
 
     /**
@@ -215,42 +248,125 @@ export interface Stream<T> extends Iterable<T> {
     shuffle(): Stream<T>;
 
     /**
-     * Returns an optional which resolves to an item if this stream contains only one item. Otherwise resolves to empty.
+     * Creates an optional which resolves to an item if this stream contains only one item, or which resolves to empty
+     * otherwise.
      */
     single(): Optional<T>;
 
+    /**
+     * Returns the number of items in this stream
+     */
     size(): number;
 
     /**
-     * Creates a stream with items of this stream ordered by value retrieved by `getComparable`.
+     * Creates a stream with items of this stream ordered by value returned by `getComparable`. Returned values
+     * are compared with `>` and `<`.
      * @param getComparable A function which, given an item, returns comparable value. Returned value of the function
-     * is not cached, so it's recommended to not contain any heavy evaluations.
+     * is not cached, so it's recommended to not to perform heavy computations.
      */
     sortBy(getComparable: (item: T) => number | string | boolean): Stream<T>
 
+    /**
+     * Creates a stream whose items are groups of this stream adjacent items for which `isSplit` returned false;
+     * in other words, given all items as a sequence, splits it between items for which `isSplit` returns true.
+     * Order of items in arrays is the same as it is in this stream.
+     * @param isSplit A function to check if items sequence should be split between `l` and `r` items
+     */
     splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]>;
 
+    /**
+     * Creates a stream which contains all but first item of this stream. If this stream is empty or contains one item
+     * the returned stream is empty.
+     */
     tail(): Stream<T>;
 
+    /**
+     * Creates a stream containing no more than `n` first items of this stream
+     * @param n Max leading items to select from this stream
+     */
     take(n: number): Stream<T>;
 
+    /**
+     * Creates a stream containing no more than `n` last items of this stream
+     * @param n Max trailing items to select from this stream
+     */
     takeLast(n: number): Stream<T>;
 
+    /**
+     * Creates a stream containing no more than `n` random items of this stream. The result is sampled
+     * [without replacement](https://en.wikipedia.org/wiki/Simple_random_sample) i.e. one item of this stream
+     * appears in the result stream no more than once.
+     * @param n Max items to sample
+     */
     takeRandom(n: number): Stream<T>;
 
+    /**
+     * Returns stream items as an array
+     */
     toArray(): T[];
 
+    /**
+     * If elements of this stream are `[key, value]` pairs where `key` is `string`, `number`, or `symbol`, collects
+     * stream items to an object; if some `key` appears multiple times in this stream, only the last [`key`, `value`]
+     * will be included in the result object. If elements of this stream are not `[key, value]` as described above
+     * throws an error.
+     */
     toObject(): T extends readonly [string | number | symbol, any] ? { [key in T[0]]: T[1] } : unknown;
 
+    /**
+     * Extension method to apply arbitrary operator to the stream. An `operator` is passed an iterable which yields
+     * this stream items, and it must return the iterator which is an input for the next step. The easiest way is
+     * to use generators:
+     * 
+     * ```typescript
+     * stream(1, 2, 3, 4, 5, 6)
+     *   .transform(function* (items) {
+     *       for (const item of items) {
+     *           if (item % 3 === 0) yield item
+     *       }
+     *   }).toArray()   // => [3, 6]
+     * ```
+     * @param operator A function which is passed an iterable yielding this stream items, and which is expected
+     * to return iterator for downstream step
+     */
     transform<U>(operator: (input: Iterable<T>) => Iterator<U>): Stream<U>;
 
+    /**
+     * Like {@link transform} but returns optional which discards all but first item yielded by an iterator
+     * returned by an `operator`.
+     * @param operator A function to transform this stream items
+     */
     transformToOptional<U>(operator: (input: Iterable<T>) => Iterator<U>): Optional<U>;
 
+    /**
+     * Creates a stream whose elements are pairs where the first element is this stream item and the second element
+     * is the corresponding item of the `other` iterable. The length of the result stream is the minimum of
+     * this stream length and `other` length.
+     * @param other An iterable to zip this stream with
+     */
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]>;
 
+    /**
+     * Like {@link zip} but requires that this stream and `other` iterable have the same length, otherwise throws
+     * an error.
+     * @param other An iterable to zip this stream with
+     */
     zipStrict<U>(other: Iterable<U>): Stream<readonly [T, U]>
 
+    /**
+     * Creates a stream of pairs where first element is this stream item, and the second one is its index. In other
+     * words, {@link zip zips} with integers sequence starting with 0.
+     */
     zipWithIndex(): Stream<readonly [T, number]>;
 
+    /**
+     * Creates s stream of triplets where the first element is this stream item, second element is its index, and
+     * third one is this stream size.
+     */
     zipWithIndexAndLen(): Stream<readonly [T, number, number]>;
+
+    /**
+     * Creates an iterator which yields items of this stream
+     */
+    [Symbol.iterator](): Iterator<T>;
 }
