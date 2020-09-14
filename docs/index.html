@@ -67,11 +67,70 @@
 				<a href="#fluent-streams" id="fluent-streams" style="color: inherit; text-decoration: none;">
 					<h1>Fluent Streams</h1>
 				</a>
-				<p>Fluent API for JavaScript iterables processing.</p>
-				<a href="#status" id="status" style="color: inherit; text-decoration: none;">
-					<h2>Status</h2>
+				<p>Fluent Streams is a JavaScript and TypeScript library providing rich API for lazy iterables (arrays, sets, etc) processing.
+					The main construct is a <a href="https://aleksei-berezkin.github.io/fluent-streams/interfaces/stream.html">Stream</a>
+					which is a thin stateless wrapper over an iterable; there is also an
+				<a href="https://aleksei-berezkin.github.io/fluent-streams/interfaces/optional.html">Optional</a> modeling existing or lacking value.</p>
+				<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
+					<h2>Getting started</h2>
 				</a>
-				<p>Deep in progress.</p>
+				<a href="#install" id="install" style="color: inherit; text-decoration: none;">
+					<h3>Install</h3>
+				</a>
+				<pre><code class="language-bash">npm i --save fluent-streams</code></pre>
+				<a href="#use" id="use" style="color: inherit; text-decoration: none;">
+					<h3>Use</h3>
+				</a>
+				<p>To create or generate a stream or an optional use one of <a href="https://aleksei-berezkin.github.io/fluent-streams/globals.html">factory functions</a>;
+					the most generic is <a href="https://aleksei-berezkin.github.io/fluent-streams/globals.html#stream">stream()</a> which allows
+					creating stream from any iterable. Fluent Streams exports all functions and interfaces by name from <code>index.ts</code>,
+				so you import with <code>import { ... } from &#39;fluent-streams&#39;</code>.</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { stream } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;fluent-streams&#x27;</span>;
+
+stream([<span class="hljs-string">&#x27;Aspire&#x27;</span>, <span class="hljs-string">&#x27;to&#x27;</span>, <span class="hljs-string">&#x27;inspire&#x27;</span>, <span class="hljs-string">&#x27;before&#x27;</span>, <span class="hljs-string">&#x27;we&#x27;</span>, <span class="hljs-string">&#x27;expire&#x27;</span>])
+    .flatMap(<span class="hljs-function"><span class="hljs-params">word</span> =&gt;</span> word)
+    .groupBy(<span class="hljs-function"><span class="hljs-params">char</span> =&gt;</span> char)
+    .map(<span class="hljs-function">(<span class="hljs-params">[char, chars]</span>) =&gt;</span> ([char, chars.length]))
+    .sortBy(<span class="hljs-function">(<span class="hljs-params">[_, count]</span>) =&gt;</span> -count)
+    .take(<span class="hljs-number">3</span>)
+    .toArray()     <span class="hljs-comment">// =&gt; [[&#x27;e&#x27;, 7], [&#x27;i&#x27;, 4], [&#x27;r&#x27;, 4]]</span></code></pre>
+				<a href="#learn" id="learn" style="color: inherit; text-decoration: none;">
+					<h3>Learn</h3>
+				</a>
+				<p>All exported members are documented with TSDoc. Docs are also <a href="https://aleksei-berezkin.github.io/fluent-streams/">available online</a>.
+				The concept of stream and its main properties are described in <a href="https://aleksei-berezkin.github.io/fluent-streams/interfaces/stream.html">Stream interface documentation</a>.</p>
+				<a href="#why-fluent-streams" id="why-fluent-streams" style="color: inherit; text-decoration: none;">
+					<h2>Why Fluent Streams</h2>
+				</a>
+				<p>The lib is not the first to provide such a functionality. However, there are things specific to the lib:</p>
+				<ul>
+					<li>There is Optional. While some people assume it just to be a boilerplate, it provides the means to get back to stream
+						with <a href="https://aleksei-berezkin.github.io/fluent-streams/interfaces/optional.html#flatmaptostream">flatMapToStream()</a>
+					without breaking a fluent pipeline.</li>
+					<li>Stream and Optional seamlessly interoperate with ES6 iterables — they are iterables themselves, so may be iterated
+					over.</li>
+					<li><a href="https://aleksei-berezkin.github.io/fluent-streams/interfaces/stream.html">flatMap()</a> doesn&#39;t require you
+						to return only Stream (or Optional) — the required type is iterable<ul>
+							<li>That doesn&#39;t allow calling Stream and Optional a <a href="https://github.com/fantasyland/fantasy-land#monad">monad</a>.
+							Fluent Stream intentionally takes more practical, not puristic approach here.</li>
+						</ul>
+					</li>
+					<li>The lib is optimized for arrays — much of operations work faster (and produce less garbage) if an input is array</li>
+					<li>If an operation needs to create an intermediate array (for example <a href="https://aleksei-berezkin.github.io/fluent-streams/interfaces/stream.html#sort">sort()</a>),
+					the next step reuses it as a modifiable input array</li>
+				</ul>
+				<a href="#inspirations-and-acknowledgements" id="inspirations-and-acknowledgements" style="color: inherit; text-decoration: none;">
+					<h2>Inspirations and acknowledgements</h2>
+				</a>
+				<p>The following great libs influenced Fluent Streams the most:</p>
+				<ul>
+					<li><a href="https://ramdajs.com/">Ramda</a></li>
+					<li><a href="https://github.com/emmanueltouzery/prelude-ts">prelude-ts</a></li>
+					<li><a href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html">Java Streams</a></li>
+					<li><a href="https://github.com/winterbe/sequency">Sequency</a></li>
+					<li><a href="http://danieltao.com/lazy.js/">Lazy.js</a></li>
+					<li><a href="https://rxjs-dev.firebaseapp.com/">RxJS</a></li>
+				</ul>
 			</div>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
