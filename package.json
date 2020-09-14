@@ -9,11 +9,11 @@
     "test": "jest",
     "compile": "tsc --project tsconfig.build.json",
     "rm-impl-typedef": "rm -f dist/impl/*.d.ts",
-    "build": "npm-run-all clean test compile rm-impl-typedef",
+    "doc": "typedoc src --tsconfig tsconfig.build.json --excludeNotDocumented --mode file --theme default",
+    "build": "npm-run-all clean test compile rm-impl-typedef doc",
     "bench-compile": "tsc --project tsconfig.bench.json",
     "bench-run": "node dist/bench/index.js",
     "bench": "npm-run-all bench-compile bench-run",
-    "doc": "typedoc src --tsconfig tsconfig.build.json --excludeNotDocumented --mode file --theme default",
     "serve": "serve -n docs"
   },
   "files": [
