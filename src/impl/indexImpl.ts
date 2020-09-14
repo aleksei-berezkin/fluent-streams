@@ -334,6 +334,14 @@ abstract class AbstractStream<T> implements Stream<T> {
         return s;
     }
 
+    sort(compareFn?: (a: T, b: T) => number): Stream<T> {
+        return new DelegateStream(() => {
+            const arr = this.toArray();
+            arr.sort(compareFn);
+            return new ArrayStream(arr);
+        });
+    }
+
     sortBy(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
         return new DelegateStream(() => {
             const arr = this.toArray();

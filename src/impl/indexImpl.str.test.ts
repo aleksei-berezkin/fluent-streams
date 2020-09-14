@@ -452,6 +452,22 @@ test('size', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(
     ))
 )));
 
+test('sort', () => [[], ['a'], ['c', 'a', 'd', 'e', 'b']].forEach(input => forInput(
+    input,
+    s => s.sort(),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(input.sort(), inputHint, runHint)
+    ),
+)))
+
+test('sort compareFn', () => [[], [1], [4, 1, 5, 2, 3]].forEach(input => forInput(
+    input,
+    s => s.sort((i, j) => j - i),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(input.sort().reverse(), inputHint, runHint)
+    ),
+)))
+
 test('sortBy', () => [[] as string[], ['0'], ['1', '0'], ['4', '22', '1', '6', '2']].forEach(input => forInput(
     input,
     s => s.sortBy(i => Number.parseInt(i)),

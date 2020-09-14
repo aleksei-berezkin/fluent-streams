@@ -126,6 +126,10 @@ export class DelegateStream<T> implements Stream<T> {
         return this.getDelegate().size();
     }
 
+    sort(compareFn?: (a: T, b: T) => number): Stream<T> {
+        return new DelegateStream(() => this.getDelegate().sort(compareFn));
+    }
+
     sortBy(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
         return new DelegateStream(() => this.getDelegate().sortBy(getComparable));
     }

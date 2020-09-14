@@ -259,6 +259,14 @@ export interface Stream<T> extends Iterable<T> {
     size(): number;
 
     /**
+     * Creates a stream whose items are sorted items of this stream. The implementation relies on
+     * [Array.sort()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort).
+     * @param compareFn Comparison function with semantics described in
+     * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort)
+     */
+    sort(compareFn?: (a: T, b: T) => number): Stream<T>;
+
+    /**
      * Creates a stream with items of this stream ordered by value returned by `getComparable`. Returned values
      * are compared with `>` and `<`.
      * @param getComparable A function which, given an item, returns comparable value. Returned value of the function
