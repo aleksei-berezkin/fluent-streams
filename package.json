@@ -5,17 +5,14 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "clean": "rm -rf dist ; rm -rf docs ; jest --clearCache",
+    "clean": "rm -rf dist ; jest --clearCache",
     "test": "jest",
     "compile": "tsc --project tsconfig.build.json",
     "rm-impl-typedef": "rm -f dist/impl/*.d.ts",
-    "doc": "typedoc src --tsconfig tsconfig.build.json --excludeNotDocumented --mode file --theme default",
-    "nojekyll": "touch docs/.nojekyll",
-    "build": "npm-run-all clean test compile rm-impl-typedef doc nojekyll",
+    "build": "npm-run-all clean test compile rm-impl-typedef",
     "bench-compile": "tsc --project tsconfig.bench.json",
     "bench-run": "node dist/bench/index.js",
-    "bench": "npm-run-all bench-compile bench-run",
-    "serve": "serve -n docs"
+    "bench": "npm-run-all bench-compile bench-run"
   },
   "files": [
     "dist"
@@ -45,9 +42,7 @@
     "lazy.js": "^0.5.1",
     "npm-run-all": "^4.1.5",
     "sequency": "^0.19.2",
-    "serve": "^11.3.2",
     "ts-jest": "^26.1.3",
-    "typedoc": "^0.19.1",
     "typescript": "^3.9.7"
   }
 }
