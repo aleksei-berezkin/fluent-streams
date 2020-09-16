@@ -749,10 +749,6 @@ export class ArrayStream<T> extends RandomAccessStream<T> {
         return this.array.join(delimiter);
     }
 
-    map<U>(mapper: (item: T) => U): Stream<U> {
-        return new MappedArrayStream(this.array, mapper);
-    }
-
     toArray(): T[] {
         return this.array;
     }
@@ -769,24 +765,6 @@ export class ArrayStream<T> extends RandomAccessStream<T> {
             get: i => [this.array[i], i, this.array.length] as const,
             length: this.array.length,
         }));
-    }
-}
-
-// FIXME Is there really a performance gain?
-export class MappedArrayStream<T, U> extends RandomAccessStream<U> {
-    constructor(private readonly array: T[], private readonly mapper: (item: T) => U) {
-        super(() => ({get: i => mapper(array[i]), length: array.length}));
-    }
-
-    toArray(): U[] {
-        const a = this.array;
-        const l = this.array.length;
-        const m = this.mapper;
-        const arr: U[] = [];
-        for (let i = 0; i < l; i ++) {
-            arr.push(m(a[i]));
-        }
-        return arr;
     }
 }
 
