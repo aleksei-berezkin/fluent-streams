@@ -1,4 +1,4 @@
-const date = Date.now();
+const justConst = Date.now() / 1e12;
 
 export function sink(a: number[] | number | string | { toArray(): number[] } | undefined | null): number {
     if (a == null) {
@@ -17,5 +17,7 @@ export function sink(a: number[] | number | string | { toArray(): number[] } | u
         a = a.toArray();
     }
 
-    return a.length ? (a[0] - a[Math.floor(a.length / 2)] + a[a.length - 1]) : date;
+    return a.length
+        ? (a[0] - a[Math.floor(a.length / 2)] + a[a.length - 1])
+        : justConst;
 }

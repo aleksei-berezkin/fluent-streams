@@ -7,6 +7,7 @@ import Sequence, { asSequence } from 'sequency';
 import Lazy from 'lazy.js';
 import { asIterable } from './asIterable';
 import { LazyGen } from './lazyGen';
+import { Lib, parseName, Result, toName } from './result';
 
 const inputAsItr = [false, true];
 const runs = [0, 1];
@@ -19,29 +20,43 @@ export function benchmark(
         seq?: (input: Sequence<number>, n: number) => Sequence<number> | number | null | string | undefined,
         laz?: (input: ReturnType<typeof Lazy>, n: number) => {toArray: () => number[]} | number | string | undefined,
     },
-) {
+): Result {
     let suite = new Benchmark.Suite();
     let collector = 0;
+    const result: Result = {
+        name,
+        res: {
+            arr: {str: {}, arr: {}, seq: {}, laz: {}},
+            itr: {str: {}, arr: {}, seq: {}, laz: {}},
+        },
+    };
 
-    genInputs().forEach(a => inputAsItr.forEach(asItr => runs.forEach(run => (Object.keys(fns) as (keyof typeof fns)[]).forEach(key => {
+    genInputs().forEach(a => inputAsItr.forEach(asItr => runs.forEach(run => (Object.keys(fns) as Lib[]).forEach(lib => {
         const runFn
-            = key === 'str' ? () => fns[key]!(stream(asItr ? asIterable(a) : a), a.length)
-            : key === 'arr' ? () => fns[key]!(asItr ? [...asIterable(a)] : a, a.length, asItr)
-            : key === 'seq' ? () => fns[key]!(asSequence(asItr ? asIterable(a) : a), a.length)
-            : key === 'laz' ? () => fns[key]!(asItr ? LazyGen(a) : Lazy(a), a.length)
+            = lib === 'str' ? () => fns[lib]!(stream(asItr ? asIterable(a) : a), a.length)
+            : lib === 'arr' ? () => fns[lib]!(asItr ? [...asIterable(a)] : a, a.length, asItr)
+            : lib === 'seq' ? () => fns[lib]!(asSequence(asItr ? asIterable(a) : a), a.length)
+            : lib === 'laz' ? () => fns[lib]!(asItr ? LazyGen(a) : Lazy(a), a.length)
             : undefined as any;
         return suite = suite.add(
-            `${ capitalize(key) }(${ asItr ? 'Itr' : 'Arr' }[${ a.length }]).${ name } #${ run }`,
+            toName(lib, asItr ? 'itr' : 'arr', a.length, name, run),
             () => collector += sink(runFn()),
         );
     }))));
 
     suite
-        .on('cycle', (event: Event) => console.log(String(event.target)))
+        .on('cycle', (event: Event) => {
+            console.log(String(event.target));
+            if (collector > 0) collector = -collector;
+            const {lib, input, n, run} = parseName(event.target.name!);
+            if (run === runs[runs.length - 1]) {
+                if (event.target.hz === undefined) {
+                    throw new Error('No hz');
+                }
+                result.res[input][lib][n] = event.target.hz;
+            }
+        })
         .on('complete', () => console.log(`(collector=${ collector })`))
         .run();
-}
-
-function capitalize(s: string) {
-    return s.substr(0, 1).toUpperCase() + s.substr(1);
+    return result;
 }
