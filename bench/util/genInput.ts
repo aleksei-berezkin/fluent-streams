@@ -10,7 +10,7 @@ export function genInputs(): InputData[] {
             run: 'warmup',
         } as InputData
     ].concat(
-        [0, 1, 10, 100, 1000, 10000].map(n => ({
+        [/*0, */1, 10, 100/*, 1000, 10000*/].map(n => ({
             data: genInput(n),
             run: 'measure' as const,
         }))
