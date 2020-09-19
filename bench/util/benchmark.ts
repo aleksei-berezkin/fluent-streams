@@ -15,9 +15,9 @@ export function benchmark(
     name: string,
     fns: {
         str: (input: Stream<number>, n: number) => Stream<number> | number | string | undefined,
-        arr?: (input: number[], n: number, canModify: boolean) => number[] | number | string | undefined,
-        seq?: (input: Sequence<number>, n: number) => Sequence<number> | number | null | string | undefined,
-        laz?: (input: ReturnType<typeof Lazy>, n: number) => {toArray: () => number[]} | number | string | undefined,
+        arr: (input: number[], n: number, canModify: boolean) => number[] | number | string | undefined,
+        seq: (input: Sequence<number>, n: number) => Sequence<number> | number | null | string | undefined,
+        laz: (input: ReturnType<typeof Lazy>, n: number) => {toArray: () => number[]} | number | string | undefined,
     },
 ): Result {
     let suite = new Benchmark.Suite();
@@ -32,10 +32,10 @@ export function benchmark(
 
     genInputs().forEach(({data: a, run}) => inputAsItr.forEach(asItr => (Object.keys(fns) as Lib[]).forEach(lib => {
         const runFn
-            = lib === 'str' ? () => fns[lib]!(stream(asItr ? asIterable(a) : a), a.length)
-            : lib === 'arr' ? () => fns[lib]!(asItr ? [...asIterable(a)] : a, a.length, asItr)
-            : lib === 'seq' ? () => fns[lib]!(asSequence(asItr ? asIterable(a) : a), a.length)
-            : lib === 'laz' ? () => fns[lib]!(asItr ? LazyGen(a) : Lazy(a), a.length)
+            = lib === 'str' ? () => fns[lib](stream(asItr ? asIterable(a) : a), a.length)
+            : lib === 'arr' ? () => fns[lib](asItr ? [...asIterable(a)] : a, a.length, asItr)
+            : lib === 'seq' ? () => fns[lib](asSequence(asItr ? asIterable(a) : a), a.length)
+            : lib === 'laz' ? () => fns[lib](asItr ? LazyGen(a) : Lazy(a), a.length)
             : undefined as any;
         return suite = suite.add(
             toName(lib, asItr ? 'itr' : 'arr', a.length, name, run),
