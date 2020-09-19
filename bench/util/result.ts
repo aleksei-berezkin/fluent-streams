@@ -1,3 +1,5 @@
+import { InputData } from './genInput';
+
 export type Input = 'arr' | 'itr';
 export const inputs: Input[] = ['arr', 'itr'];
 
@@ -23,12 +25,12 @@ export type Result = {
     }
 };
 
-export function toName(lib: Lib, input: Input, n: number, name: string, run: number) {
-    return `${ capitalize(lib) }(${ capitalize(input) }[${ n }]).${ name } #${ run }`;
+export function toName(lib: Lib, input: Input, n: number, name: string, run: InputData['run']) {
+    return `${ capitalize(lib) }(${ capitalize(input) }[${ n }]).${ name }${ run === 'warmup' ? ' (warmup)' : '' }`;
 }
 
-export function parseName(benchName: string): {lib: Lib, input: Input, n: number, name: string, run: number} {
-    const res = /(\w+)\((\w+)\[(\d+)]\)\.([\w.]+) #(\d)/.exec(benchName)!;
+export function parseName(benchName: string): {lib: Lib, input: Input, n: number, name: string, run: InputData['run']} {
+    const res = /^(\w+)\((\w+)\[(\d+)]\)\.([\w.]+)( \(warmup\))?$/.exec(benchName)!;
     const lib = res[1].toLowerCase();
     if (!isLib(lib)) throw new Error(lib);
 
@@ -40,8 +42,7 @@ export function parseName(benchName: string): {lib: Lib, input: Input, n: number
 
     const name = res[4];
 
-    const run = Number.parseInt(res[5], 10);
-    if (Number.isNaN(run)) throw new Error(res[5]);
+    const run: InputData['run'] = !!res[5] ? 'warmup' : 'measure';
 
     return {lib, input, n, name, run}
 }

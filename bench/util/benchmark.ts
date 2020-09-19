@@ -10,7 +10,6 @@ import { LazyGen } from './lazyGen';
 import { Lib, parseName, Result, toName } from './result';
 
 const inputAsItr = [false, true];
-const runs = [0, 1];
 
 export function benchmark(
     name: string,
@@ -31,7 +30,7 @@ export function benchmark(
         },
     };
 
-    genInputs().forEach(a => inputAsItr.forEach(asItr => runs.forEach(run => (Object.keys(fns) as Lib[]).forEach(lib => {
+    genInputs().forEach(({data: a, run}) => inputAsItr.forEach(asItr => (Object.keys(fns) as Lib[]).forEach(lib => {
         const runFn
             = lib === 'str' ? () => fns[lib]!(stream(asItr ? asIterable(a) : a), a.length)
             : lib === 'arr' ? () => fns[lib]!(asItr ? [...asIterable(a)] : a, a.length, asItr)
@@ -42,14 +41,14 @@ export function benchmark(
             toName(lib, asItr ? 'itr' : 'arr', a.length, name, run),
             () => collector += sink(runFn()),
         );
-    }))));
+    })));
 
     suite
         .on('cycle', (event: Event) => {
             console.log(String(event.target));
             if (collector > 0) collector = -collector;
             const {lib, input, n, run} = parseName(event.target.name!);
-            if (run === runs[runs.length - 1]) {
+            if (run === 'measure') {
                 if (event.target.hz === undefined) {
                     throw new Error('No hz');
                 }
