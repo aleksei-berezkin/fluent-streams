@@ -2,7 +2,7 @@ import { benchmark } from './util/benchmark';
 import { asSequence } from 'sequency';
 import Lazy from 'lazy.js';
 
-benchmark(
+export default benchmark(
     'flatMap',
     {
         str: s => s.flatMap(i => [i + 4.4, i - 5.5, i * 1.9]),

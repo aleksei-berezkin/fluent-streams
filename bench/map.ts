@@ -1,6 +1,6 @@
 import { benchmark } from './util/benchmark';
 
-benchmark(
+export default benchmark(
     'map',
     {
         str: s => s.map(i => i - 2.9),

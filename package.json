@@ -11,7 +11,7 @@
     "rm-impl-typedef": "rm -f dist/impl/*.d.ts",
     "build": "npm-run-all clean test compile rm-impl-typedef",
     "bench-compile": "tsc --project tsconfig.bench.json",
-    "bench-run": "node dist/bench/index.js docs/benchmarks.md",
+    "bench-run": "node dist/bench/index.js ../fluent-streams-docs/benchmarks/benchmarks.md",
     "bench": "npm-run-all bench-compile bench-run"
   },
   "files": [

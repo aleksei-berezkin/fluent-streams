@@ -19,8 +19,8 @@ export function benchmark(
         seq: (input: Sequence<number>, n: number) => Sequence<number> | number | null | string | undefined,
         laz: (input: ReturnType<typeof Lazy>, n: number) => {toArray: () => number[]} | number | string | undefined,
     },
-): Promise<Result> {
-    return Promise.resolve().then(() => {
+): () => Result {
+    return () => {
         let suite = new Benchmark.Suite();
         let collector = 0;
         const result: Result = {
@@ -59,5 +59,5 @@ export function benchmark(
             .on('complete', () => console.log(`(collector=${ collector })`))
             .run();
         return result;
-    });
+    };
 }

@@ -1,6 +1,6 @@
 import { benchmark } from './util/benchmark';
 
-benchmark(
+export default benchmark(
     'appendAll',
     {
         str: s => s.appendAll([1.1, 4.2, -.4]),
