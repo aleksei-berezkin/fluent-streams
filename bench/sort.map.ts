@@ -1,6 +1,6 @@
 import { benchmark } from './util/benchmark';
 
-benchmark(
+export default benchmark(
     'sort.map',
     {
         str: s => s.sortBy(i => i).map(i => i + .2),

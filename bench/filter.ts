@@ -1,6 +1,6 @@
 import { benchmark } from './util/benchmark';
 
-benchmark(
+export default benchmark(
     'filter',
     {
         str: s => s.filter(i => i > 0),

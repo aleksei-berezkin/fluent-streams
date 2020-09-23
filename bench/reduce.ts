@@ -1,6 +1,6 @@
 import { benchmark } from './util/benchmark';
 
-benchmark(
+export default benchmark(
     'reduce',
     {
         str: s => s.reduce((l, r) => l + r).orElseUndefined(),

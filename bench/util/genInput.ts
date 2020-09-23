@@ -3,20 +3,20 @@ export type InputData = {
     run: 'warmup' | 'measure',
 }
 
-export const inputN = [/*0, */1, 10, 100/*, 1000, 10000*/];
+export const inputN = [0, 1, 10, 100, 1000, 10000];
 
 export function genInputs(): InputData[] {
-    // return [
-    //     {
-    //         data: genInput(5),
-    //         run: 'warmup',
-    //     } as InputData
-    // ].concat(
-        return inputN.map(n => ({
+    return [
+        {
+            data: genInput(5),
+            run: 'warmup',
+        } as InputData
+    ].concat(
+        inputN.map(n => ({
             data: genInput(n),
             run: 'measure' as const,
         }))
-    // );
+    );
 }
 
 function genInput(n: number) {

@@ -1,6 +1,6 @@
 import { benchmark } from './util/benchmark';
 
-benchmark(
+export default benchmark(
     'distinct',
     {
         str: s => s.distinctBy(i => i),

@@ -1,6 +1,6 @@
 import { benchmark } from './util/benchmark';
 
-benchmark(
+export default benchmark(
     'join',
     {
         str: s => s.join(', '),

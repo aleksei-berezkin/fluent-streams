@@ -1,7 +1,7 @@
 import { benchmark } from './util/benchmark';
 
 export default benchmark(
-    'filter',
+    'find',
     {
         str: s => s.find(i => Number.isNaN(i)).orElseUndefined(),
         arr: a => a.find(i => Number.isNaN(i)),

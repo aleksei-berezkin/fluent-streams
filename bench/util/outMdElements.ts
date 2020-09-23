@@ -1,10 +1,10 @@
 import { Input, inputs, Lib, libs, Result } from './result';
-import { entryStream, stream } from '../../src';
+import { entryStream, range, stream } from '../../src';
 import { prettyPrint } from './prettyPrint';
 import { inputN } from './genInput';
 import { first, second, third } from './emojis';
 
-export const legend = `${first} The fastest  ${second} Second place  ${third} Third place`;
+export const legend = `${first} The fastest  \n${second} Second place  \n${third} Third place`;
 
 export const benchmarkSection = (r: Result) => `## ${r.name}\n${inputs.map(input => oneInputTable(r.res, input)).join('\n')}\n`
 
@@ -19,6 +19,7 @@ const table = (res: Result['res'][Input]) => {
         .toObject();
 
     return `| Lib | ${ nRow(inputN) } |\n` +
+        `|${ range(0, inputN.length + 1).map(() => '---').join('|') }|\n` +
         libs.map(lib => `| ${ libName(lib) } | ${ hzRow(res[lib], lib, nToTop) } |`).join('\n');
 };
 

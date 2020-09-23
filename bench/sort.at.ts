@@ -1,6 +1,6 @@
 import { benchmark } from './util/benchmark';
 
-benchmark(
+export default benchmark(
     'sort.at',
     {
         str: (s, n) => s.sortBy(i => i).at(Math.floor(n / 2)).orElseUndefined(),

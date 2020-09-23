@@ -1,16 +1,16 @@
 import at from './at';
 import append from './append';
 import appendAll from './appendAll';
-// import './butLast';
-// import './distinct';
-// import './filter';
+import butLast from './butLast';
+import distinct from './distinct';
+import filter from './filter';
 import find from './find';
 import flatMap from './flatMap';
-// import './join';
+import join from './join';
 import map from './map';
-// import './reduce';
-// import './sort.at';
-// import './sort.map';
+import reduce from './reduce';
+import sortAt from './sort.at';
+import sortMap from './sort.map';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as process from 'process';
@@ -27,6 +27,6 @@ fs.mkdirSync(path.dirname(outFile), {
 });
 fs.writeFileSync(outFile, `# Benchmarks\n${legend}\n\n`);
 
-[at, append, appendAll, find, flatMap, map].forEach(benchmark =>
+[at, append, appendAll, butLast, distinct, filter, find, flatMap, join, map, reduce, sortAt, sortMap].forEach(benchmark =>
     fs.appendFileSync(outFile, benchmarkSection(benchmark()))
 );
