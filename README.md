@@ -45,11 +45,16 @@ without breaking a fluent pipeline.
 over.
 * [flatMap()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html) doesn't require you
 to return only Stream (or Optional) — the required type is iterable
-    * That doesn't allow calling Stream and Optional a [monad](https://github.com/fantasyland/fantasy-land#monad).
-    Fluent Stream intentionally takes more practical, not puristic approach here.
+    * This means Stream and Optional aren't pure [monads](https://github.com/fantasyland/fantasy-land#monad).
+    Fluent Streams intentionally takes more practical, not puristic approach here.
 * The lib is optimized for arrays — much of operations work faster (and produce less garbage) if an input is array
 * If an operation needs to create an intermediate array (for example [sort()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html#sort)),
 the next step reuses it as a modifiable input array
+
+## Benchmarks
+Fluent Streams is compared to the native JS Array and two other popular very similar libs. Because each lib is specific,
+there is no the only winner, and in general all libs show reasonable performance.
+[Here are the results](https://github.com/aleksei-berezkin/fluent-streams-docs/tree/master/benchmarks). 
 
 ## Inspirations and acknowledgements
 The following great libs influenced Fluent Streams the most:
