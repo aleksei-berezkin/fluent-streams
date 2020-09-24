@@ -1,5 +1,9 @@
 # Fluent Streams
 
+[![Travis CI](https://travis-ci.org/aleksei-berezkin/fluent-streams.svg?branch=master)](https://travis-ci.org/github/aleksei-berezkin/fluent-streams)
+[![NPM version](https://img.shields.io/npm/v/fluent-streams.svg)](https://www.npmjs.com/package/fluent-streams)
+[![Read the docs](https://img.shields.io/badge/docs-available-44cc11.svg)](https://aleksei-berezkin.github.io/fluent-streams-docs/)
+
 Fluent Streams is a JavaScript and TypeScript library providing rich API for lazy iterables (arrays, sets, etc) processing.
 The main construct is a [Stream](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html)
 which is a thin stateless wrapper over an iterable; there is also an
