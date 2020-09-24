@@ -14,9 +14,11 @@ npm i fluent-streams
 ```
 ### Use
 To create or generate a stream or an optional use one of [factory functions](https://aleksei-berezkin.github.io/fluent-streams-docs/globals.html);
-the most generic is [stream()](https://aleksei-berezkin.github.io/fluent-streams-docs/globals.html#stream) which allows
-creating stream from any iterable. Fluent Streams exports all functions and interfaces by name from `index.ts`,
-so you import with `import { ... } from 'fluent-streams'`.
+the most generic is [stream()](https://aleksei-berezkin.github.io/fluent-streams-docs/globals.html#stream) which
+creates a stream from any iterable.
+
+Fluent Streams exports all functions and interfaces by name from `dist/index.js` and `dist/index.d.ts`,
+so you import everything with `import { ... } from 'fluent-streams'`.
 
 ```typescript
 import { stream } from 'fluent-streams';
@@ -41,13 +43,13 @@ The lib is not the first to provide such a functionality. However, there are thi
 * There is Optional. While some people assume it just to be a boilerplate, it provides the means to get back to stream
 with [flatMapToStream()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/optional.html#flatmaptostream)
 without breaking a fluent pipeline.
-* Stream and Optional seamlessly interoperate with ES6 iterables — they are iterables themselves, so may be iterated
+* Stream and Optional seamlessly interoperate with ES6 iterables — they are iterables themselves, and may be iterated
 over.
 * [flatMap()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html) doesn't require you
 to return only Stream (or Optional) — the required type is iterable
     * This means Stream and Optional aren't pure [monads](https://github.com/fantasyland/fantasy-land#monad).
     Fluent Streams intentionally takes more practical, not puristic approach here.
-* The lib is optimized for arrays — much of operations work faster (and produce less garbage) if an input is array
+* The lib is optimized for arrays — much of operations work faster (and produce less garbage) if an input is an array
 * If an operation needs to create an intermediate array (for example [sort()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html#sort)),
 the next step reuses it as a modifiable input array
 
