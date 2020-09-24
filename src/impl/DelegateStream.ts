@@ -114,6 +114,10 @@ export class DelegateStream<T> implements Stream<T> {
         return this.getDelegate().reduceRight(zero, reducer);
     }
 
+    reverse(): Stream<T> {
+        return new DelegateStream(() => this.getDelegate().reverse());
+    }
+
     shuffle(): Stream<T> {
         return new DelegateStream(() => this.getDelegate().shuffle());
     }

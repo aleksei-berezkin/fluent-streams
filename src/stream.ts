@@ -243,6 +243,11 @@ export interface Stream<T> extends Iterable<T> {
     reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U;
 
     /**
+     * Creates a stream whose elements are elements of this stream in the reversed order.
+     */
+    reverse(): Stream<T>;
+
+    /**
      * Creates a stream whose elements are elements of this stream with random order.
      */
     shuffle(): Stream<T>;

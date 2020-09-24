@@ -409,6 +409,16 @@ test('reduceRight', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd
     )),
 )));
 
+test('reverse', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
+    input,
+    s => s.reverse(),
+    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(
+        [...input].reverse(),
+        inputHint,
+        runHint,
+    ))
+)));
+
 test('shuffle', () => {
     const input = ['a', 'b', 'c', 'd', 'e'];
     const perm = permutations(input);

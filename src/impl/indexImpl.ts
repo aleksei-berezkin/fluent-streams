@@ -304,6 +304,14 @@ abstract class AbstractStream<T> implements Stream<T> {
         return current;
     }
 
+    reverse(): Stream<T> {
+        return new DelegateStream(() => {
+            const a = this.toArray();
+            a.reverse();
+            return new ArrayStream(a);
+        })
+    }
+
     shuffle(): Stream<T> {
         return new DelegateStream(() => {
             const a = this.toArray();
@@ -635,6 +643,16 @@ export class RandomAccessStream<T> extends AbstractStream<T>  {
             const {get, length} = this.spec();
             if (length > 0) return {done: false, value: get(length - 1)};
             return {done: true, value: undefined};
+        });
+    }
+
+    reverse(): Stream<T> {
+        return new RandomAccessStream(() => {
+            const {get, length} = this.spec();
+            return {
+                get: i => get(length - 1 - i),
+                length,
+            }
         });
     }
 

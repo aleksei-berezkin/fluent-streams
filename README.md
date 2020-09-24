@@ -54,7 +54,8 @@ the next step reuses it as a modifiable input array
 ## Benchmarks
 Fluent Streams is compared to the native JS Array and two other popular very similar libs. Because each lib is specific,
 there is no the only winner, and in general all libs show reasonable performance.
-[Here are the results](https://github.com/aleksei-berezkin/fluent-streams-docs/tree/master/benchmarks). 
+[Results are here](https://github.com/aleksei-berezkin/fluent-streams-docs/tree/master/benchmarks),
+and [benchmarks are here](). 
 
 ## Inspirations and acknowledgements
 The following great libs influenced Fluent Streams the most:
