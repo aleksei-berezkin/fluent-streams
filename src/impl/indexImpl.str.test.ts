@@ -324,6 +324,27 @@ test('join', () => forInput(
     ),
 ));
 
+test('join spec', () => [
+    [[] as string[], {sep: ','}, ''] as const,
+    [[] as string[], {sep: ',', leading: true}, ','] as const,
+    [[] as string[], {sep: ',', trailing: true}, ','] as const,
+    [[] as string[], {sep: ',', leading: true, trailing: true}, ',,'] as const,
+    [['a'] as string[], {sep: ','}, 'a'] as const,
+    [['a'] as string[], {sep: ',', leading: true}, ',a'] as const,
+    [['a'] as string[], {sep: ',', trailing: true}, 'a,'] as const,
+    [['a'] as string[], {sep: ',', leading: true, trailing: true}, ',a,'] as const,
+    [['a', 'b'] as string[], {sep: ','}, 'a,b'] as const,
+    [['a', 'b'] as string[], {sep: ',', leading: true}, ',a,b'] as const,
+    [['a', 'b'] as string[], {sep: ',', trailing: true}, 'a,b,'] as const,
+    [['a', 'b'] as string[], {sep: ',', leading: true, trailing: true}, ',a,b,'] as const,
+].forEach(([input, spec, output]) => forInput(
+    input,
+    s => s,
+    (s, inputHint) => twice(runHint =>
+        expect(s.join(spec)).toBeWithHint(output, inputHint, runHint)
+    ),
+)));
+
 test('joinBy', () => forInput(
     ['a', 'b', 'c', 'd', 'e', 'b'],
     s => s,

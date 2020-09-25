@@ -82,8 +82,8 @@ export class DelegateStream<T> implements Stream<T> {
         return new DelegateOptional(() => this.getDelegate().head());
     }
 
-    join(delimiter: string): string {
-        return this.getDelegate().join(delimiter);
+    join(sep: string | {sep: string, leading?: boolean, trailing?: boolean}): string {
+        return this.getDelegate().join(sep as any);
     }
 
     joinBy(getDelimiter: (l: T, r: T) => string): string {

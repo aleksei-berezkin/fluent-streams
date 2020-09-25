@@ -219,11 +219,30 @@ abstract class AbstractStream<T> implements Stream<T> {
         });
     }
 
-    join(delimiter: string): string {
-        return this.joinBy(() => delimiter);
+    join(sep: string | {sep: string, leading?: boolean, trailing?: boolean}): string {
+        let result = (typeof sep === 'object' && sep.leading) ? sep.sep : '';
+        let first = true;
+        const itr = this[Symbol.iterator]();
+        for ( ; ; ) {
+            const n = itr.next();
+            if (n.done) {
+                break;
+            }
+
+            if (first) {
+                result += String(n.value);
+                first = false;
+            } else {
+                result += (typeof sep === 'string' ? sep : sep.sep) + String(n.value);
+            }
+        }
+        if (typeof sep === 'object' && sep.trailing) {
+            result += sep.sep;
+        }
+        return result;
     }
 
-    joinBy(getDelimiter: (l: T, r: T) => string): string {
+    joinBy(getSep: (l: T, r: T) => string): string {
         let result = '';
         let prev: T = undefined as any;
         let first = true;
@@ -238,7 +257,7 @@ abstract class AbstractStream<T> implements Stream<T> {
                 result = String(n.value);
                 first = false;
             } else {
-                result += getDelimiter(prev, n.value) + String(n.value);
+                result += getSep(prev, n.value) + String(n.value);
             }
             prev = n.value;
         }
@@ -761,10 +780,6 @@ export class ArrayStream<T> extends RandomAccessStream<T> {
 
     forEach(effect: (i: T) => void) {
         this.array.forEach(effect);
-    }
-
-    join(delimiter: string): string {
-        return this.array.join(delimiter);
     }
 
     toArray(): T[] {

@@ -184,18 +184,24 @@ export interface Stream<T> extends Iterable<T> {
     head(): Optional<T>;
 
     /**
-     * Concatenates this stream items inserting `delimiter` between. Items are mapped to string using
+     * Concatenates this stream items inserting `sep` between. Items are mapped to string using
      * [String function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/String)
      * (without `new`).
-     * @param delimiter A string to insert between items.
+     * @param sep A string to insert between items.
      */
-    join(delimiter: string): string;
+    join(sep: string): string;
 
     /**
-     * Like {@link join} but retrieves delimiter calling `getDelimiter` for each adjacent items.
-     * @param getDelimiter A function to get delimiter for adjacent items pair
+     * Like {@link join} but can insert `sep` in the beginning and (or) in the end
+     * @param spec Object specifying separator, and whether to insert it before the first and after the last items
      */
-    joinBy(getDelimiter: (l: T, r: T) => string): string;
+    join(spec: {sep: string, leading?: boolean, trailing?: boolean}): string,
+
+    /**
+     * Like {@link join} but retrieves separator calling `getSep` for each adjacent items pair.
+     * @param getSep A function to get separator for adjacent items pair
+     */
+    joinBy(getSep: (l: T, r: T) => string): string;
 
     /**
      * Creates an optional resolving to the last item of this stream if it's nonempty, or resolving to empty
