@@ -92,6 +92,17 @@ test('appendAllIf neg', () => forInput(
     ),
 ));
 
+test('appendIf null itr', () => forInput(
+    ['a', 'b'],
+    s => s.appendAll({
+        [Symbol.iterator](): Iterator<string> {
+            return null as any;
+        }
+    }),
+    s => twice(() => expect(() => s.toArray()).toThrow()),
+    false,
+));
+
 test('at neg', () => forInput(
     ['a', 'b'],
     s => s.at(-1),
@@ -499,7 +510,7 @@ test('sort compareFn', () => [[], [1], [4, 1, 5, 2, 3]].forEach(input => forInpu
     ),
 )))
 
-test('sortBy', () => [[] as string[], ['0'], ['1', '0'], ['4', '22', '1', '6', '2']].forEach(input => forInput(
+test('sortBy', () => [[] as string[], ['0'], ['1', '0'], ['4', '22', '6', '6', '2']].forEach(input => forInput(
     input,
     s => s.sortBy(i => Number.parseInt(i)),
     (s, inputHint) => twice(runHint =>
@@ -621,6 +632,22 @@ test('toObject', () => {
         ),
     );
 });
+
+test('toObject not key', () =>
+    forInput(
+        [[{}, 1, 1212]],
+        s => s,
+        s => twice(() => expect(() => s.toObject()).toThrow()),
+    )
+);
+
+test('toObject not pair', () =>
+    forInput(
+        [['a', 1, 2]],
+        s => s,
+        s => twice(() => expect(() => s.toObject()).toThrow()),
+    )
+);
 
 test('transform gen', () => forInput(
     ['a', 'b', 'c'],
