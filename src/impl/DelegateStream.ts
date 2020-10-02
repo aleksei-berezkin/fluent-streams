@@ -26,14 +26,6 @@ export class DelegateStream<T> implements Stream<T> {
         return new DelegateStream(() => this.getDelegate().appendAll(items));
     }
 
-    appendAllIf(condition: boolean, items: Iterable<T>): Stream<T> {
-        return new DelegateStream(() => this.getDelegate().appendAllIf(condition, items));
-    }
-
-    appendIf(condition: boolean, item: T): Stream<T> {
-        return new DelegateStream(() => this.getDelegate().appendIf(condition, item));
-    }
-
     at(index: number): Optional<T> {
         return new DelegateOptional(() => this.getDelegate().at(index));
     }

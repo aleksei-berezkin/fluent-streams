@@ -35,18 +35,6 @@ test('append', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
     (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(input.concat('c'), inputHint, runHint)),
 )));
 
-test('appendIf', () => forInput(
-    ['a', 'b'],
-    s => s.appendIf(true, 'c'),
-    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(['a', 'b', 'c'], inputHint, runHint)),
-));
-
-test('appendIf neg', () => forInput(
-    ['a', 'b'],
-    s => s.appendIf(false, 'c'),
-    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(['a', 'b'], inputHint, runHint)),
-));
-
 test('appendAll', () =>  forInput(
     ['a', 'b'],
     s => s.appendAll(['c', 'd']),
@@ -68,31 +56,7 @@ test('appendAll suspended', () => {
     );
 });
 
-test('appendAllIf', () => forInput(
-    ['a', 'b'],
-    s => s.appendAllIf(true, ['c', 'd']),
-    (s, inputHint) => twice(runHint =>
-        expect(s.toArray()).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint)
-    ),
-));
-
-test('appendAllIf set', () => forInput(
-    ['a', 'b'],
-    s => s.appendAllIf(true, new Set(['c', 'd', 'e'])),
-    (s, inputHint) => twice(runHint =>
-        expect(s.toArray()).toEqualWithHint(['a', 'b', 'c', 'd', 'e'], inputHint, runHint)
-    ),
-));
-
-test('appendAllIf neg', () => forInput(
-    ['a', 'b'],
-    s => s.appendAllIf(false, ['c', 'd']),
-    (s, inputHint) => twice(runHint =>
-        expect(s.toArray()).toEqualWithHint(['a', 'b'], inputHint, runHint)
-    ),
-));
-
-test('appendIf null itr', () => forInput(
+test('append null itr', () => forInput(
     ['a', 'b'],
     s => s.appendAll({
         [Symbol.iterator](): Iterator<string> {

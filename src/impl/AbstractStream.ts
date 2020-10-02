@@ -33,53 +33,41 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
     }
 
     append(item: T): Stream<T> {
-        return this.appendIf(true, item);
+        return new impl.IteratorStream(() => {
+            const inner = this[Symbol.iterator]();
+            let fullDone = false;
+            return {
+                next(): IteratorResult<T> {
+                    const n = inner.next();
+                    if (!n.done) return n;
+                    if (!fullDone) {
+                        fullDone = true;
+                        return {done: false, value: item};
+                    }
+                    return {done: true, value: undefined};
+                }
+            };
+        });
     }
 
     appendAll(items: Iterable<T>): Stream<T> {
-        return this.appendAllIf(true, items);
-    }
-
-    appendAllIf(condition: boolean, items: Iterable<T>): Stream<T> {
-        return condition
-            ? new impl.IteratorStream(() => {
-                const left = this[Symbol.iterator]();
-                let right: Iterator<T> | undefined = undefined;
-                return {
-                    next(): IteratorResult<T> {
-                        const l = left.next();
-                        if (!l.done) return l;
-                        if (!right) {
-                            right = items[Symbol.iterator]();
-                            if (right == null) {
-                                throw new Error('Null iterator');
-                            }
+        return new impl.IteratorStream(() => {
+            const left = this[Symbol.iterator]();
+            let right: Iterator<T> | undefined = undefined;
+            return {
+                next(): IteratorResult<T> {
+                    const l = left.next();
+                    if (!l.done) return l;
+                    if (!right) {
+                        right = items[Symbol.iterator]();
+                        if (right == null) {
+                            throw new Error('Null iterator');
                         }
-                        return right.next();
                     }
-                };
-            })
-            : this;
-    }
-
-    appendIf(condition: boolean, item: T): Stream<T> {
-        return condition
-            ? new impl.IteratorStream(() => {
-                const inner = this[Symbol.iterator]();
-                let fullDone = false;
-                return {
-                    next(): IteratorResult<T> {
-                        const n = inner.next();
-                        if (!n.done) return n;
-                        if (!fullDone) {
-                            fullDone = true;
-                            return {done: false, value: item};
-                        }
-                        return {done: true, value: undefined};
-                    }
-                };
-            })
-            : this;
+                    return right.next();
+                }
+            };
+        });
     }
 
     at(index: number): Optional<T> {

@@ -81,26 +81,10 @@ export interface Stream<T> extends Iterable<T> {
     append(item: T): Stream<T>;
 
     /**
-     * Creates a stream whose items are all items of this stream optionally followed by provided `item` if `condition`
-     * is true, otherwise no data is appended.
-     * @param condition `true` or `false` to append or skip `item`
-     * @param item Item to append conditionally
-     */
-    appendIf(condition: boolean, item: T): Stream<T>;
-
-    /**
      * Creates a stream whose items are all items of this stream followed by all items provided by `items` iterable.  
      * @param items Items to append to this stream
      */
     appendAll(items: Iterable<T>): Stream<T>;
-
-    /**
-     * Creates a stream whose items are all items of this stream optionally followed by all items provided by `items`
-     * iterable if `condition` is true, otherwise no data is appended.
-     * @param condition `true` or `false` to append or skip `items`
-     * @param items Items to append to this stream conditionally
-     */
-    appendAllIf(condition: boolean, items: Iterable<T>): Stream<T>;
 
     /**
      * Creates a stream containing all but last items of this stream. The result stream is empty if
