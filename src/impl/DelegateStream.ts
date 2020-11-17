@@ -90,6 +90,10 @@ export class DelegateStream<T> implements Stream<T> {
         return new DelegateStream(() => this.getDelegate().map(mapper));
     }
 
+    peek(effect: (item: T) => void): Stream<T> {
+        return new DelegateStream(() => this.getDelegate().peek(effect));
+    }
+
     randomItem(): Optional<T> {
         return new DelegateOptional(() => this.getDelegate().randomItem());
     }

@@ -352,6 +352,16 @@ test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     ),
 )));
 
+test('peek', () => forInput(
+    ['a', 'b', 'c'],
+    s => s,
+    (s, inputHint) => twice(runHint => {
+        const collector: string[] = [];
+        expect(s.peek(c => collector.push(c)).toArray()).toEqualWithHint(['a', 'b', 'c'], inputHint, runHint);
+        expect(collector).toEqualWithHint(['a', 'b', 'c'], inputHint, `${runHint} -- checking collector`);
+    }),
+));
+
 test('randomItem', () => {
     const input = ['a', 'b', 'c'];
     const iterations = 3000;

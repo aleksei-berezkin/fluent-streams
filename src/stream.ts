@@ -200,6 +200,12 @@ export interface Stream<T> extends Iterable<T> {
     map<U>(mapper: (item: T) => U): Stream<U>;
 
     /**
+     * Creates a stream executing an effect for each item and returning the item as is.
+     * @param effect The effect to execute
+     */
+    peek(effect: (item: T) => void): Stream<T>;
+
+    /**
      * Creates an optional resolving to a random item of this stream, or resolving to emtpy if this stream is empty.
      */
     randomItem(): Optional<T>

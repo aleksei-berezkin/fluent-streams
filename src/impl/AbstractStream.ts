@@ -12,7 +12,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
     // Cannot return abstract class from function
     [Symbol.iterator](): Iterator<T> {
         throw undefined;
-    };
+    }
 
     all(predicate: (item: T) => boolean): boolean {
         for (const i of this) {
@@ -268,6 +268,21 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
 
     map<U>(mapper: (item: T) => U): Stream<U> {
         return new impl.IteratorStream(() => new MapIterator(this[Symbol.iterator](), mapper));
+    }
+
+    peek(effect: (item: T) => void): Stream<T> {
+        return new impl.IteratorStream(() => {
+            const itr = this[Symbol.iterator]();
+            return {
+                next() {
+                    const n = itr.next();
+                    if (!n.done) {
+                        effect(n.value);
+                    }
+                    return n;
+                }
+            };
+        });
     }
 
     randomItem(): Optional<T> {

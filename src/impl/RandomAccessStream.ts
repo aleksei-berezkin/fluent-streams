@@ -96,6 +96,20 @@ export default (impl: Impl) => class RandomAccessStream<T> extends impl.Abstract
         });
     }
 
+    peek(effect: (item: T) => void): Stream<T> {
+        return new RandomAccessStream(() => {
+            const {get, length} = this.spec();
+            return {
+                get: i => {
+                    const item = get(i);
+                    effect(item);
+                    return item;
+                },
+                length,
+            }
+        });
+    }
+
     reverse(): Stream<T> {
         return new RandomAccessStream(() => {
             const {get, length} = this.spec();
