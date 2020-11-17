@@ -319,6 +319,22 @@ export interface Stream<T> extends Iterable<T> {
      * stream items to an object; if some `key` appears multiple times in this stream, only the last [`key`, `value`]
      * will be included in the result object. If elements of this stream are not `[key, value]` as described above
      * throws an error.
+     *
+     * Using in TypeScript may require putting `as const` after each tuple to help TS infer correct tuple types:
+     *
+     * ```typescript
+     * stream(['a', 'b'] as const)
+     *   .map(key => [key, 0] as const)
+     *   .toObject()   // => type is {a: 0, b: 0}
+     *
+     * stream(['a', 'b'])
+     *   .map(key => [key, 0] as const)
+     *   .toObject()   // => type is {[p: string]: 0}
+     *
+     * stream(['a', 'b'])
+     *   .map(key => [key, 0])
+     *   .toObject()   // => type is unknown
+     * ```
      */
     toObject(): T extends readonly [string | number | symbol, any] ? { [key in T[0]]: T[1] } : unknown;
 
