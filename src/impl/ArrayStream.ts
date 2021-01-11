@@ -2,6 +2,7 @@ import { Stream } from '../stream';
 import { Impl } from './impl';
 import { _extends } from './helpers';
 // @ts-ignore
+// noinspection JSUnusedLocalSymbols
 const __extends = _extends;
 
 export const makeArrayStream = (impl: Impl) => class ArrayStream<T> extends impl.RandomAccessStream<T> implements Stream<T> {

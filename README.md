@@ -16,6 +16,15 @@ which is a thin stateless wrapper over an iterable; there is also an
 ```bash
 npm i fluent-streams
 ```
+
+### Add polyfills
+Fluent Streams is compiled to ES5, so no additional transpilation needed, however it needs the following polyfills:
+
+* Symbol
+* Symbol.iterator
+* Map
+* Set
+
 ### Use
 To create or generate a stream or an optional use one of [factory functions](https://aleksei-berezkin.github.io/fluent-streams-docs/globals.html);
 the most generic is [stream()](https://aleksei-berezkin.github.io/fluent-streams-docs/globals.html#stream) which

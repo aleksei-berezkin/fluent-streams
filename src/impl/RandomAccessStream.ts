@@ -6,6 +6,7 @@ import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 import { Impl } from './impl';
 import { _extends } from './helpers';
 // @ts-ignore
+// noinspection JSUnusedLocalSymbols
 const __extends = _extends;
 
 export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T> extends impl.AbstractStream<T> implements Stream<T> {
