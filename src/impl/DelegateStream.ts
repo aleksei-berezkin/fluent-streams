@@ -66,6 +66,10 @@ export class DelegateStream<T> implements Stream<T> {
         return this.getDelegate().forEach(effect);
     }
 
+    forEachUntil(effect: (item: T) => boolean | undefined | void) {
+        return this.getDelegate().forEachUntil(effect);
+    }
+
     groupBy<K>(getKey: (item: T) => K): Stream<readonly [K, T[]]> {
         return new DelegateStream(() => this.getDelegate().groupBy(getKey));
     }

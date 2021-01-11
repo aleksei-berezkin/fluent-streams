@@ -1,8 +1,11 @@
 import { Impl } from './impl';
 import { Stream } from '../stream';
+import { _extends } from './helpers';
+// @ts-ignore
+const __extends = _extends;
 
-export default (impl: Impl) => class InputArrayStream<T> extends impl.ArrayStream<T> implements Stream<T> {
+export const makeInputArrayStream = (impl: Impl) => class InputArrayStream<T> extends impl.ArrayStream<T> implements Stream<T> {
     toArray(): T[] {
-        return [...super.toArray()];
+        return super.toArray().slice();
     }
 }

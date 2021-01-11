@@ -1,5 +1,10 @@
 {
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "noEmitHelpers": true
+  },
+  "exclude": ["**/*.test.ts", "**/testUtil/*"],
   "extends": "./tsconfig.json",
-  "include": ["src"],
-  "exclude": ["**/*.test.ts", "**/testUtil/*"]
+  "include": ["src"]
 }

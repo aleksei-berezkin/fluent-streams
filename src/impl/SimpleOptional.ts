@@ -3,8 +3,8 @@ import { Stream } from '../stream';
 import { RandomAccessIterator } from './RandomAccessIterator';
 import { Impl } from './impl';
 
-export default (impl: Impl) => class SimpleOptional<T> implements Optional<T> {
-    constructor(private readonly getResult: () => IteratorResult<T>) {
+export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implements Optional<T> {
+    constructor(readonly getResult: () => IteratorResult<T>) {
     }
 
     [Symbol.iterator](): Iterator<T> {

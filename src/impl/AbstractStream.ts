@@ -8,28 +8,18 @@ import { shuffle } from './shuffle';
 import { Impl } from './impl';
 import { DelegateStream } from './DelegateStream';
 
-export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
+export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implements Stream<T> {
     // Cannot return abstract class from function
     [Symbol.iterator](): Iterator<T> {
         throw undefined;
     }
 
     all(predicate: (item: T) => boolean): boolean {
-        for (const i of this) {
-            if (!predicate(i)) {
-                return false;
-            }
-        }
-        return true;
+        return !this.forEachUntil(item => !predicate(item));
     }
 
     any(predicate: (item: T) => boolean): boolean {
-        for (const i of this) {
-            if (predicate(i)) {
-                return true;
-            }
-        }
-        return false;
+        return this.forEachUntil(predicate);
     }
 
     append(item: T): Stream<T> {
@@ -73,16 +63,13 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
     at(index: number): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
             let pos = 0;
-            let found = false;
             let value: T = undefined as any;
-            for (const i of this) {
-                if (pos === index) {
-                    value = i;
-                    found = true;
-                    break;
+            const found = this.forEachUntil(item => {
+                if (pos++ === index) {
+                    value = item;
+                    return true;
                 }
-                pos++;
-            }
+            });
             if (found) {
                 return {done: false, value};
             }
@@ -116,7 +103,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
             const set = new Set<T>();
             return {
                 next(): IteratorResult<T> {
-                    for (; ;) {
+                    for ( ; ; ) {
                         const n = itr.next();
                         if (n.done) return {done: true, value: undefined};
                         const k = getKey(n.value);
@@ -132,14 +119,14 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
 
     equals(other: Iterable<T>): boolean {
         const itr = other[Symbol.iterator]();
-        for (const i of this) {
+        const foundNotEqual = this.forEachUntil(item => {
             const n = itr.next();
-            if (n.done || i !== n.value) {
-                return false;
+            if (n.done || item !== n.value) {
+                return true;
             }
-        }
+        })
         // noinspection PointlessBooleanExpressionJS
-        return !!itr.next().done;
+        return !foundNotEqual && !!itr.next().done;
     }
 
     filter(predicate: (item: T) => boolean): Stream<T> {
@@ -147,7 +134,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
             const itr = this[Symbol.iterator]();
             return {
                 next(): IteratorResult<T> {
-                    for (; ;) {
+                    for ( ; ; ) {
                         const n = itr.next();
                         if (n.done) return {done: true, value: undefined};
                         if (predicate(n.value)) return n;
@@ -162,7 +149,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
             const itr = this[Symbol.iterator]();
             return {
                 next(): IteratorResult<U> {
-                    for (; ;) {
+                    for ( ; ; ) {
                         const n = itr.next();
                         if (n.done) return {done: true, value: undefined};
                         if (assertion(n.value)) return n as IteratorResult<U>;
@@ -175,7 +162,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
     find(predicate: (item: T) => boolean): Optional<T> {
         return new impl.SimpleOptional(() => {
             const itr = this[Symbol.iterator]();
-            for (; ;) {
+            for ( ; ; ) {
                 const n = itr.next();
                 if (n.done) return {done: true, value: undefined};
                 if (predicate(n.value)) return n;
@@ -188,8 +175,19 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
     }
 
     forEach(effect: (item: T) => void): void {
-        for (const i of this) {
-            effect(i);
+        this.forEachUntil(item => void effect(item));
+    }
+
+    forEachUntil(effect: (item: T) => boolean | undefined | void) {
+        const itr = this[Symbol.iterator]();
+        for ( ; ; ) {
+            const n = itr.next();
+            if (n.done) {
+                return false;
+            }
+            if (effect(n.value) === true) {
+                return true;
+            }
         }
     }
 
@@ -212,7 +210,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
         let result = (typeof sep === 'object' && sep.leading) ? sep.sep : '';
         let first = true;
         const itr = this[Symbol.iterator]();
-        for (; ;) {
+        for ( ; ; ) {
             const n = itr.next();
             if (n.done) {
                 break;
@@ -236,7 +234,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
         let prev: T = undefined as any;
         let first = true;
         const itr = this[Symbol.iterator]();
-        for (; ;) {
+        for ( ; ; ) {
             const n = itr.next();
             if (n.done) {
                 break;
@@ -257,10 +255,10 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
         return new impl.SimpleOptional<T>(() => {
             let value: T = undefined as any;
             let found = false;
-            for (const i of this) {
-                value = i;
+            this.forEach(item => {
+                value = item;
                 found = true;
-            }
+            })
             if (found) return {done: false, value};
             return {done: true, value: undefined};
         });
@@ -298,23 +296,21 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
         return new impl.SimpleOptional<T>(() => {
             let found = false;
             let value: T = undefined as any;
-            for (const i of this) {
+            this.forEach(item => {
                 if (!found) {
-                    value = i;
+                    value = item;
                     found = true;
                 } else {
-                    value = reducer(value, i);
+                    value = reducer(value, item);
                 }
-            }
+            })
             return found ? {done: false, value} : {done: true, value: undefined};
         });
     }
 
     reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U {
         let current = zero;
-        for (const i of this) {
-            current = reducer(current, i);
-        }
+        this.forEach(item => current = reducer(current, item))
         return current;
     }
 
@@ -359,9 +355,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
 
     size(): number {
         let s = 0;
-        for (const _ of this) {
-            s++;
-        }
+        this.forEach(() => s++);
         return s;
     }
 
@@ -397,7 +391,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
             let chunk: T[] | undefined = undefined;
             return {
                 next(): IteratorResult<T[]> {
-                    for (; ;) {
+                    for ( ; ; ) {
                         const n = itr.next();
                         if (n.done) {
                             if (chunk) {
@@ -469,9 +463,7 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
 
         return new impl.IteratorStream(() => {
             const buffer = new RingBuffer<T>(n);
-            for (const i of this) {
-                buffer.add(i);
-            }
+            this.forEach(item => buffer.add(item));
             return buffer[Symbol.iterator]();
         });
     }
@@ -487,26 +479,25 @@ export default (impl: Impl) => class AbstractStream<T> implements Stream<T> {
 
     toArray(): T[] {
         const a: T[] = [];
-        for (const i of this) {
-            a.push(i);
-        }
+        this.forEach(item => a.push(item));
         return a;
     }
 
     toObject(): T extends readonly [string | number | symbol, any] ? { [key in T[0]]: T[1] } : unknown {
         const obj: any = {};
-        for (const i of this) {
-            if (Array.isArray(i) && i.length === 2) {
-                const [k, v] = i;
+        this.forEach(item => {
+            if (Array.isArray(item) && item.length === 2) {
+                const k = item[0];
+                const v = item[1]
                 if (typeof k === 'string' || typeof k === 'number' || typeof k === 'symbol') {
                     obj[k] = v;
                 } else {
                     throw Error('Not key: ' + k);
                 }
             } else {
-                throw Error('Not 2-element array: ' + i);
+                throw Error('Not 2-element array: ' + item);
             }
-        }
+        });
         return obj;
     }
 

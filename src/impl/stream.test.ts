@@ -174,8 +174,8 @@ test('equals', () =>
                 ['a', 'b', 'c'],
                 t => t,
                 (t, inputHint2) => twice(runHint2 => {
-                    expect(s.equals(t)).toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
-                    expect(t.equals(s)).toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                    expect(s.equals(t)).toBeWithHint(true, () => `${ inputHint1() } - ${ inputHint2() }`, `${ runHint1 } - ${ runHint2 }`);
+                    expect(t.equals(s)).toBeWithHint(true, () => `${ inputHint1() } - ${ inputHint2() }`, `${ runHint1 } - ${ runHint2 }`);
                 }),
             )
         ),
@@ -191,8 +191,8 @@ test('equals neg', () =>
                 ['a', 'b', 'c', 'd'],
                 t => t,
                 (t, inputHint2) => twice(runHint2 => {
-                    expect(s.equals(t)).not.toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
-                    expect(t.equals(s)).not.toBeWithHint(true, () => `${ inputHint1 } - ${ inputHint2 }`, `${ runHint1 } - ${ runHint2 }`);
+                    expect(s.equals(t)).not.toBeWithHint(true, () => `${ inputHint1() } - ${ inputHint2() }`, `${ runHint1 } - ${ runHint2 }`);
+                    expect(t.equals(s)).not.toBeWithHint(true, () => `${ inputHint1() } - ${ inputHint2() }`, `${ runHint1 } - ${ runHint2 }`);
                 }),
             )
         ),

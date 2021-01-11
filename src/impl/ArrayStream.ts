@@ -1,8 +1,11 @@
 import { Stream } from '../stream';
 import { Impl } from './impl';
+import { _extends } from './helpers';
+// @ts-ignore
+const __extends = _extends;
 
-export default (impl: Impl) => class ArrayStream<T> extends impl.RandomAccessStream<T> implements Stream<T> {
-    constructor(private readonly array: T[]) {
+export const makeArrayStream = (impl: Impl) => class ArrayStream<T> extends impl.RandomAccessStream<T> implements Stream<T> {
+    constructor(readonly array: T[]) {
         super(() => ({get: i => array[i], length: array.length}));
     }
 

@@ -1,9 +1,9 @@
-import makeAbstractStream from './AbstractStream';
-import makeArrayStream from './ArrayStream';
-import makeInputArrayStream from './InputArrayStream';
-import makeIteratorStream from './IteratorStream';
-import makeRandomAccessStream from './RandomAccessStream';
-import makeSimpleOptional from './SimpleOptional';
+import { makeAbstractStream } from './AbstractStream';
+import { makeArrayStream } from './ArrayStream';
+import { makeInputArrayStream } from './InputArrayStream';
+import { makeIteratorStream } from './IteratorStream';
+import { makeRandomAccessStream } from './RandomAccessStream';
+import { makeSimpleOptional } from './SimpleOptional';
 
 // To avoid cyclic imports
 export const impl: {

@@ -1,11 +1,17 @@
 export function collectToMap<K, T>(items: Iterable<T>, getKey: (item: T) => K) {
     const m = new Map<K, T[]>();
-    for (const i of items) {
-        const k = getKey(i);
-        if (m.has(k)) {
-            m.get(k)!.push(i);
+    const itr = items[Symbol.iterator]();
+    for ( ; ; ) {
+        const n = itr.next();
+        if (n.done) {
+            break;
+        }
+        const item = n.value;
+        const key = getKey(item);
+        if (m.has(key)) {
+            m.get(key)!.push(item);
         } else {
-            m.set(k, [i]);
+            m.set(key, [item]);
         }
     }
     return m;

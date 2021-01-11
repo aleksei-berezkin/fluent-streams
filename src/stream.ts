@@ -154,6 +154,13 @@ export interface Stream<T> extends Iterable<T> {
     forEach(effect: (item: T) => void): void;
 
     /**
+     * Invokes `effect` for each item of this stream until `effect` returns `true`.
+     * @param effect An effect to apply to items which also returns stop flag.
+     * @return True if iteration was stopped because some effect returned `true`, false otherwise.
+     */
+    forEachUntil(effect: (item: T) => boolean | undefined | void): boolean;
+
+    /**
      * Creates a stream whose elements are `[key, items[]]` pairs; `key`s are retrieved with `getKey` applied
      * to this stream items; `items`s are arrays of this stream items which produced the same `key`. Order of items
      * is the same as in this stream.

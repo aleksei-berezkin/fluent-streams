@@ -4,9 +4,12 @@ import { Stream } from '../stream';
 import { Optional } from '../optional';
 import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 import { Impl } from './impl';
+import { _extends } from './helpers';
+// @ts-ignore
+const __extends = _extends;
 
-export default (impl: Impl) => class RandomAccessStream<T> extends impl.AbstractStream<T> implements Stream<T> {
-    constructor(private readonly spec: () => RandomAccessSpec<T>) {
+export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T> extends impl.AbstractStream<T> implements Stream<T> {
+    constructor(readonly spec: () => RandomAccessSpec<T>) {
         super();
     }
 
@@ -50,7 +53,7 @@ export default (impl: Impl) => class RandomAccessStream<T> extends impl.Abstract
             let pos = 0;
             return {
                 next(): IteratorResult<T> {
-                    for (; ;) {
+                    for ( ; ; ) {
                         if (pos === length) return {done: true, value: undefined};
                         const value = get(pos++);
                         if (predicate(value)) return {done: false, value};

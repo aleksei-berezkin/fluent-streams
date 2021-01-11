@@ -8,8 +8,9 @@
     "clean": "rm -rf dist ; jest --clearCache",
     "test": "jest",
     "compile": "tsc --project tsconfig.build.json",
+    "integrationTest": "node integrationTest.mjs",
     "rm-impl-typedef": "rm -f dist/impl/*.d.ts",
-    "build": "npm-run-all clean test compile rm-impl-typedef"
+    "build": "npm-run-all clean test compile rm-impl-typedef integrationTest"
   },
   "files": [
     "dist"
