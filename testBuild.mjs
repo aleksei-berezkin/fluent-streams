@@ -1,5 +1,5 @@
-import factories from './dist/factories.js';
-const { stream, streamOf } = factories;
+import fluentStreams from './dist/cjs/index.cjs.js';
+const { stream, streamOf } = fluentStreams;
 
 const output = stream(['a', 'b', 'c'])
     .map(s => s.toUpperCase())
@@ -8,5 +8,5 @@ const output = stream(['a', 'b', 'c'])
     .toArray();
 
 if (output[4] !== 'Ex') {
-    throw new Error('Not passed')
+    throw new Error(String(output))
 }

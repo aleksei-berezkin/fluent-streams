@@ -18,7 +18,7 @@ npm i fluent-streams
 ```
 
 ### Add polyfills
-Fluent Streams is compiled to ES5, so no additional transpilation needed, however it needs the following polyfills:
+Fluent Streams lib is distributed compiled to ES5, so no additional transpilation needed, however it needs the following polyfills in older environments:
 
 * Symbol
 * Symbol.iterator
@@ -65,6 +65,10 @@ to return only Stream (or Optional) — the required type is iterable
 * The lib is optimized for arrays — much of operations work faster (and produce less garbage) if an input is an array
 * If an operation needs to create an intermediate array (for example [sort()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html#sort)),
 the next step reuses it as a modifiable input array
+* The lib is very heavily tested
+    * Much of edge cases like empty or null/undefined inputs are checked
+    * Methods like `takeRandom` are checked to yield an expected result distribution
+    * Each test runs multiple times, including consecutive executions of the same stream (possibly modifying input data between runs), which makes sure streams are indeed stateless.
 
 ## Benchmarks
 Fluent Streams is compared to the native JS Array and two other popular very similar libs. Because each lib is specific,
@@ -81,3 +85,7 @@ The following great libs influenced Fluent Streams the most:
 * [Sequency](https://github.com/winterbe/sequency)
 * [Lazy.js](http://danieltao.com/lazy.js/)
 * [RxJS](https://rxjs-dev.firebaseapp.com/)
+
+## License
+The library is provided under the ISC license. Some TS helpers (`__extend`, `__exportStar`) are copied from
+[TSLib](https://github.com/microsoft/tslib/) which is 0BSD-licensed.  

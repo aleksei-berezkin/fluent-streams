@@ -1,6 +1,6 @@
 import { Stream } from '../stream';
 import { Impl } from './impl';
-import { _extends } from './helpers';
+import { _extends } from './_extends';
 // @ts-ignore
 // noinspection JSUnusedLocalSymbols
 const __extends = _extends;

@@ -2,9 +2,10 @@
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",
+    "outDir": "dist/cjs",
     "noEmitHelpers": true
   },
-  "exclude": ["**/*.test.ts", "**/testUtil/*"],
+  "exclude": ["**/*.test.ts", "**/testUtil/*", "**/*.esm.ts"],
   "extends": "./tsconfig.json",
   "include": ["src"]
 }
