@@ -30,7 +30,7 @@ To create or generate a stream or an optional use one of [factory functions](htt
 the most generic is [stream()](https://aleksei-berezkin.github.io/fluent-streams-docs/globals.html#stream) which
 creates a stream from any iterable.
 
-Fluent Streams exports all functions and interfaces by name from `dist/index.js` and `dist/index.d.ts`,
+Fluent Streams exports all functions and interfaces by name from index files,
 so you import everything with `import { ... } from 'fluent-streams'`.
 
 ```typescript
@@ -66,9 +66,11 @@ to return only Stream (or Optional) — the required type is iterable
 * If an operation needs to create an intermediate array (for example [sort()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html#sort)),
 the next step reuses it as a modifiable input array
 * The lib is very heavily tested
-    * Much of edge cases like empty or null/undefined inputs are checked
-    * Methods like `takeRandom` are checked to yield an expected result distribution
-    * Each test runs multiple times, including consecutive executions of the same stream (possibly modifying input data between runs), which makes sure streams are indeed stateless.
+    * Much of edge cases like empty or null/undefined inputs are thoroughly checked
+    * Methods with randomicity are checked to yield an even distribution
+    * Each test runs multiple times, and these runs include: consecutive executions of the same stream (optional),
+      modifying inputs between runs, querying iterator after exhaustion, using different stream implementations
+      in multiple combinations — everything to make sure stream fully obeys its own contract and iteration protocol.
 
 ## Benchmarks
 Fluent Streams is compared to the native JS Array and two other popular very similar libs. Because each lib is specific,
