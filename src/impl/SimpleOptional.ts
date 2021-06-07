@@ -38,7 +38,7 @@ export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implem
     flatMapToStream<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
         return new impl.IteratorStream(() => {
             const r = this.getResult();
-            if (r.done) return new RandomAccessIterator({get: undefined as any, length: 0});
+            if (r.done) return new RandomAccessIterator(undefined as any, 0);
             return mapper(r.value)[Symbol.iterator]();
         });
     }

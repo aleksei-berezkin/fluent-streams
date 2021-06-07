@@ -1,5 +1,5 @@
 export class MapIterator<T, U> implements Iterator<U> {
-    constructor(private input: Iterator<T>, private readonly mapper: (item: T) => U) {
+    constructor(private readonly input: Iterator<T>, private readonly mapper: (item: T) => U) {
     }
 
     next(): IteratorResult<U> {

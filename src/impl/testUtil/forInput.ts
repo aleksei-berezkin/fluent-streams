@@ -16,7 +16,7 @@ export function forStreamInput<T, Out extends Stream<unknown> | Optional<unknown
         [
             a => new impl.IteratorStream(() => a[Symbol.iterator]()),
             a => new impl.InputArrayStream(a),
-            a => new impl.RandomAccessStream(() => ({get: i => a[i], length: a.length})),
+            a => new impl.RandomAccessStream(i => a[i], () => a.length),
             a => new DelegateStream(() => new impl.ArrayStream([...a])),
         ],
         build,

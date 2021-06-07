@@ -1,11 +1,7 @@
 export class RandomAccessIterator<T> implements Iterator<T> {
     private pos = 0;
-    private readonly get: (i: number) => T;
-    private readonly length: number;
 
-    constructor(spec: {get: (i: number) => T, length: number}) {
-        this.get = spec.get;
-        this.length = spec.length;
+    constructor(readonly get: (i: number) => T, readonly length: number) {
     }
 
     next(): IteratorResult<T> {

@@ -46,13 +46,12 @@ export function streamOf<T>(...input: T[]): Stream<T> {
  * @param object Object to create `[key, value]`-pairs stream from.
  */
 export function entryStream<O extends {[k: string]: any}>(object: O): Stream<readonly [keyof O, O[keyof O]]> {
-    return new impl.RandomAccessStream<readonly [keyof O, O[keyof O]]>(() => {
-        const keys = Object.keys(object);
-        return {
-            get: i => [keys[i], object[keys[i]]] as const,
-            length: keys.length,
-        }
-    });
+    let _keys: string[] | undefined;
+    const keys = () => _keys || (_keys = Object.keys(object));
+    return new impl.RandomAccessStream<readonly [keyof O, O[keyof O]]>(
+        i => [keys()[i], object[keys()[i]]] as const,
+        () => keys().length,
+    );
 }
 
 /**
@@ -61,20 +60,21 @@ export function entryStream<O extends {[k: string]: any}>(object: O): Stream<rea
  * @param bound End value exclusively
  */
 export function range(from: number, bound: number): Stream<number> {
-    return new impl.RandomAccessStream(() => ({
-        get: i => from + i,
-        length: Math.max(0, bound - from),
-    }));
+    return new impl.RandomAccessStream(
+        i => from + i,
+        () => Math.max(0, bound - from),
+    );
 }
 
 /**
  * Creates a stream of `'a'`, `'b'`, `'c'`, ..., `'z'` strings.
  */
 export function abc(): Stream<string> {
-    return new impl.RandomAccessStream(() => ({
-        get: i => String.fromCharCode('a'.charCodeAt(0) + i),
-        length: 'z'.charCodeAt(0) + 1 - 'a'.charCodeAt(0),
-    }));
+    const length = 'z'.charCodeAt(0) + 1 - 'a'.charCodeAt(0);
+    return new impl.RandomAccessStream(
+        i => String.fromCharCode('a'.charCodeAt(0) + i),
+        () => length,
+    );
 }
 
 /**

@@ -1,14 +1,8 @@
-import { RandomAccessSpec } from './RandomAccessSpec';
-
 export class RandomAccessFlatMapIterator<T> implements Iterator<T> {
-    private readonly get: (i: number) => Iterable<T>;
-    private readonly length: number;
     private inner: Iterator<T> = undefined as any;
     private pos = -1;
 
-    constructor(spec: RandomAccessSpec<Iterable<T>>) {
-        this.get = spec.get;
-        this.length = spec.length;
+    constructor(private readonly get: (i: number) => Iterable<T>, private readonly length: number) {
     }
 
     next(): IteratorResult<T> {

@@ -1,4 +1,3 @@
-import { RandomAccessSpec } from './RandomAccessSpec';
 import { RandomAccessIterator } from './RandomAccessIterator';
 import { Stream } from '../stream';
 import { Optional } from '../optional';
@@ -10,47 +9,38 @@ import { _extends } from './_extends';
 const __extends = _extends;
 
 export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T> extends impl.AbstractStream<T> implements Stream<T> {
-    constructor(readonly spec: () => RandomAccessSpec<T>) {
+    constructor(readonly get: (i: number) => T, readonly length: () => number) {
         super();
     }
 
     [Symbol.iterator](): Iterator<T> {
-        return new RandomAccessIterator(this.spec());
+        return new RandomAccessIterator(this.get, this.length());
     }
 
     append(item: T): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {get, length} = this.spec();
-            return {
-                get: i => i === length ? item : get(i),
-                length: length + 1,
-            };
-        });
+        return new RandomAccessStream(
+            i => i === this.length() ? item : this.get(i),
+            () => this.length() + 1,
+        );
     }
 
     at(index: number): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            const {get, length} = this.spec();
-            if (0 <= index && index < length) {
-                return {done: false, value: get(index)};
+            if (0 <= index && index < this.length()) {
+                return {done: false, value: this.get(index)};
             }
             return {done: true, value: undefined};
         });
     }
 
     butLast(): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {get, length} = this.spec();
-            return {
-                get,
-                length: Math.max(length - 1, 0),
-            };
-        });
+        return new RandomAccessStream(this.get, () => Math.max(this.length() - 1, 0));
     }
 
     filter(predicate: (item: T) => boolean): Stream<T> {
         return new impl.IteratorStream(() => {
-            const {get, length} = this.spec();
+            const get = this.get;
+            const length = this.length();
             let pos = 0;
             return {
                 next(): IteratorResult<T> {
@@ -66,9 +56,8 @@ export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T
 
     find(predicate: (item: T) => boolean): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            const {get, length} = this.spec();
-            for (let i = 0; i < length; i++) {
-                const value = get(i);
+            for (let i = 0; i < this.length(); i++) {
+                const value = this.get(i);
                 if (predicate(value)) return {done: false, value};
             }
             return {done: true, value: undefined};
@@ -77,142 +66,117 @@ export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T
 
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
         return new impl.IteratorStream(() => {
-            const {get, length} = this.spec();
-            return new RandomAccessFlatMapIterator({
-                get: (i: number) => mapper(get(i)),
-                length,
-            });
+            return new RandomAccessFlatMapIterator(
+                (i: number) => mapper(this.get(i)),
+                this.length(),
+            );
         });
     }
 
     forEach(effect: (i: T) => void) {
-        const {get, length} = this.spec();
-        for (let i = 0; i < length; i++) {
-            effect(get(i));
+        for (let i = 0; i < this.length(); i++) {
+            effect(this.get(i));
         }
     }
 
     last(): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            const {get, length} = this.spec();
-            if (length > 0) return {done: false, value: get(length - 1)};
+            if (this.length() > 0) return {done: false, value: this.get(this.length() - 1)};
             return {done: true, value: undefined};
         });
     }
 
     peek(effect: (item: T) => void): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {get, length} = this.spec();
-            return {
-                get: i => {
-                    const item = get(i);
-                    effect(item);
-                    return item;
-                },
-                length,
-            }
-        });
+        return new RandomAccessStream(
+            i => {
+                const item = this.get(i);
+                effect(item);
+                return item;
+            },
+            this.length,
+        );
     }
 
     reverse(): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {get, length} = this.spec();
-            return {
-                get: i => get(length - 1 - i),
-                length,
-            };
-        });
+        return new RandomAccessStream(
+            i => this.get(this.length() - 1 - i),
+            this.length,
+        );
     }
 
     single(): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            const {get, length} = this.spec();
-            if (length === 1) return {done: false, value: get(0)};
+            if (this.length() === 1) return {done: false, value: this.get(0)};
             return {done: true, value: undefined};
         });
     }
 
     size(): number {
-        return this.spec().length;
+        return this.length();
     }
 
     tail(): Stream<T> {
-        return new RandomAccessStream<T>(() => {
-            const {get, length} = this.spec();
-            return {
-                get: i => get(i + 1),
-                length: Math.max(0, length - 1),
-            };
-        });
+        return new RandomAccessStream<T>(
+            i => this.get(i + 1),
+            () => Math.max(0, this.length() - 1),
+        );
     }
 
     take(n: number): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {get, length} = this.spec();
-            return {
-                get,
-                length: Math.max(0, Math.min(n, length)),
-            };
-        });
+        return new RandomAccessStream(
+            this.get,
+            () => Math.max(0, Math.min(n, this.length())),
+        );
     }
 
     takeLast(n: number): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {get, length} = this.spec();
-            const actualN = Math.min(n, length);
-            return {
-                get: i => get(i + (length - actualN)),
-                length: Math.max(0, Math.min(actualN, length)),
-            };
-        });
+        return new RandomAccessStream(
+            i => this.get(Math.max(0, this.length() - n) + i),
+            () => Math.max(0, Math.min(n, this.length())),
+        );
     }
 
     map<U>(mapper: (item: T) => U): Stream<U> {
-        return new RandomAccessStream(() => {
-            const {get, length} = this.spec();
-            return {
-                get: i => mapper(get(i)),
-                length,
-            };
-        });
+        return new RandomAccessStream(
+            i => mapper(this.get(i)),
+            this.length,
+        );
     }
 
     randomItem(): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            const {get, length} = this.spec();
+            const length = this.length();
             return length
-                ? {done: false, value: get(Math.floor(Math.random() * length))}
+                ? {done: false, value: this.get(Math.floor(Math.random() * length))}
                 : {done: true, value: undefined};
         });
     }
 
     reduce(reducer: (l: T, r: T) => T): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            const {get, length} = this.spec();
+            const length = this.length();
             if (!length) return {done: true, value: undefined};
 
-            let value: T = get(0);
+            let value: T = this.get(0);
             for (let i = 1; i < length; i++) {
-                value = reducer(value, get(i));
+                value = reducer(value, this.get(i));
             }
             return {done: false, value};
         });
     }
 
     reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U {
-        const {get, length} = this.spec();
         let current = zero;
-        for (let i = 0; i < length; i++) {
-            current = reducer(current, get(i));
+        for (let i = 0; i < this.length(); i++) {
+            current = reducer(current, this.get(i));
         }
         return current;
     }
 
     reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U {
-        const {get, length} = this.spec();
         let current = zero;
-        for (let i = length - 1; i >= 0; i--) {
-            current = reducer(get(i), current);
+        for (let i = this.length() - 1; i >= 0; i--) {
+            current = reducer(this.get(i), current);
         }
         return current;
     }

@@ -473,7 +473,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
             const a = this.toArray();
             const length = Math.max(0, Math.min(n, a.length));
             shuffle(a, length);
-            return new impl.RandomAccessStream(() => ({get: i => a[i], length}));
+            return new impl.RandomAccessStream(i => a[i], () => length);
         });
     }
 
