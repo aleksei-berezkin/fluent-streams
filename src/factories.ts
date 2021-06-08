@@ -70,10 +70,10 @@ export function range(from: number, bound: number): Stream<number> {
  * Creates a stream of `'a'`, `'b'`, `'c'`, ..., `'z'` strings.
  */
 export function abc(): Stream<string> {
-    const length = 'z'.charCodeAt(0) + 1 - 'a'.charCodeAt(0);
+    const size = 'z'.charCodeAt(0) + 1 - 'a'.charCodeAt(0);
     return new impl.RandomAccessStream(
         i => String.fromCharCode('a'.charCodeAt(0) + i),
-        () => length,
+        () => size,
     );
 }
 

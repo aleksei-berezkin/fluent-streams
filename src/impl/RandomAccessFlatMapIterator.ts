@@ -2,7 +2,7 @@ export class RandomAccessFlatMapIterator<T> implements Iterator<T> {
     private inner: Iterator<T> = undefined as any;
     private pos = -1;
 
-    constructor(private readonly get: (i: number) => Iterable<T>, private readonly length: number) {
+    constructor(private readonly get: (i: number) => Iterable<T>, private readonly size: number) {
     }
 
     next(): IteratorResult<T> {
@@ -11,7 +11,7 @@ export class RandomAccessFlatMapIterator<T> implements Iterator<T> {
                 const i = this.inner.next();
                 if (!i.done) return i;
             }
-            if (this.pos === this.length - 1) {
+            if (this.pos === this.size - 1) {
                 return {done: true, value: undefined};
             }
             this.inner = this.get(++this.pos)[Symbol.iterator]();

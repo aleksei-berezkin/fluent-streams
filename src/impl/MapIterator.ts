@@ -9,5 +9,4 @@ export class MapIterator<T, U> implements Iterator<U> {
         }
         return {done: false, value: this.mapper(n.value)};
     }
-
 }

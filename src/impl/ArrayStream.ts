@@ -25,7 +25,7 @@ export const makeArrayStream = (impl: Impl) => class ArrayStream<T> extends impl
     zipWithIndex(): Stream<readonly [T, number]> {
         return new impl.RandomAccessStream(
             i => [this.array[i], i] as const,
-            this.length,
+            this.size,
         );
     }
 

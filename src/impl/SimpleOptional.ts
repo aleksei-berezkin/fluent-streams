@@ -4,11 +4,11 @@ import { RandomAccessIterator } from './RandomAccessIterator';
 import { Impl } from './impl';
 
 export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implements Optional<T> {
-    constructor(readonly getResult: () => IteratorResult<T>) {
+    constructor(readonly next: () => IteratorResult<T>) {
     }
 
     [Symbol.iterator](): Iterator<T> {
-        let r = this.getResult();
+        let r = this.next();
         return {
             next(): IteratorResult<T> {
                 if (r.done) return r;
@@ -22,14 +22,14 @@ export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implem
 
     filter(predicate: (item: T) => boolean): Optional<T> {
         return new SimpleOptional(() => {
-            const r = this.getResult();
+            const r = this.next();
             return !r.done && predicate(r.value) ? r : {done: true, value: undefined};
         });
     }
 
     flatMap<U>(mapper: (item: T) => Iterable<U>): Optional<U> {
         return new SimpleOptional(() => {
-            const r = this.getResult();
+            const r = this.next();
             if (r.done) return r;
             return mapper(r.value)[Symbol.iterator]().next();
         });
@@ -37,14 +37,14 @@ export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implem
 
     flatMapToStream<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
         return new impl.IteratorStream(() => {
-            const r = this.getResult();
+            const r = this.next();
             if (r.done) return new RandomAccessIterator(undefined as any, 0);
             return mapper(r.value)[Symbol.iterator]();
         });
     }
 
     get(): T {
-        const r = this.getResult();
+        const r = this.next();
         if (r.done) {
             throw new Error('No value');
         }
@@ -52,27 +52,27 @@ export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implem
     }
 
     has(predicate: (item: T) => boolean): boolean {
-        const r = this.getResult();
+        const r = this.next();
         return !r.done && predicate(r.value);
     }
 
     hasNot(predicate: (item: T) => boolean): boolean {
-        const r = this.getResult();
+        const r = this.next();
         return r.done || !predicate(r.value);
     }
 
     is(item: T): boolean {
-        const r = this.getResult();
+        const r = this.next();
         return !r.done && r.value === item;
     }
 
     isPresent(): boolean {
-        return !this.getResult().done;
+        return !this.next().done;
     }
 
     map<U>(mapper: (item: T) => U): Optional<U> {
         return new SimpleOptional(() => {
-            const r = this.getResult();
+            const r = this.next();
             if (r.done) return r;
             return {done: false, value: mapper(r.value)};
         });
@@ -80,7 +80,7 @@ export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implem
 
     mapNullable<U>(mapper: (item: T) => (U | null | undefined)): Optional<U> {
         return new SimpleOptional<U>(() => {
-            const r = this.getResult();
+            const r = this.next();
             if (r.done) return r;
             const value = mapper(r.value);
             if (value != null) return {done: false, value};
@@ -89,22 +89,22 @@ export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implem
     }
 
     orElse<U>(other: U): T | U {
-        const r = this.getResult();
+        const r = this.next();
         return !r.done ? r.value : other;
     }
 
     orElseGet<U>(get: () => U): T | U {
-        const r = this.getResult();
+        const r = this.next();
         return !r.done ? r.value : get();
     }
 
     orElseNull(): T | null {
-        const r = this.getResult();
+        const r = this.next();
         return !r.done ? r.value : null;
     }
 
     orElseThrow(createError: () => Error): T {
-        const r = this.getResult();
+        const r = this.next();
         if (r.done) {
             throw createError();
         }
@@ -112,7 +112,7 @@ export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implem
     }
 
     orElseUndefined(): T | undefined {
-        const r = this.getResult();
+        const r = this.next();
         if (r.done) {
             return undefined;
         }
@@ -120,18 +120,18 @@ export const makeSimpleOptional = (impl: Impl) => class SimpleOptional<T> implem
     }
 
     resolve(): {has: true; val: T} | {has: false} {
-        const r = this.getResult();
+        const r = this.next();
         return r.done ? {has: false} : {has: true, val: r.value};
     }
 
     toArray(): T[] {
-        const r = this.getResult();
+        const r = this.next();
         return r.done ? [] : [r.value];
     }
 
     toStream(): Stream<T> {
         return new impl.IteratorStream(() => {
-            let r = this.getResult();
+            let r = this.next();
             return {
                 next(): IteratorResult<T> {
                     if (r.done) return r;

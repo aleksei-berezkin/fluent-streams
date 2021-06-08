@@ -9,24 +9,24 @@ import { _extends } from './_extends';
 const __extends = _extends;
 
 export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T> extends impl.AbstractStream<T> implements Stream<T> {
-    constructor(readonly get: (i: number) => T, readonly length: () => number) {
+    constructor(readonly get: (i: number) => T, readonly size: () => number) {
         super();
     }
 
     [Symbol.iterator](): Iterator<T> {
-        return new RandomAccessIterator(this.get, this.length());
+        return new RandomAccessIterator(this.get, this.size());
     }
 
     append(item: T): Stream<T> {
         return new RandomAccessStream(
-            i => i === this.length() ? item : this.get(i),
-            () => this.length() + 1,
+            i => i === this.size() ? item : this.get(i),
+            () => this.size() + 1,
         );
     }
 
     at(index: number): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            if (0 <= index && index < this.length()) {
+            if (0 <= index && index < this.size()) {
                 return {done: false, value: this.get(index)};
             }
             return {done: true, value: undefined};
@@ -34,18 +34,18 @@ export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T
     }
 
     butLast(): Stream<T> {
-        return new RandomAccessStream(this.get, () => Math.max(this.length() - 1, 0));
+        return new RandomAccessStream(this.get, () => Math.max(this.size() - 1, 0));
     }
 
     filter(predicate: (item: T) => boolean): Stream<T> {
         return new impl.IteratorStream(() => {
             const get = this.get;
-            const length = this.length();
+            const size = this.size();
             let pos = 0;
             return {
                 next(): IteratorResult<T> {
                     for ( ; ; ) {
-                        if (pos === length) return {done: true, value: undefined};
+                        if (pos === size) return {done: true, value: undefined};
                         const value = get(pos++);
                         if (predicate(value)) return {done: false, value};
                     }
@@ -56,7 +56,7 @@ export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T
 
     find(predicate: (item: T) => boolean): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            for (let i = 0; i < this.length(); i++) {
+            for (let i = 0; i < this.size(); i++) {
                 const value = this.get(i);
                 if (predicate(value)) return {done: false, value};
             }
@@ -68,20 +68,20 @@ export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T
         return new impl.IteratorStream(() => {
             return new RandomAccessFlatMapIterator(
                 (i: number) => mapper(this.get(i)),
-                this.length(),
+                this.size(),
             );
         });
     }
 
     forEach(effect: (i: T) => void) {
-        for (let i = 0; i < this.length(); i++) {
+        for (let i = 0; i < this.size(); i++) {
             effect(this.get(i));
         }
     }
 
     last(): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            if (this.length() > 0) return {done: false, value: this.get(this.length() - 1)};
+            if (this.size() > 0) return {done: false, value: this.get(this.size() - 1)};
             return {done: true, value: undefined};
         });
     }
@@ -93,72 +93,68 @@ export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T
                 effect(item);
                 return item;
             },
-            this.length,
+            this.size,
         );
     }
 
     reverse(): Stream<T> {
         return new RandomAccessStream(
-            i => this.get(this.length() - 1 - i),
-            this.length,
+            i => this.get(this.size() - 1 - i),
+            this.size,
         );
     }
 
     single(): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            if (this.length() === 1) return {done: false, value: this.get(0)};
+            if (this.size() === 1) return {done: false, value: this.get(0)};
             return {done: true, value: undefined};
         });
-    }
-
-    size(): number {
-        return this.length();
     }
 
     tail(): Stream<T> {
         return new RandomAccessStream<T>(
             i => this.get(i + 1),
-            () => Math.max(0, this.length() - 1),
+            () => Math.max(0, this.size() - 1),
         );
     }
 
     take(n: number): Stream<T> {
         return new RandomAccessStream(
             this.get,
-            () => Math.max(0, Math.min(n, this.length())),
+            () => Math.max(0, Math.min(n, this.size())),
         );
     }
 
     takeLast(n: number): Stream<T> {
         return new RandomAccessStream(
-            i => this.get(Math.max(0, this.length() - n) + i),
-            () => Math.max(0, Math.min(n, this.length())),
+            i => this.get(Math.max(0, this.size() - n) + i),
+            () => Math.max(0, Math.min(n, this.size())),
         );
     }
 
     map<U>(mapper: (item: T) => U): Stream<U> {
         return new RandomAccessStream(
             i => mapper(this.get(i)),
-            this.length,
+            this.size,
         );
     }
 
     randomItem(): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            const length = this.length();
-            return length
-                ? {done: false, value: this.get(Math.floor(Math.random() * length))}
+            const size = this.size();
+            return size
+                ? {done: false, value: this.get(Math.floor(Math.random() * size))}
                 : {done: true, value: undefined};
         });
     }
 
     reduce(reducer: (l: T, r: T) => T): Optional<T> {
         return new impl.SimpleOptional<T>(() => {
-            const length = this.length();
-            if (!length) return {done: true, value: undefined};
+            const size = this.size();
+            if (!size) return {done: true, value: undefined};
 
             let value: T = this.get(0);
-            for (let i = 1; i < length; i++) {
+            for (let i = 1; i < size; i++) {
                 value = reducer(value, this.get(i));
             }
             return {done: false, value};
@@ -167,7 +163,7 @@ export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T
 
     reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U {
         let current = zero;
-        for (let i = 0; i < this.length(); i++) {
+        for (let i = 0; i < this.size(); i++) {
             current = reducer(current, this.get(i));
         }
         return current;
@@ -175,7 +171,7 @@ export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T
 
     reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U {
         let current = zero;
-        for (let i = this.length() - 1; i >= 0; i--) {
+        for (let i = this.size() - 1; i >= 0; i--) {
             current = reducer(this.get(i), current);
         }
         return current;
