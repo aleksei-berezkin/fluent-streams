@@ -1,4 +1,4 @@
-import fluentStreams from './dist/cjs/index.cjs.js';
+import fluentStreams from './dist/cjs/index.js';
 const { stream, streamOf } = fluentStreams;
 
 const output = stream(['a', 'b', 'c'])

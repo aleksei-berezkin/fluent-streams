@@ -3,10 +3,6 @@ import { Stream } from '../stream';
 import { Optional } from '../optional';
 import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 import { Impl } from './impl';
-import { _extends } from './_extends';
-// @ts-ignore
-// noinspection JSUnusedLocalSymbols
-const __extends = _extends;
 
 export const makeRandomAccessStream = (impl: Impl) => class RandomAccessStream<T> extends impl.AbstractStream<T> implements Stream<T> {
     constructor(readonly get: (i: number) => T, readonly size: () => number) {

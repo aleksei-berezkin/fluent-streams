@@ -89,5 +89,4 @@ The following great libs influenced Fluent Streams the most:
 * [RxJS](https://rxjs-dev.firebaseapp.com/)
 
 ## License
-The library is provided under the ISC license. Some TS helpers (`__extend`, `__exportStar`) are copied from
-[TSLib](https://github.com/microsoft/tslib/) which is 0BSD-licensed.  
+The library is provided under the ISC license.  
