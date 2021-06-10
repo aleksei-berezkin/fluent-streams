@@ -1,6 +1,6 @@
 import { Stream } from './stream';
 import { Optional } from './optional';
-import { impl } from './impl/impl';
+import { ArrayStream, InputArrayStream, IteratorStream, RandomAccessStream, SimpleOptional } from './impl/streamImpl';
 
 /**
  * Creates a stream from an iterable (for example, array, set etc). Streams created with this function never
@@ -13,8 +13,8 @@ import { impl } from './impl/impl';
  */
 export function stream<T>(input: Iterable<T>): Stream<T> {
     return Array.isArray(input)
-        ? new impl.InputArrayStream(input as T[])
-        : new impl.IteratorStream(() => input[Symbol.iterator]());
+        ? new InputArrayStream(input as T[])
+        : new IteratorStream(() => input[Symbol.iterator]());
 }
 
 /**
@@ -24,7 +24,7 @@ export function stream<T>(input: Iterable<T>): Stream<T> {
  * @param input array allowed for modifications to create stream from
  */
 export function streamFromModifiable<T>(input: T[]): Stream<T> {
-    return new impl.ArrayStream(input);
+    return new ArrayStream(input);
 }
 
 /**
@@ -35,7 +35,7 @@ export function streamFromModifiable<T>(input: T[]): Stream<T> {
  * @param input Elements to create a stream from
  */
 export function streamOf<T>(...input: T[]): Stream<T> {
-    return new impl.ArrayStream(input);
+    return new ArrayStream(input);
 }
 
 /**
@@ -48,7 +48,7 @@ export function streamOf<T>(...input: T[]): Stream<T> {
 export function entryStream<O extends {[k: string]: any}>(object: O): Stream<readonly [keyof O, O[keyof O]]> {
     let _keys: string[] | undefined;
     const keys = () => _keys || (_keys = Object.keys(object));
-    return new impl.RandomAccessStream<readonly [keyof O, O[keyof O]]>(
+    return new RandomAccessStream<readonly [keyof O, O[keyof O]]>(
         i => [keys()[i], object[keys()[i]]] as const,
         () => keys().length,
     );
@@ -60,7 +60,7 @@ export function entryStream<O extends {[k: string]: any}>(object: O): Stream<rea
  * @param bound End value exclusively
  */
 export function range(from: number, bound: number): Stream<number> {
-    return new impl.RandomAccessStream(
+    return new RandomAccessStream(
         i => from + i,
         () => Math.max(0, bound - from),
     );
@@ -71,7 +71,7 @@ export function range(from: number, bound: number): Stream<number> {
  */
 export function abc(): Stream<string> {
     const size = 'z'.charCodeAt(0) + 1 - 'a'.charCodeAt(0);
-    return new impl.RandomAccessStream(
+    return new RandomAccessStream(
         i => String.fromCharCode('a'.charCodeAt(0) + i),
         () => size,
     );
@@ -83,7 +83,7 @@ export function abc(): Stream<string> {
  * @param value An item to repeat endlessly
  */
 export function same<T>(value: T): Stream<T> {
-    return new impl.IteratorStream(() => ({
+    return new IteratorStream(() => ({
         next: () => ({done: false, value}),
     }));
 }
@@ -95,7 +95,7 @@ export function same<T>(value: T): Stream<T> {
  * @param getItem Function that produces items.
  */
 export function continually<T>(getItem: () => T): Stream<T> {
-    return new impl.IteratorStream(() => ({
+    return new IteratorStream(() => ({
         next: () => ({done: false, value: getItem()}),
     }));
 }
@@ -107,7 +107,7 @@ export function continually<T>(getItem: () => T): Stream<T> {
  * @param input 
  */
 export function optional<T>(input: Iterable<T>): Optional<T> {
-    return new impl.SimpleOptional(() => input[Symbol.iterator]().next());
+    return new SimpleOptional(() => input[Symbol.iterator]().next());
 }
 
 /**
@@ -117,7 +117,7 @@ export function optional<T>(input: Iterable<T>): Optional<T> {
  * @param getInput Function which produces value or `null` or `undefined`
  */
 export function optionalOfNullable<T>(getInput: () => T | null | undefined): Optional<T> {
-    return new impl.SimpleOptional<T>(() => {
+    return new SimpleOptional<T>(() => {
         const input = getInput();
         if (input != null) return {done: false, value: input};
         return {done: true, value: undefined};

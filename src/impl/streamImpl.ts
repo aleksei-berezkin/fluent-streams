@@ -5,14 +5,12 @@ import { collectToMap } from './collectToMap';
 import { MapIterator } from './MapIterator';
 import { RingBuffer } from './RingBuffer';
 import { shuffle } from './shuffle';
-import { Impl } from './impl';
 import { DelegateStream } from './DelegateStream';
+import { RandomAccessIterator } from './RandomAccessIterator';
+import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 
-export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implements Stream<T> {
-    // Cannot return abstract class from function
-    [Symbol.iterator](): Iterator<T> {
-        throw undefined;
-    }
+abstract class AbstractStream<T> implements Stream<T> {
+    abstract [Symbol.iterator](): Iterator<T>;
 
     all(predicate: (item: T) => boolean): boolean {
         return !this.forEachUntil(item => !predicate(item));
@@ -23,7 +21,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     append(item: T): Stream<T> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const inner = this[Symbol.iterator]();
             let fullDone = false;
             return {
@@ -41,7 +39,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     appendAll(items: Iterable<T>): Stream<T> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const left = this[Symbol.iterator]();
             let right: Iterator<T> | undefined = undefined;
             return {
@@ -61,7 +59,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     at(index: number): Optional<T> {
-        return new impl.SimpleOptional<T>(() => {
+        return new SimpleOptional<T>(() => {
             let pos = 0;
             let value: T = undefined as any;
             const found = this.forEachUntil(item => {
@@ -82,7 +80,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     butLast(): Stream<T> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const itr = this[Symbol.iterator]();
             let p = itr.next();
             return {
@@ -98,7 +96,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     distinctBy(getKey: (item: T) => any): Stream<T> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const itr = this[Symbol.iterator]();
             const set = new Set<T>();
             return {
@@ -130,7 +128,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     filter(predicate: (item: T) => boolean): Stream<T> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const itr = this[Symbol.iterator]();
             return {
                 next(): IteratorResult<T> {
@@ -145,7 +143,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     filterWithAssertion<U extends T>(assertion: (item: T) => item is U): Stream<U> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const itr = this[Symbol.iterator]();
             return {
                 next(): IteratorResult<U> {
@@ -160,7 +158,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     find(predicate: (item: T) => boolean): Optional<T> {
-        return new impl.SimpleOptional(() => {
+        return new SimpleOptional(() => {
             const itr = this[Symbol.iterator]();
             for ( ; ; ) {
                 const n = itr.next();
@@ -171,7 +169,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
-        return new impl.IteratorStream(() => new FlatMapIterator(this[Symbol.iterator](), mapper));
+        return new IteratorStream(() => new FlatMapIterator(this[Symbol.iterator](), mapper));
     }
 
     forEach(effect: (item: T) => void): void {
@@ -192,14 +190,14 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     groupBy<K>(getKey: (item: T) => K): Stream<readonly [K, T[]]> {
-        return new impl.IteratorStream<readonly [K, T[]]>(() => {
+        return new IteratorStream<readonly [K, T[]]>(() => {
             const map = collectToMap(this, getKey);
             return map[Symbol.iterator]();
         });
     }
 
     head(): Optional<T> {
-        return new impl.SimpleOptional(() => {
+        return new SimpleOptional(() => {
             const n = this[Symbol.iterator]().next();
             if (!n.done) return n;
             return {done: true, value: undefined};
@@ -252,7 +250,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     last(): Optional<T> {
-        return new impl.SimpleOptional<T>(() => {
+        return new SimpleOptional<T>(() => {
             let value: T = undefined as any;
             let found = false;
             this.forEach(item => {
@@ -265,11 +263,11 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     map<U>(mapper: (item: T) => U): Stream<U> {
-        return new impl.IteratorStream(() => new MapIterator(this[Symbol.iterator](), mapper));
+        return new IteratorStream(() => new MapIterator(this[Symbol.iterator](), mapper));
     }
 
     peek(effect: (item: T) => void): Stream<T> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const itr = this[Symbol.iterator]();
             return {
                 next() {
@@ -284,7 +282,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     randomItem(): Optional<T> {
-        return new impl.SimpleOptional<T>(() => {
+        return new SimpleOptional<T>(() => {
             const a = this.toArray();
             return a.length
                 ? {done: false, value: a[Math.floor(Math.random() * a.length)]}
@@ -293,7 +291,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     reduce(reducer: (l: T, r: T) => T): Optional<T> {
-        return new impl.SimpleOptional<T>(() => {
+        return new SimpleOptional<T>(() => {
             let found = false;
             let value: T = undefined as any;
             this.forEach(item => {
@@ -327,7 +325,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
         return new DelegateStream(() => {
             const a = this.toArray();
             a.reverse();
-            return new impl.ArrayStream(a);
+            return new ArrayStream(a);
         });
     }
 
@@ -335,12 +333,12 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
         return new DelegateStream(() => {
             const a = this.toArray();
             shuffle(a, a.length);
-            return new impl.ArrayStream(a);
+            return new ArrayStream(a);
         });
     }
 
     single(): Optional<T> {
-        return new impl.SimpleOptional(() => {
+        return new SimpleOptional(() => {
             const itr = this[Symbol.iterator]();
             const n = itr.next();
             if (!n.done) {
@@ -363,7 +361,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
         return new DelegateStream(() => {
             const arr = this.toArray();
             arr.sort(compareFn);
-            return new impl.ArrayStream(arr);
+            return new ArrayStream(arr);
         });
     }
 
@@ -381,12 +379,12 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
                 }
                 return 0;
             });
-            return new impl.ArrayStream(arr);
+            return new ArrayStream(arr);
         });
     }
 
     splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const itr = this[Symbol.iterator]();
             let chunk: T[] | undefined = undefined;
             return {
@@ -418,7 +416,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     tail(): Stream<T> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const itr = this[Symbol.iterator]();
             let first = true;
             return {
@@ -437,10 +435,10 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
 
     take(n: number): Stream<T> {
         if (n <= 0) {
-            return new impl.ArrayStream<T>([]);
+            return new ArrayStream<T>([]);
         }
 
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const itr = this[Symbol.iterator]();
             let i = 0;
             return {
@@ -458,10 +456,10 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
 
     takeLast(n: number): Stream<T> {
         if (n <= 0) {
-            return new impl.ArrayStream<T>([]);
+            return new ArrayStream<T>([]);
         }
 
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const buffer = new RingBuffer<T>(n);
             this.forEach(item => buffer.add(item));
             return buffer[Symbol.iterator]();
@@ -473,7 +471,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
             const a = this.toArray();
             const size = Math.max(0, Math.min(n, a.length));
             shuffle(a, size);
-            return new impl.RandomAccessStream(i => a[i], () => size);
+            return new RandomAccessStream(i => a[i], () => size);
         });
     }
 
@@ -502,15 +500,15 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     transform<U>(operator: (input: Iterable<T>) => Iterator<U>): Stream<U> {
-        return new impl.IteratorStream<U>(() => operator(this));
+        return new IteratorStream<U>(() => operator(this));
     }
 
     transformToOptional<U>(operator: (input: Iterable<T>) => Iterator<U>): Optional<U> {
-        return new impl.SimpleOptional(() => operator(this).next());
+        return new SimpleOptional(() => operator(this).next());
     }
 
     zip<U>(other: Iterable<U>): Stream<readonly [T, U]> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const it1 = this[Symbol.iterator]();
             const it2 = other[Symbol.iterator]();
             return {
@@ -525,7 +523,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     zipStrict<U>(other: Iterable<U>): Stream<readonly [T, U]> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const it1 = this[Symbol.iterator]();
             const it2 = other[Symbol.iterator]();
             return {
@@ -542,7 +540,7 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     zipWithIndex(): Stream<readonly [T, number]> {
-        return new impl.IteratorStream(() => {
+        return new IteratorStream(() => {
             const it = this[Symbol.iterator]();
             let i = 0;
             return {
@@ -556,6 +554,365 @@ export const makeAbstractStream = (impl: Impl) => class AbstractStream<T> implem
     }
 
     zipWithIndexAndLen(): Stream<readonly [T, number, number]> {
-        return new DelegateStream(() => new impl.ArrayStream(this.toArray()).zipWithIndexAndLen());
+        return new DelegateStream(() => new ArrayStream(this.toArray()).zipWithIndexAndLen());
+    }
+}
+
+export class IteratorStream<T> extends AbstractStream<T> implements Stream<T> {
+    constructor(readonly createIterator: () => Iterator<T>) {
+        super();
+    }
+
+    [Symbol.iterator](): Iterator<T> {
+        return this.createIterator();
+    }
+}
+
+export class RandomAccessStream<T> extends AbstractStream<T> implements Stream<T> {
+    constructor(readonly get: (i: number) => T, readonly size: () => number) {
+        super();
+    }
+
+    [Symbol.iterator](): Iterator<T> {
+        return new RandomAccessIterator(this.get, this.size());
+    }
+
+    append(item: T): Stream<T> {
+        return new RandomAccessStream(
+            i => i === this.size() ? item : this.get(i),
+            () => this.size() + 1,
+        );
+    }
+
+    at(index: number): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            if (0 <= index && index < this.size()) {
+                return {done: false, value: this.get(index)};
+            }
+            return {done: true, value: undefined};
+        });
+    }
+
+    butLast(): Stream<T> {
+        return new RandomAccessStream(this.get, () => Math.max(this.size() - 1, 0));
+    }
+
+    filter(predicate: (item: T) => boolean): Stream<T> {
+        return new IteratorStream(() => {
+            const get = this.get;
+            const size = this.size();
+            let pos = 0;
+            return {
+                next(): IteratorResult<T> {
+                    for ( ; ; ) {
+                        if (pos === size) return {done: true, value: undefined};
+                        const value = get(pos++);
+                        if (predicate(value)) return {done: false, value};
+                    }
+                }
+            };
+        });
+    }
+
+    find(predicate: (item: T) => boolean): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            for (let i = 0; i < this.size(); i++) {
+                const value = this.get(i);
+                if (predicate(value)) return {done: false, value};
+            }
+            return {done: true, value: undefined};
+        });
+    }
+
+    flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
+        return new IteratorStream(() => {
+            return new RandomAccessFlatMapIterator(
+                (i: number) => mapper(this.get(i)),
+                this.size(),
+            );
+        });
+    }
+
+    forEach(effect: (i: T) => void) {
+        for (let i = 0; i < this.size(); i++) {
+            effect(this.get(i));
+        }
+    }
+
+    last(): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            if (this.size() > 0) return {done: false, value: this.get(this.size() - 1)};
+            return {done: true, value: undefined};
+        });
+    }
+
+    peek(effect: (item: T) => void): Stream<T> {
+        return new RandomAccessStream(
+            i => {
+                const item = this.get(i);
+                effect(item);
+                return item;
+            },
+            this.size,
+        );
+    }
+
+    reverse(): Stream<T> {
+        return new RandomAccessStream(
+            i => this.get(this.size() - 1 - i),
+            this.size,
+        );
+    }
+
+    single(): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            if (this.size() === 1) return {done: false, value: this.get(0)};
+            return {done: true, value: undefined};
+        });
+    }
+
+    tail(): Stream<T> {
+        return new RandomAccessStream<T>(
+            i => this.get(i + 1),
+            () => Math.max(0, this.size() - 1),
+        );
+    }
+
+    take(n: number): Stream<T> {
+        return new RandomAccessStream(
+            this.get,
+            () => Math.max(0, Math.min(n, this.size())),
+        );
+    }
+
+    takeLast(n: number): Stream<T> {
+        return new RandomAccessStream(
+            i => this.get(Math.max(0, this.size() - n) + i),
+            () => Math.max(0, Math.min(n, this.size())),
+        );
+    }
+
+    map<U>(mapper: (item: T) => U): Stream<U> {
+        return new RandomAccessStream(
+            i => mapper(this.get(i)),
+            this.size,
+        );
+    }
+
+    randomItem(): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            const size = this.size();
+            return size
+                ? {done: false, value: this.get(Math.floor(Math.random() * size))}
+                : {done: true, value: undefined};
+        });
+    }
+
+    reduce(reducer: (l: T, r: T) => T): Optional<T> {
+        return new SimpleOptional<T>(() => {
+            const size = this.size();
+            if (!size) return {done: true, value: undefined};
+
+            let value: T = this.get(0);
+            for (let i = 1; i < size; i++) {
+                value = reducer(value, this.get(i));
+            }
+            return {done: false, value};
+        });
+    }
+
+    reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U {
+        let current = zero;
+        for (let i = 0; i < this.size(); i++) {
+            current = reducer(current, this.get(i));
+        }
+        return current;
+    }
+
+    reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U {
+        let current = zero;
+        for (let i = this.size() - 1; i >= 0; i--) {
+            current = reducer(this.get(i), current);
+        }
+        return current;
+    }
+}
+
+export class ArrayStream<T> extends RandomAccessStream<T> implements Stream<T> {
+    constructor(readonly array: T[]) {
+        super(i => array[i], () => array.length);
+    }
+
+    [Symbol.iterator](): Iterator<T> {
+        return this.array[Symbol.iterator]();
+    }
+
+    forEach(effect: (i: T) => void) {
+        this.array.forEach(effect);
+    }
+
+    toArray(): T[] {
+        return this.array;
+    }
+
+    zipWithIndex(): Stream<readonly [T, number]> {
+        return new RandomAccessStream(
+            i => [this.array[i], i] as const,
+            this.size,
+        );
+    }
+
+    zipWithIndexAndLen(): Stream<readonly [T, number, number]> {
+        return new RandomAccessStream(
+            i => [this.array[i], i, this.array.length] as const,
+            () => this.array.length,
+        );
+    }
+}
+
+export class InputArrayStream<T> extends ArrayStream<T> implements Stream<T> {
+    toArray(): T[] {
+        return super.toArray().slice();
+    }
+}
+
+export class SimpleOptional<T> implements Optional<T> {
+    constructor(readonly next: () => IteratorResult<T>) {
+    }
+
+    [Symbol.iterator](): Iterator<T> {
+        let r = this.next();
+        return {
+            next(): IteratorResult<T> {
+                if (r.done) return r;
+
+                let _r = r;
+                r = {done: true, value: undefined};
+                return _r;
+            }
+        };
+    }
+
+    filter(predicate: (item: T) => boolean): Optional<T> {
+        return new SimpleOptional(() => {
+            const r = this.next();
+            return !r.done && predicate(r.value) ? r : {done: true, value: undefined};
+        });
+    }
+
+    flatMap<U>(mapper: (item: T) => Iterable<U>): Optional<U> {
+        return new SimpleOptional(() => {
+            const r = this.next();
+            if (r.done) return r;
+            return mapper(r.value)[Symbol.iterator]().next();
+        });
+    }
+
+    flatMapToStream<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
+        return new IteratorStream(() => {
+            const r = this.next();
+            if (r.done) return new RandomAccessIterator(undefined as any, 0);
+            return mapper(r.value)[Symbol.iterator]();
+        });
+    }
+
+    get(): T {
+        const r = this.next();
+        if (r.done) {
+            throw new Error('No value');
+        }
+        return r.value;
+    }
+
+    has(predicate: (item: T) => boolean): boolean {
+        const r = this.next();
+        return !r.done && predicate(r.value);
+    }
+
+    hasNot(predicate: (item: T) => boolean): boolean {
+        const r = this.next();
+        return r.done || !predicate(r.value);
+    }
+
+    is(item: T): boolean {
+        const r = this.next();
+        return !r.done && r.value === item;
+    }
+
+    isPresent(): boolean {
+        return !this.next().done;
+    }
+
+    map<U>(mapper: (item: T) => U): Optional<U> {
+        return new SimpleOptional(() => {
+            const r = this.next();
+            if (r.done) return r;
+            return {done: false, value: mapper(r.value)};
+        });
+    }
+
+    mapNullable<U>(mapper: (item: T) => (U | null | undefined)): Optional<U> {
+        return new SimpleOptional<U>(() => {
+            const r = this.next();
+            if (r.done) return r;
+            const value = mapper(r.value);
+            if (value != null) return {done: false, value};
+            return {done: true, value: undefined};
+        });
+    }
+
+    orElse<U>(other: U): T | U {
+        const r = this.next();
+        return !r.done ? r.value : other;
+    }
+
+    orElseGet<U>(get: () => U): T | U {
+        const r = this.next();
+        return !r.done ? r.value : get();
+    }
+
+    orElseNull(): T | null {
+        const r = this.next();
+        return !r.done ? r.value : null;
+    }
+
+    orElseThrow(createError: () => Error): T {
+        const r = this.next();
+        if (r.done) {
+            throw createError();
+        }
+        return r.value;
+    }
+
+    orElseUndefined(): T | undefined {
+        const r = this.next();
+        if (r.done) {
+            return undefined;
+        }
+        return r.value;
+    }
+
+    resolve(): {has: true; val: T} | {has: false} {
+        const r = this.next();
+        return r.done ? {has: false} : {has: true, val: r.value};
+    }
+
+    toArray(): T[] {
+        const r = this.next();
+        return r.done ? [] : [r.value];
+    }
+
+    toStream(): Stream<T> {
+        return new IteratorStream(() => {
+            let r = this.next();
+            return {
+                next(): IteratorResult<T> {
+                    if (r.done) return r;
+                    const _r = r;
+                    r = {done: true, value: undefined};
+                    return _r;
+                }
+            };
+        });
     }
 }
