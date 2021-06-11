@@ -5,7 +5,7 @@ import { collectToMap } from './collectToMap';
 import { MapIterator } from './MapIterator';
 import { RingBuffer } from './RingBuffer';
 import { shuffle } from './shuffle';
-import { DelegateStream } from './DelegateStream';
+import { delegateStream } from './delegate';
 import { RandomAccessIterator } from './RandomAccessIterator';
 import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 
@@ -322,7 +322,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     reverse(): Stream<T> {
-        return new DelegateStream(() => {
+        return delegateStream(() => {
             const a = this.toArray();
             a.reverse();
             return new ArrayStream(a);
@@ -330,7 +330,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     shuffle(): Stream<T> {
-        return new DelegateStream(() => {
+        return delegateStream(() => {
             const a = this.toArray();
             shuffle(a, a.length);
             return new ArrayStream(a);
@@ -358,7 +358,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     sort(compareFn?: (a: T, b: T) => number): Stream<T> {
-        return new DelegateStream(() => {
+        return delegateStream(() => {
             const arr = this.toArray();
             arr.sort(compareFn);
             return new ArrayStream(arr);
@@ -366,7 +366,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     sortBy(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
-        return new DelegateStream(() => {
+        return delegateStream(() => {
             const arr = this.toArray();
             arr.sort((a, b) => {
                 const ca = getComparable(a);
@@ -467,7 +467,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     takeRandom(n: number): Stream<T> {
-        return new DelegateStream(() => {
+        return delegateStream(() => {
             const a = this.toArray();
             const size = Math.max(0, Math.min(n, a.length));
             shuffle(a, size);
@@ -554,7 +554,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     zipWithIndexAndLen(): Stream<readonly [T, number, number]> {
-        return new DelegateStream(() => new ArrayStream(this.toArray()).zipWithIndexAndLen());
+        return delegateStream(() => new ArrayStream(this.toArray()).zipWithIndexAndLen());
     }
 }
 
