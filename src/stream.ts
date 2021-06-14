@@ -166,7 +166,7 @@ export interface Stream<T> extends Iterable<T> {
      * is the same as in this stream.
      * @param getKey Function to get item key with
      */
-    groupBy<K>(getKey: (item: T) => K): Stream<readonly [K, T[]]>;
+    groupBy<K>(getKey: (item: T) => K): Stream<[K, T[]]>;
 
     /**
      * Creates an optional which resolves to this stream first item if the stream has item(s), or resolves
@@ -376,26 +376,26 @@ export interface Stream<T> extends Iterable<T> {
      * this stream length and `other` length.
      * @param other An iterable to zip this stream with
      */
-    zip<U>(other: Iterable<U>): Stream<readonly [T, U]>;
+    zip<U>(other: Iterable<U>): Stream<[T, U]>;
 
     /**
      * Like {@link zip} but requires that this stream and `other` iterable have the same length, otherwise throws
      * an error.
      * @param other An iterable to zip this stream with
      */
-    zipStrict<U>(other: Iterable<U>): Stream<readonly [T, U]>
+    zipStrict<U>(other: Iterable<U>): Stream<[T, U]>
 
     /**
      * Creates a stream of pairs where first element is this stream item, and the second one is its index. In other
      * words, {@link zip zips} with integers sequence starting with 0.
      */
-    zipWithIndex(): Stream<readonly [T, number]>;
+    zipWithIndex(): Stream<[T, number]>;
 
     /**
      * Creates s stream of triplets where the first element is this stream item, second element is its index, and
      * third one is this stream size.
      */
-    zipWithIndexAndLen(): Stream<readonly [T, number, number]>;
+    zipWithIndexAndLen(): Stream<[T, number, number]>;
 
     /**
      * Creates an iterator which yields items of this stream

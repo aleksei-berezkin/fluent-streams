@@ -178,8 +178,8 @@ abstract class AbstractStream<T> implements Stream<T> {
         }
     }
 
-    groupBy<K>(getKey: (item: T) => K): Stream<readonly [K, T[]]> {
-        return new IteratorStream<readonly [K, T[]]>(() => {
+    groupBy<K>(getKey: (item: T) => K): Stream<[K, T[]]> {
+        return new IteratorStream<[K, T[]]>(() => {
             const map = collectToMap(this, getKey);
             return map[Symbol.iterator]();
         });
@@ -496,53 +496,53 @@ abstract class AbstractStream<T> implements Stream<T> {
         return new SimpleOptional(() => operator(this).next());
     }
 
-    zip<U>(other: Iterable<U>): Stream<readonly [T, U]> {
+    zip<U>(other: Iterable<U>): Stream<[T, U]> {
         return new IteratorStream(() => {
             const it1 = this[Symbol.iterator]();
             const it2 = other[Symbol.iterator]();
             return {
-                next(): IteratorResult<readonly [T, U]> {
+                next(): IteratorResult<[T, U]> {
                     const n = it1.next();
                     const m = it2.next();
-                    if (!n.done && !m.done) return {done: false, value: [n.value, m.value] as const};
+                    if (!n.done && !m.done) return {done: false, value: [n.value, m.value]};
                     return {done: true, value: undefined};
                 }
             };
         });
     }
 
-    zipStrict<U>(other: Iterable<U>): Stream<readonly [T, U]> {
+    zipStrict<U>(other: Iterable<U>): Stream<[T, U]> {
         return new IteratorStream(() => {
             const it1 = this[Symbol.iterator]();
             const it2 = other[Symbol.iterator]();
             return {
-                next(): IteratorResult<readonly [T, U]> {
+                next(): IteratorResult<[T, U]> {
                     const n = it1.next();
                     const m = it2.next();
                     if (n.done && !m.done) throw new Error('Too few elements in this');
                     if (!n.done && m.done) throw new Error('Too few elements in other');
-                    if (!n.done && !m.done) return {done: false, value: [n.value, m.value] as const};
+                    if (!n.done && !m.done) return {done: false, value: [n.value, m.value]};
                     return {done: true, value: undefined};
                 }
             };
         });
     }
 
-    zipWithIndex(): Stream<readonly [T, number]> {
+    zipWithIndex(): Stream<[T, number]> {
         return new IteratorStream(() => {
             const it = this[Symbol.iterator]();
             let i = 0;
             return {
-                next(): IteratorResult<readonly [T, number]> {
+                next(): IteratorResult<[T, number]> {
                     const n = it.next();
                     if (n.done) return {done: true, value: undefined};
-                    return {done: false, value: [n.value, i++] as const};
+                    return {done: false, value: [n.value, i++]};
                 }
             };
         });
     }
 
-    zipWithIndexAndLen(): Stream<readonly [T, number, number]> {
+    zipWithIndexAndLen(): Stream<[T, number, number]> {
         return delegateStream(() => new ArrayStream(this.toArray()).zipWithIndexAndLen());
     }
 }
@@ -744,16 +744,16 @@ export class ArrayStream<T> extends RandomAccessStream<T> implements Stream<T> {
         return this.array;
     }
 
-    zipWithIndex(): Stream<readonly [T, number]> {
+    zipWithIndex(): Stream<[T, number]> {
         return new RandomAccessStream(
-            i => [this.array[i], i] as const,
+            i => [this.array[i], i],
             this.size,
         );
     }
 
-    zipWithIndexAndLen(): Stream<readonly [T, number, number]> {
+    zipWithIndexAndLen(): Stream<[T, number, number]> {
         return new RandomAccessStream(
-            i => [this.array[i], i, this.array.length] as const,
+            i => [this.array[i], i, this.array.length],
             () => this.array.length,
         );
     }
