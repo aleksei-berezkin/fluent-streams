@@ -57,7 +57,9 @@ test('entryStream', () => {
         b: 1,
         c: 2,
     };
-    twice(() => expect(entryStream(o).toArray()).toEqual([['a', 0], ['b', 1], ['c', 2]]));
+    const str = entryStream(o);
+    (o as any).d = 3;
+    twice(() => expect(str.toArray()).toEqual([['a', 0], ['b', 1], ['c', 2], ['d', 3]]));
 });
 
 test('entryStream skips prototype', () => {

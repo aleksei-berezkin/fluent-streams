@@ -20,10 +20,17 @@ npm i fluent-streams
 ### Add polyfills
 Fluent Streams lib is distributed compiled to ES5, so no additional transpilation needed, however it needs the following polyfills in older environments:
 
+* Array.isArray()
+* Array.prototype.forEach()
+* Array.prototype\[@@iterator]()
+* Map
+* Object.keys()
+* Set
 * Symbol
 * Symbol.iterator
-* Map
-* Set
+
+Optionally:
+* Promise.all — only for [Stream.awaitAll()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html#awaitall)
 
 ### Use
 To create or generate a stream or an optional use one of [factory functions](https://aleksei-berezkin.github.io/fluent-streams-docs/globals.html);
@@ -53,6 +60,7 @@ The concept of stream and its main properties are described in [Stream interface
 ## Why Fluent Streams
 The lib is not the first to provide such a functionality. However, there are things specific to the lib:
 
+* Quite small: 18.3 kB minified, 4.0 kB gzipped [as per Bundlephobia](https://bundlephobia.com/package/fluent-streams)
 * There is Optional. While some people assume it just to be a boilerplate, it provides the means to get back to stream
 with [flatMapToStream()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/optional.html#flatmaptostream)
 without breaking a fluent pipeline.
@@ -64,13 +72,13 @@ to return only Stream (or Optional) — the required type is iterable
     Fluent Streams intentionally takes more practical, not puristic approach here.
 * The lib is optimized for arrays — much of operations work faster (and produce less garbage) if an input is an array
 * If an operation needs to create an intermediate array (for example [sort()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html#sort)),
-the next step reuses it as a modifiable input array
+the next step reuses it as a modifiable input array, applying above mentioned optimizations
 * The lib is very heavily tested
     * Much of edge cases like empty or null/undefined inputs are thoroughly checked
     * Methods with randomicity are checked to yield an even distribution
-    * Each test runs multiple times, and these runs include: consecutive executions of the same stream (optional),
-      modifying inputs between runs, querying iterator after exhaustion, using different stream implementations
-      in multiple combinations — everything to make sure stream fully obeys its own contract and iteration protocol.
+    * Each test runs multiple times, and these runs include: consecutive executions of the same stream (optional);
+      modifying inputs between runs; querying iterator after exhaustion; using different stream implementations
+      in multiple combinations; and many other checks.
 
 ## Benchmarks
 Fluent Streams is compared to the native JS Array and two other popular very similar libs. Because each lib is specific,

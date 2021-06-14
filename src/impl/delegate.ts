@@ -116,16 +116,16 @@ function createMethod(m: Method[0], k: Method[1]) {
             return function (this: any) {
                 const a = arguments;
                 return delegateOptional(() => {
-                    let t;
-                    return (t = this.getTarget())[m].apply(t, a);
+                    const t = this.getTarget();
+                    return t[m].apply(t, a);
                 });
             }
         case 2:
             return function (this: any) {
                 const a = arguments;
                 return delegateStream(() => {
-                    let t;
-                    return (t = this.getTarget())[m].apply(t, a);
+                    const t = this.getTarget();
+                    return t[m].apply(t, a);
                 });
             };
     }
