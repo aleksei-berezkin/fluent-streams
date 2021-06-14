@@ -128,18 +128,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     filter(predicate: (item: T) => boolean): Stream<T> {
-        return new IteratorStream(() => {
-            const itr = this[Symbol.iterator]();
-            return {
-                next(): IteratorResult<T> {
-                    for ( ; ; ) {
-                        const n = itr.next();
-                        if (n.done) return {done: true, value: undefined};
-                        if (predicate(n.value)) return n;
-                    }
-                }
-            };
-        });
+        return this.filterWithAssertion(predicate as (item: T) => item is T);
     }
 
     filterWithAssertion<U extends T>(assertion: (item: T) => item is U): Stream<U> {
