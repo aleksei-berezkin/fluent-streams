@@ -60,7 +60,7 @@ The concept of stream and its main properties are described in [Stream interface
 ## Why Fluent Streams
 The lib is not the first to provide such a functionality. However, there are things specific to the lib:
 
-* Quite small: 18.3 kB minified, 4.0 kB gzipped [as per Bundlephobia](https://bundlephobia.com/package/fluent-streams)
+* Quite small: 18.2 kB minified, 4.0 kB gzipped [as per Bundlephobia](https://bundlephobia.com/package/fluent-streams)
 * There is Optional. While some people assume it just to be a boilerplate, it provides the means to get back to stream
 with [flatMapToStream()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/optional.html#flatmaptostream)
 without breaking a fluent pipeline.
