@@ -1,5 +1,5 @@
 import './testUtil/extendExpect';
-import { forStreamInput as forInput } from './testUtil/forInput';
+import { forStreamInput as forInput, streamInputRuns } from './testUtil/forInput';
 import { twice, twiceAsync } from './testUtil/twice';
 import { permutations } from './testUtil/permutations';
 import { variations } from './testUtil/variations';
@@ -86,48 +86,63 @@ test('at out of', () => forInput(
 ));
 
 test('awaitAll const', doneTest => {
+    let runs = 0;
     forInput(
         ['a', 'b'],
         s => s,
-        (s, inputHint) => twiceAsync(doneTest, (doneRun, runHint) =>
-            s.awaitAll().then(items => {
-                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
-                doneRun();
-            })
-        )
-    );
-});
-
-test('awaitAll promise', doneTest => {
-    forInput(
-        [
-            new Promise(resolve => setTimeout(() => resolve('a'), 100)),
-            new Promise(resolve => setTimeout(() => resolve('b'), 200))
-        ],
-        s => s,
-        (s, inputHint) => twiceAsync(doneTest, (doneRun, runHint) =>
-            s.awaitAll().then(items => {
-                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
-                doneRun();
-            })
-        )
-    )
-});
-
-test('awaitAll mix', doneTest => {
-    forInput(
-        [
-            new Promise(resolve => setTimeout(() => resolve('a'), 100)),
-            'b',
-        ],
-        s => s,
-        (s, inputHint) => twiceAsync(doneTest, (doneRun, runHint) =>
+        (s, inputHint) => twiceAsync(() => runs++, (doneRun, runHint) =>
             s.awaitAll().then(items => {
                 expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
                 doneRun();
             })
         ),
     );
+    setTimeout(() => {
+        expect(runs).toBe(streamInputRuns);
+        doneTest();
+    }, 100);
+});
+
+test('awaitAll promise', doneTest => {
+    let runs = 0;
+    forInput(
+        [
+            new Promise(resolve => setTimeout(() => resolve('a'), 100)),
+            new Promise(resolve => setTimeout(() => resolve('b'), 200))
+        ],
+        s => s,
+        (s, inputHint) => twiceAsync(() => runs++, (doneRun, runHint) =>
+            s.awaitAll().then(items => {
+                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
+                doneRun();
+            })
+        )
+    );
+    setTimeout(() => {
+        expect(runs).toBe(streamInputRuns);
+        doneTest();
+    }, 500);
+});
+
+test('awaitAll mix', doneTest => {
+    let runs = 0;
+    forInput(
+        [
+            new Promise(resolve => setTimeout(() => resolve('a'), 100)),
+            'b',
+        ],
+        s => s,
+        (s, inputHint) => twiceAsync(() => runs++, (doneRun, runHint) =>
+            s.awaitAll().then(items => {
+                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
+                doneRun();
+            })
+        ),
+    );
+    setTimeout(() => {
+        expect(runs).toBe(streamInputRuns);
+        doneTest();
+    }, 500);
 });
 
 test('butLast', () =>  [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
