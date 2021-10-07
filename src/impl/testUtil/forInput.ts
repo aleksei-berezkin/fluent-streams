@@ -24,8 +24,6 @@ export function forStreamInput<T, Out extends Stream<unknown> | Optional<unknown
     );
 }
 
-export const streamInputRuns = 4;
-
 export function forOptionalInput<T, Out extends Stream<unknown> | Optional<unknown>>(
     input: T[],
     build: (base: Optional<T>) => Out,
