@@ -6,14 +6,16 @@ export function twice(run: (runHint: string) => void) {
     run(hint2);
 }
 
-export function twiceAsync(doneTest: () => void, run: (doneRun: () => void, runHint: string) => void) {
+export function twiceAsync(doneTest: (() => void) | undefined, run: (doneRun: () => void, runHint: string) => void) {
     run(() => {}, hint1);
     let isDone = false;
     run(() => {
         if (isDone) {
             throw new Error('Already done');
         }
-        doneTest();
+        if (doneTest) {
+            doneTest();
+        }
         isDone = true;
     }, hint2);
 }
