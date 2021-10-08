@@ -30,8 +30,6 @@ type Method = [string | symbol, Kind];
 
 const streamMethods: Method[] = [
     [Symbol.iterator, 0],
-    ['all', 0],
-    ['any', 0],
     ['append', 2],
     ['appendAll', 2],
     ['at', 1],
@@ -39,6 +37,7 @@ const streamMethods: Method[] = [
     ['butLast', 2],
     ['distinctBy', 2],
     ['equals', 0],
+    ['every', 0],
     ['filter', 2],
     ['filterWithAssertion', 2],
     ['find', 1],
@@ -60,6 +59,7 @@ const streamMethods: Method[] = [
     ['shuffle', 2],
     ['single', 1],
     ['size', 0],
+    ['some', 0],
     ['sort', 2],
     ['sortBy', 2],
     ['splitWhen', 2],

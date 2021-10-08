@@ -12,14 +12,6 @@ import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 abstract class AbstractStream<T> implements Stream<T> {
     abstract [Symbol.iterator](): Iterator<T>;
 
-    all(predicate: (item: T) => boolean): boolean {
-        return !this.forEachUntil(item => !predicate(item));
-    }
-
-    any(predicate: (item: T) => boolean): boolean {
-        return this.forEachUntil(predicate);
-    }
-
     append(item: T): Stream<T> {
         return new IteratorStream(() => {
             const inner = this[Symbol.iterator]();
@@ -125,6 +117,10 @@ abstract class AbstractStream<T> implements Stream<T> {
         })
         // noinspection PointlessBooleanExpressionJS
         return !foundNotEqual && !!itr.next().done;
+    }
+
+    every(predicate: (item: T) => boolean): boolean {
+        return !this.forEachUntil(item => !predicate(item));
     }
 
     filter(predicate: (item: T) => boolean): Stream<T> {
@@ -344,6 +340,10 @@ abstract class AbstractStream<T> implements Stream<T> {
         let s = 0;
         this.forEach(() => s++);
         return s;
+    }
+
+    some(predicate: (item: T) => boolean): boolean {
+        return this.forEachUntil(predicate);
     }
 
     sort(compareFn?: (a: T, b: T) => number): Stream<T> {

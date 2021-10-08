@@ -5,30 +5,6 @@ import { permutations } from './testUtil/permutations';
 import { variations } from './testUtil/variations';
 
 
-test('all', () =>  forInput(
-    ['ax', 'bx', 'cx'],
-    s => s,
-    (s, inputHint) => twice(runHint => expect(s.all(i => i.endsWith('x'))).toBeWithHint(true, inputHint, runHint)),
-));
-
-test('all neg', () => forInput(
-    ['ax', 'bx', 'c'],
-    s => s,
-    (s, inputHint) => twice(runHint => expect(s.all(i => i.endsWith('x'))).toBeWithHint(false, inputHint, runHint)),
-));
-
-test('any', () => forInput(
-    ['a', 'b'],
-    s => s,
-    (s, inputHint) => twice(runHint => expect(s.any(i => i === 'a')).toBeWithHint(true, inputHint, runHint)),
-));
-
-test('any neg', () => forInput(
-    ['a', 'b'],
-    s => s,
-    (s, inputHint) => twice(runHint => expect(s.any(i => i === 'c')).toBeWithHint(false, inputHint, runHint)),
-));
-
 test('append', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
     input,
     s => s.append('c'),
@@ -213,6 +189,18 @@ test('equals neg', () =>
         ),
     )
 );
+
+test('every', () =>  forInput(
+    ['ax', 'bx', 'cx'],
+    s => s,
+    (s, inputHint) => twice(runHint => expect(s.every(i => i.endsWith('x'))).toBeWithHint(true, inputHint, runHint)),
+));
+
+test('every neg', () => forInput(
+    ['ax', 'bx', 'c'],
+    s => s,
+    (s, inputHint) => twice(runHint => expect(s.every(i => i.endsWith('x'))).toBeWithHint(false, inputHint, runHint)),
+));
 
 test('filter', () =>
     forInput(
@@ -482,6 +470,18 @@ test('size', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(
         runHint,
     ))
 )));
+
+test('some', () => forInput(
+    ['a', 'b'],
+    s => s,
+    (s, inputHint) => twice(runHint => expect(s.some(i => i === 'a')).toBeWithHint(true, inputHint, runHint)),
+));
+
+test('some neg', () => forInput(
+    ['a', 'b'],
+    s => s,
+    (s, inputHint) => twice(runHint => expect(s.some(i => i === 'c')).toBeWithHint(false, inputHint, runHint)),
+));
 
 test('sort', () => [[], ['a'], ['c', 'a', 'd', 'e', 'b']].forEach(input => forInput(
     input,

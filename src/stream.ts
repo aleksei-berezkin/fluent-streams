@@ -47,20 +47,6 @@ import { Optional } from './optional';
  */
 export interface Stream<T> extends Iterable<T> {
     /**
-     * Returns `true` if the `predicate` returns `true` for all items of this stream; returns false otherwise. This is
-     * short-circuiting operation which means it skips the rest items if the `predicate` returned `false` for some item.
-     * @param predicate A function to test each item
-     */
-    all(predicate: (item: T) => boolean): boolean;
-
-    /**
-     * Returns `true` if the `predicate` returns `true` for any item of this stream; returns false otherwise. This is
-     * short-circuiting operation which means it skips the rest items if the `predicate` returned `true` for some item.
-     * @param predicate A function to test each item
-     */
-    any(predicate: (item: T) => boolean): boolean;
-
-    /**
      * Creates an optional which resolves to an element of this stream at `index` position if there is such a position,
      * or resolves to empty otherwise.
      * @param index Zero-based position to return an item at
@@ -107,6 +93,13 @@ export interface Stream<T> extends Iterable<T> {
      * @param other Iterable to test for equality
      */
     equals(other: Iterable<T>): boolean,
+
+    /**
+     * Returns `true` if the `predicate` returns `true` for all items of this stream; returns false otherwise. This is
+     * short-circuiting operation which means it skips the rest items if the `predicate` returned `false` for some item.
+     * @param predicate A function to test each item
+     */
+    every(predicate: (item: T) => boolean): boolean;
 
     /**
      * Creates a stream containing items of this stream which match the provided `predicate`.
@@ -265,6 +258,13 @@ export interface Stream<T> extends Iterable<T> {
      * Returns the number of items in this stream
      */
     size(): number;
+
+    /**
+     * Returns `true` if the `predicate` returns `true` for any item of this stream; returns false otherwise. This is
+     * short-circuiting operation which means it skips the rest items if the `predicate` returned `true` for some item.
+     * @param predicate A function to test each item
+     */
+    some(predicate: (item: T) => boolean): boolean;
 
     /**
      * Creates a stream whose items are sorted items of this stream. The implementation relies on
