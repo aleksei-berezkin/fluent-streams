@@ -12,44 +12,6 @@ import { RandomAccessFlatMapIterator } from './RandomAccessFlatMapIterator';
 abstract class AbstractStream<T> implements Stream<T> {
     abstract [Symbol.iterator](): Iterator<T>;
 
-    append(item: T): Stream<T> {
-        return new IteratorStream(() => {
-            const inner = this[Symbol.iterator]();
-            let fullDone = false;
-            return {
-                next(): IteratorResult<T> {
-                    const n = inner.next();
-                    if (!n.done) return n;
-                    if (!fullDone) {
-                        fullDone = true;
-                        return {done: false, value: item};
-                    }
-                    return {done: true, value: undefined};
-                }
-            };
-        });
-    }
-
-    appendAll(items: Iterable<T>): Stream<T> {
-        return new IteratorStream(() => {
-            const left = this[Symbol.iterator]();
-            let right: Iterator<T> | undefined = undefined;
-            return {
-                next(): IteratorResult<T> {
-                    const l = left.next();
-                    if (!l.done) return l;
-                    if (!right) {
-                        right = items[Symbol.iterator]();
-                        if (right == null) {
-                            throw new Error('Null iterator');
-                        }
-                    }
-                    return right.next();
-                }
-            };
-        });
-    }
-
     at(index: number): Optional<T> {
         return new SimpleOptional<T>(() => {
             let pos = 0;
@@ -82,6 +44,44 @@ abstract class AbstractStream<T> implements Stream<T> {
                     const r = p;
                     p = n;
                     return r;
+                }
+            };
+        });
+    }
+
+    concat(item: T): Stream<T> {
+        return new IteratorStream(() => {
+            const inner = this[Symbol.iterator]();
+            let fullDone = false;
+            return {
+                next(): IteratorResult<T> {
+                    const n = inner.next();
+                    if (!n.done) return n;
+                    if (!fullDone) {
+                        fullDone = true;
+                        return {done: false, value: item};
+                    }
+                    return {done: true, value: undefined};
+                }
+            };
+        });
+    }
+
+    concatAll(items: Iterable<T>): Stream<T> {
+        return new IteratorStream(() => {
+            const left = this[Symbol.iterator]();
+            let right: Iterator<T> | undefined = undefined;
+            return {
+                next(): IteratorResult<T> {
+                    const l = left.next();
+                    if (!l.done) return l;
+                    if (!right) {
+                        right = items[Symbol.iterator]();
+                        if (right == null) {
+                            throw new Error('Null iterator');
+                        }
+                    }
+                    return right.next();
                 }
             };
         });
@@ -566,13 +566,6 @@ export class RandomAccessStream<T> extends AbstractStream<T> implements Stream<T
         return new RandomAccessIterator(this.get, this.size());
     }
 
-    append(item: T): Stream<T> {
-        return new RandomAccessStream(
-            i => i === this.size() ? item : this.get(i),
-            () => this.size() + 1,
-        );
-    }
-
     at(index: number): Optional<T> {
         return new SimpleOptional<T>(() => {
             if (0 <= index && index < this.size()) {
@@ -584,6 +577,13 @@ export class RandomAccessStream<T> extends AbstractStream<T> implements Stream<T
 
     butLast(): Stream<T> {
         return new RandomAccessStream(this.get, () => Math.max(this.size() - 1, 0));
+    }
+
+    concat(item: T): Stream<T> {
+        return new RandomAccessStream(
+            i => i === this.size() ? item : this.get(i),
+            () => this.size() + 1,
+        );
     }
 
     filter(predicate: (item: T) => boolean): Stream<T> {

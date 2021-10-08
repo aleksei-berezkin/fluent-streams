@@ -5,44 +5,6 @@ import { permutations } from './testUtil/permutations';
 import { variations } from './testUtil/variations';
 
 
-test('append', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
-    input,
-    s => s.append('c'),
-    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(input.concat('c'), inputHint, runHint)),
-)));
-
-test('appendAll', () =>  forInput(
-    ['a', 'b'],
-    s => s.appendAll(['c', 'd']),
-    (s, inputHint) => twice(runHint =>
-        expect(s.toArray()).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint),
-    ),
-));
-
-test('appendAll suspended', () => {
-    const appended: string[] = [];
-    forInput(
-        ['a', 'b'],
-        s => s.appendAll(appended),
-        (s, inputHint) => twice(runHint => {
-            appended.push('c', 'd');
-            expect(s.toArray()).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint);
-            appended.length = 0;
-        }),
-    );
-});
-
-test('append null itr', () => forInput(
-    ['a', 'b'],
-    s => s.appendAll({
-        [Symbol.iterator](): Iterator<string> {
-            return null as any;
-        }
-    }),
-    s => twice(() => expect(() => s.toArray()).toThrow()),
-    false,
-));
-
 test('at neg', () => forInput(
     ['a', 'b'],
     s => s.at(-1),
@@ -133,6 +95,44 @@ test('butLast', () =>  [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
             )
         ),
     )
+));
+
+test('concat', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
+    input,
+    s => s.concat('c'),
+    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(input.concat('c'), inputHint, runHint)),
+)));
+
+test('concatAll', () =>  forInput(
+    ['a', 'b'],
+    s => s.concatAll(['c', 'd']),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint),
+    ),
+));
+
+test('concatAll suspended', () => {
+    const appended: string[] = [];
+    forInput(
+        ['a', 'b'],
+        s => s.concatAll(appended),
+        (s, inputHint) => twice(runHint => {
+            appended.push('c', 'd');
+            expect(s.toArray()).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint);
+            appended.length = 0;
+        }),
+    );
+});
+
+test('concat null itr', () => forInput(
+    ['a', 'b'],
+    s => s.concatAll({
+        [Symbol.iterator](): Iterator<string> {
+            return null as any;
+        }
+    }),
+    s => twice(() => expect(() => s.toArray()).toThrow()),
+    false,
 ));
 
 test('distinctBy', () => forInput(
@@ -739,7 +739,7 @@ test('zipWithIndexAndLen', () =>
 test('long chain', () => forInput(
     ['a', 'b'],
     s => s
-        .append('c')
+        .concat('c')
         .map(c => c.toUpperCase())
         .filter(c => c !== 'B'),
     (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(['A', 'C'], inputHint, runHint)),

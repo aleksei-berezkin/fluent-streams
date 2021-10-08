@@ -30,11 +30,11 @@ type Method = [string | symbol, Kind];
 
 const streamMethods: Method[] = [
     [Symbol.iterator, 0],
-    ['append', 2],
-    ['appendAll', 2],
     ['at', 1],
     ['awaitAll', 0],
     ['butLast', 2],
+    ['concat', 2],
+    ['concatAll', 2],
     ['distinctBy', 2],
     ['equals', 0],
     ['every', 0],

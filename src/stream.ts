@@ -61,22 +61,22 @@ export interface Stream<T> extends Iterable<T> {
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]>;
 
     /**
-     * Creates a stream whose items are all items of this stream followed by provided `item`. 
-     * @param item Item to append
-     */
-    append(item: T): Stream<T>;
-
-    /**
-     * Creates a stream whose items are all items of this stream followed by all items provided by `items` iterable.  
-     * @param items Items to append to this stream
-     */
-    appendAll(items: Iterable<T>): Stream<T>;
-
-    /**
      * Creates a stream containing all but last items of this stream. The result stream is empty if
      * this stream is empty or contains one item.
      */
     butLast(): Stream<T>;
+
+    /**
+     * Creates a stream whose items are all items of this stream followed by provided `item`.
+     * @param item Item to append
+     */
+    concat(item: T): Stream<T>;
+
+    /**
+     * Creates a stream whose items are all items of this stream followed by all items provided by `items` iterable.
+     * @param items Items to append to this stream
+     */
+    concatAll(items: Iterable<T>): Stream<T>;
 
     /**
      * Creates a stream containing only elements of this stream for which `getKey` returns different keys.
