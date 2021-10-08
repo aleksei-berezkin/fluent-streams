@@ -47,9 +47,9 @@ import { Optional } from './optional';
  */
 export interface Stream<T> extends Iterable<T> {
     /**
-     * Creates an optional which resolves to an element of this stream at `index` position if there is such a position,
-     * or resolves to empty otherwise.
-     * @param index Zero-based position to return an item at
+     * Creates an optional which resolves to an element of this stream at `index` position (negative `index` counts
+     * from last item) if there is such a position, or resolves to empty otherwise.
+     * @param index Zero-based position to return an item at, or negative position where -1 means last, -2 last-but-one etc.
      */
     at(index: number): Optional<T>;
 

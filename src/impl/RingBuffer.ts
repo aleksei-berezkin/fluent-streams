@@ -1,7 +1,7 @@
 export class RingBuffer<T> implements Iterable<T>{
     private readonly a: T[];
     private readonly capacity: number;
-    private size: number = 0;
+    size: number = 0;
     private start: number = 0;
 
     constructor(capacity: number) {
@@ -20,6 +20,13 @@ export class RingBuffer<T> implements Iterable<T>{
             this.a[this.start] = i;
             this.start = (this.start < this.capacity - 1) ? this.start + 1 : 0
         }
+    }
+
+    first(): T {
+        if (this.size === 0) {
+            throw new Error();
+        }
+        return this.a[this.start];
     }
 
     [Symbol.iterator]() {

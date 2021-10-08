@@ -5,9 +5,27 @@ import { permutations } from './testUtil/permutations';
 import { variations } from './testUtil/variations';
 
 
-test('at neg', () => forInput(
-    ['a', 'b'],
+test('at neg last', () => forInput(
+    ['a', 'b', 'c'],
     s => s.at(-1),
+    (o, inputHint)  => twice(runHint => expect(o.resolve()).toEqualWithHint({has: true, val: 'c'}, inputHint, runHint)),
+));
+
+test('at neg mid', () => forInput(
+    ['a', 'b', 'c', 'd'],
+    s => s.at(-3),
+    (o, inputHint)  => twice(runHint => expect(o.resolve()).toEqualWithHint({has: true, val: 'b'}, inputHint, runHint)),
+));
+
+test('at neg first', () => forInput(
+    ['a', 'b', 'c', 'd'],
+    s => s.at(-4),
+    (o, inputHint)  => twice(runHint => expect(o.resolve()).toEqualWithHint({has: true, val: 'a'}, inputHint, runHint)),
+));
+
+test('at neg out of', () => forInput(
+    ['a', 'b', 'c', 'd'],
+    s => s.at(-5),
     (o, inputHint)  => twice(runHint => expect(o.resolve()).toEqualWithHint({has: false}, inputHint, runHint)),
 ));
 

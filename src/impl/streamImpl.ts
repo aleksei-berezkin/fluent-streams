@@ -14,6 +14,15 @@ abstract class AbstractStream<T> implements Stream<T> {
 
     at(index: number): Optional<T> {
         return new SimpleOptional<T>(() => {
+            if (index < 0) {
+                const buf = new RingBuffer<T>(-index);
+                this.forEach(i => buf.add(i));
+                if (buf.size === -index) {
+                    return {done: false, value: buf.first()};
+                }
+                return {done: true, value: undefined};
+            }
+
             let pos = 0;
             let value: T = undefined as any;
             const found = this.forEachUntil(item => {
@@ -570,6 +579,9 @@ export class RandomAccessStream<T> extends AbstractStream<T> implements Stream<T
         return new SimpleOptional<T>(() => {
             if (0 <= index && index < this.size()) {
                 return {done: false, value: this.get(index)};
+            }
+            if (-this.size() <= index && index < 0) {
+                return {done: false, value: this.get(this.size() + index)};
             }
             return {done: true, value: undefined};
         });
