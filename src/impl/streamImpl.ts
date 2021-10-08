@@ -244,16 +244,7 @@ abstract class AbstractStream<T> implements Stream<T> {
     }
 
     last(): Optional<T> {
-        return new SimpleOptional<T>(() => {
-            let value: T = undefined as any;
-            let found = false;
-            this.forEach(item => {
-                value = item;
-                found = true;
-            })
-            if (found) return {done: false, value};
-            return {done: true, value: undefined};
-        });
+        return this.at(-1);
     }
 
     map<U>(mapper: (item: T) => U): Stream<U> {
@@ -638,13 +629,6 @@ export class RandomAccessStream<T> extends AbstractStream<T> implements Stream<T
         for (let i = 0; i < this.size(); i++) {
             effect(this.get(i));
         }
-    }
-
-    last(): Optional<T> {
-        return new SimpleOptional<T>(() => {
-            if (this.size() > 0) return {done: false, value: this.get(this.size() - 1)};
-            return {done: true, value: undefined};
-        });
     }
 
     peek(effect: (item: T) => void): Stream<T> {
