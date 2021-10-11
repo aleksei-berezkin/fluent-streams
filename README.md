@@ -60,7 +60,7 @@ The concept of stream and its main properties are described in [Stream interface
 ## Why Fluent Streams
 The lib is not the first to provide such a functionality. However, there are things specific to the lib:
 
-* Quite small: 18.2 kB minified, 4.0 kB gzipped [as per Bundlephobia](https://bundlephobia.com/package/fluent-streams)
+* Quite small: 18.6 kB minified, 4.1 kB gzipped [as per Bundlephobia](https://bundlephobia.com/package/fluent-streams)
 * There is Optional. While some people assume it just to be a boilerplate, it provides the means to get back to stream
 with [flatMapToStream()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/optional.html#flatmaptostream)
 without breaking a fluent pipeline.
@@ -68,8 +68,8 @@ without breaking a fluent pipeline.
 over.
 * Stream uses similar names and, where possible, signatures of [ES Array methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)
 — it's easy to embed Fluent Streams into existing code as well as get rid of the lib.
-* The lib is optimized for arrays — much of operations work faster (and produce less garbage) if an input is an array
-* The lib is very heavily tested
+* The lib is optimized for arrays — much of operations work faster (and produce less garbage) if an input is an array.
+* The lib is very heavily tested.
 
 ## Benchmarks
 Fluent Streams is compared to the native JS Array and two other popular very similar libs. Because each lib is specific,
