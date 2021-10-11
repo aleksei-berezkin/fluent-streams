@@ -66,19 +66,10 @@ with [flatMapToStream()](https://aleksei-berezkin.github.io/fluent-streams-docs/
 without breaking a fluent pipeline.
 * Stream and Optional seamlessly interoperate with ES6 iterables — they are iterables themselves, and may be iterated
 over.
-* [flatMap()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html) doesn't require you
-to return only Stream (or Optional) — the required type is iterable
-    * This means Stream and Optional aren't pure [monads](https://github.com/fantasyland/fantasy-land#monad).
-    Fluent Streams intentionally takes more practical, not puristic approach here.
+* Stream uses similar names and, where possible, signatures of [ES Array methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array)
+— it's easy to embed Fluent Streams into existing code as well as get rid of the lib.
 * The lib is optimized for arrays — much of operations work faster (and produce less garbage) if an input is an array
-* If an operation needs to create an intermediate array (for example [sort()](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html#sort)),
-the next step reuses it as a modifiable input array, applying above mentioned optimizations
 * The lib is very heavily tested
-    * Much of edge cases like empty or null/undefined inputs are thoroughly checked
-    * Methods with randomicity are checked to yield an even distribution
-    * Each test runs multiple times, and these runs include: consecutive executions of the same stream (optional);
-      modifying inputs between runs; querying iterator after exhaustion; using different stream implementations
-      in multiple combinations; and many other checks.
 
 ## Benchmarks
 Fluent Streams is compared to the native JS Array and two other popular very similar libs. Because each lib is specific,
