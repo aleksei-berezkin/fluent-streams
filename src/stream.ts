@@ -171,9 +171,9 @@ export interface Stream<T> extends Iterable<T> {
      * Concatenates this stream items inserting `sep` between. Items are mapped to string using
      * [String function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/String)
      * (without `new`).
-     * @param sep A string to insert between items.
+     * @param sep A string to insert between items, default ",".
      */
-    join(sep: string): string;
+    join(sep?: string): string;
 
     /**
      * Like {@link join} but can insert `sep` in the beginning and (or) in the end

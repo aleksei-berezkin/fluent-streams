@@ -312,6 +312,14 @@ test('join empty', () => forInput(
     ),
 ));
 
+test('join default sep', () => forInput(
+    ['a', 'b', 'c'],
+    s => s,
+    (s, inputHint) => twice(runHint =>
+        expect(s.join()).toBeWithHint('a,b,c', inputHint, runHint)
+    ),
+));
+
 test('join', () => forInput(
     ['a', 'b', 'c'],
     s => s,

@@ -198,7 +198,10 @@ abstract class AbstractStream<T> implements Stream<T> {
         });
     }
 
-    join(sep: string | {sep: string, leading?: boolean, trailing?: boolean}): string {
+    join(sep: string | {sep: string, leading?: boolean, trailing?: boolean} | undefined): string {
+        if (sep === undefined) {
+            sep = ',';
+        }
         let result = (typeof sep === 'object' && sep.leading) ? sep.sep : '';
         let first = true;
         const itr = this[Symbol.iterator]();
