@@ -3,7 +3,7 @@ const { stream, streamOf } = fluentStreams;
 
 const output = stream(['a', 'b', 'c'])
     .map(s => s.toUpperCase())
-    .appendAll(streamOf('D', 'E', 'F'))
+    .concatAll(streamOf('D', 'E', 'F'))
     .map(s => s + 'x')
     .toArray();
 
