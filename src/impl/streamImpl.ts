@@ -275,35 +275,35 @@ abstract class AbstractStream<T> implements Stream<T> {
         });
     }
 
-    reduce(reducer: (l: T, r: T) => T): Optional<T> {
-        return new SimpleOptional<T>(() => {
+    reduce<U>(reducer: (prev: U, curr: T) => U, initial?: U): Optional<U> | U {
+        if (arguments.length > 1) {
+            let curr: U = initial!;
+            this.forEach(item => curr = reducer(curr, item));
+            return curr;
+        }
+
+        return new SimpleOptional<U>(() => {
             let found = false;
-            let value: T = undefined as any;
+            let curr: U = undefined as never;
             this.forEach(item => {
                 if (!found) {
-                    value = item;
+                    curr = item as any as U; // no initial, U=T
                     found = true;
                 } else {
-                    value = reducer(value, item);
+                    curr = reducer(curr, item);
                 }
             })
-            return found ? {done: false, value} : {done: true, value: undefined};
+            return found ? {done: false, value: curr} : {done: true, value: undefined};
         });
     }
 
-    reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U {
-        let current = zero;
-        this.forEach(item => current = reducer(current, item))
-        return current;
-    }
-
-    reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U {
-        const a = this.toArray();
-        let current = zero;
-        for (let i = a.length - 1; i >= 0; i--) {
-            current = reducer(a[i], current);
+    reduceRight<U>(reducer: (prev: U, curr: T) => U, initial?: U): Optional<U> | U {
+        if (arguments.length > 1) {
+            return this.reverse().reduce(reducer, initial!);
         }
-        return current;
+
+        // No initial, U=T
+        return this.reverse().reduce(reducer as any) as any;
     }
 
     reverse(): Stream<T> {
@@ -693,33 +693,48 @@ export class RandomAccessStream<T> extends AbstractStream<T> implements Stream<T
         });
     }
 
-    reduce(reducer: (l: T, r: T) => T): Optional<T> {
-        return new SimpleOptional<T>(() => {
+    reduce<U>(reducer: (prev: U, cur: T) => U, initial?: U): Optional<U> | U {
+        if (arguments.length > 1) {
+            const size = this.size();
+            let curr: U = initial!;
+            for (let i = 0; i < size; i++) {
+                curr = reducer(curr, this.get(i));
+            }
+            return curr;
+        }
+
+        return new SimpleOptional<U>(() => {
             const size = this.size();
             if (!size) return {done: true, value: undefined};
 
-            let value: T = this.get(0);
+            let curr: U = this.get(0) as any as U; // U=T
             for (let i = 1; i < size; i++) {
-                value = reducer(value, this.get(i));
+                curr = reducer(curr, this.get(i));
             }
-            return {done: false, value};
+            return {done: false, value: curr};
         });
     }
 
-    reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U {
-        let current = zero;
-        for (let i = 0; i < this.size(); i++) {
-            current = reducer(current, this.get(i));
+    reduceRight<U>(reducer: (prev: U, cur: T) => U, initial?: U): Optional<U> | U {
+        if (arguments.length > 1) {
+            const size = this.size();
+            let curr: U = initial!;
+            for (let i = size - 1; i >= 0; i--) {
+                curr = reducer(curr, this.get(i));
+            }
+            return curr;
         }
-        return current;
-    }
 
-    reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U {
-        let current = zero;
-        for (let i = this.size() - 1; i >= 0; i--) {
-            current = reducer(this.get(i), current);
-        }
-        return current;
+        return new SimpleOptional<U>(() => {
+            const size = this.size();
+            if (!size) return {done: true, value: undefined};
+
+            let curr: U = this.get(size - 1) as any as U; // U=T
+            for (let i = size - 2; i >= 0; i--) {
+                curr = reducer(curr, this.get(i));
+            }
+            return {done: false, value: curr};
+        });
     }
 }
 

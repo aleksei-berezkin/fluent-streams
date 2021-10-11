@@ -406,7 +406,7 @@ test('randomItem', () => {
 
 test('reduce', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
     input,
-    s => s.reduce((l, r) => l + r),
+    s => s.reduce((prev, curr) => prev + curr),
     (s, inputHint) => twice(runHint => expect(s.resolve()).toEqualWithHint(
         input.length
             ? {has: true, val: input.reduce((prev, curr) => prev + curr)}
@@ -416,11 +416,11 @@ test('reduce', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e
     )),
 )));
 
-test('reduceLeft', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
+test('reduce with initial', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
     input,
     s => s,
-    (s, inputHint) => twice(runHint => expect(s.reduceLeft('x', (l, r) => l + r)).toEqualWithHint(
-        input.reduce((l, r) => l + r, 'x'),
+    (s, inputHint) => twice(runHint => expect(s.reduce((prev, curr) => prev + curr, 'x')).toEqualWithHint(
+        input.reduce((prev, curr) => prev + curr, 'x'),
         inputHint,
         runHint,
     )),
@@ -429,8 +429,20 @@ test('reduceLeft', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd'
 test('reduceRight', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
     input,
     s => s,
-    (s, inputHint) => twice(runHint => expect(s.reduceRight('x', (l, r) => l + r)).toEqualWithHint(
-        input.reduceRight((r, l) => l + r, 'x'),
+    (s, inputHint) => twice(runHint => expect(s.reduceRight((l, r) => l + r).resolve()).toEqualWithHint(
+        input.length
+            ? {has: true, val: input.reduceRight((prev, curr) => prev + curr)}
+            : {has: false},
+        inputHint,
+        runHint,
+    )),
+)));
+
+test('reduceRight with initial', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
+    input,
+    s => s,
+    (s, inputHint) => twice(runHint => expect(s.reduceRight((prev, curr) => prev + curr, 'x')).toEqualWithHint(
+        input.reduceRight((prev, curr) => prev + curr, 'x'),
         inputHint,
         runHint,
     )),

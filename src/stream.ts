@@ -200,7 +200,8 @@ export interface Stream<T> extends Iterable<T> {
     map<U>(mapper: (item: T) => U): Stream<U>;
 
     /**
-     * Creates a stream executing an effect for each item and returning the item as is.
+     * Creates a stream executing an effect for each item and returning the item as is. One possible usage for
+     * this method is mutating items in place.
      * @param effect The effect to execute
      */
     peek(effect: (item: T) => void): Stream<T>;
@@ -218,25 +219,35 @@ export interface Stream<T> extends Iterable<T> {
      * and third item etc, and resolves to a value returned by the last `reducer` invocation.
      * @param reducer The function to reduce items
      */
-    reduce(reducer: (l: T, r: T) => T): Optional<T>;
+    reduce(reducer: (prev: T, curr: T) => T): Optional<T>;
 
     /**
-     * If this stream is empty returns `zero`; otherwise applies `reducer` to `zero` and the first item, then applies
-     * `reducer` to previously returned result and second item etc, and resolves to a value returned by the last
+     * If this stream is empty, returns initial; otherwise applies `reducer` to `initial` and the first item,
+     * then applies `reducer` to previously returned result and second item etc, and returns result from last
      * `reducer` invocation.
-     * @param zero The starting value
      * @param reducer The function to reduce items
+     * @param initial Initial value
      */
-    reduceLeft<U>(zero: U, reducer: (l: U, r: T) => U): U;
+    reduce<U>(reducer: (prev: U, curr: T) => U, initial: U): U;
 
     /**
-     * If this stream is empty returns `zero`; otherwise applies `reducer` to the last item and `zero`, then applies
-     * `reducer` to last-but-one item and previously returned result etc, and resolves to a value returned by the last
-     * `reducer` invocation.
-     * @param zero The starting value
+     * Creates an optional with the following behavior:
+     * * If this stream is empty resolves to empty
+     * * If this stream has one item resolves to that item
+     * * Otherwise applies `reducer` to the last and 2nd to end items, then applies `reducer` to previously returned
+     * result and 3rd to end item etc, and resolves to a value returned by the last `reducer` invocation.
      * @param reducer The function to reduce items
      */
-    reduceRight<U>(zero: U, reducer: (l: T, r: U) => U): U;
+    reduceRight(reducer: (prev: T, curr: T) => T): Optional<T>;
+
+    /**
+     * If this stream is empty, returns initial; otherwise applies `reducer` to `initial` and the last item,
+     * then applies `reducer` to previously returned result and 2nd to end item etc, and returns result from last
+     * `reducer` invocation.
+     * @param reducer The function to reduce items
+     * @param initial Initial value
+     */
+    reduceRight<U>(reducer: (prev: U, curr: T) => U, initial: U): U;
 
     /**
      * Creates a stream whose elements are elements of this stream in the reversed order.

@@ -25,7 +25,7 @@ export function delegateOptional<T>(getTarget: () => Optional<T>): Optional<T> {
     return new (DO as any)(getTarget) as any as Optional<T>;
 }
 
-type Kind = 0 /* terminal */ | 1 /* optional */ | 2 /* stream */;
+type Kind = 0 /* terminal */ | 1 /* optional */ | 2 /* stream */ | 3 /* reduce - depends on args */;
 type Method = [string | symbol, Kind];
 
 const streamMethods: Method[] = [
@@ -52,9 +52,8 @@ const streamMethods: Method[] = [
     ['map', 2],
     ['peek', 2],
     ['randomItem', 1],
-    ['reduce', 1],
-    ['reduceLeft', 0],
-    ['reduceRight', 0],
+    ['reduce', 3],
+    ['reduceRight', 3],
     ['reverse', 2],
     ['shuffle', 2],
     ['single', 1],
@@ -109,8 +108,8 @@ function createMethod(m: Method[0], k: Method[1]) {
     switch (k) {
         case 0:
             return function (this: any) {
-                let t;
-                return (t = this.getTarget())[m].apply(t, arguments);
+                const t = this.getTarget();
+                return t[m].apply(t, arguments);
             }
         case 1:
             return function (this: any) {
@@ -128,5 +127,17 @@ function createMethod(m: Method[0], k: Method[1]) {
                     return t[m].apply(t, a);
                 });
             };
+        case 3:
+            return function (this: any) {
+                const a = arguments;
+                if (a.length > 1) {
+                    const t = this.getTarget();
+                    return t[m].apply(t, a);
+                }
+                return delegateOptional(() => {
+                    const t = this.getTarget();
+                    return t[m].apply(t, a);
+                });
+            }
     }
 }
