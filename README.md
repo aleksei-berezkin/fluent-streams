@@ -1,3 +1,9 @@
+# The project is deprecated
+
+Now, with JS Array getting more and more powerful, especially with upcoming `groupBy()` and `at()` methods, projects like this become unneeded. Please use standard APIs.
+
+Below is the original README.
+
 # Fluent Streams
 
 [![Travis CI](https://travis-ci.org/aleksei-berezkin/fluent-streams.svg?branch=master)](https://travis-ci.org/github/aleksei-berezkin/fluent-streams)
