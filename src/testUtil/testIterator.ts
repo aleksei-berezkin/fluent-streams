@@ -1,5 +1,5 @@
-import { Stream } from '../../stream';
-import { Optional } from '../../optional';
+import type { Stream } from '..';
+import type { Optional } from '..';
 
 export function testIterator<T, Out extends Stream<T> | Optional<T>>(
     out: Out,

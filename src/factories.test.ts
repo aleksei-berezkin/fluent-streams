@@ -9,8 +9,8 @@ import {
     stream,
     streamFromModifiable,
     streamOf
-} from './factories';
-import { twice } from './impl/testUtil/twice';
+} from '.';
+import { twice } from './testUtil/twice';
 
 test('stream', () => {
     const s = stream(['a', 'b']);
@@ -21,6 +21,16 @@ test('streamFromModifiable', () => {
     const s = streamFromModifiable(['a', 'b']);
     twice(() => expect(s.toArray()).toEqual(['a', 'b']));
 });
+
+test('streamFromModifiable sort', () => {
+    const input = ['b', 'a', 'c']
+    const s = streamFromModifiable(input).sort()
+    expect(s.toArray()).toBe(input)
+    expect(input).toEqual(['a', 'b', 'c'])
+
+    expect(s.reverse().toArray()).toBe(input)
+    expect(input).toEqual(['c', 'b', 'a'])
+})
 
 test('stream of iterable', () => {
     const s = stream({

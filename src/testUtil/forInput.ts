@@ -1,8 +1,7 @@
-import { Stream } from '../../stream';
-import { delegateOptional, delegateStream } from '../delegate';
-import { Optional } from '../../optional';
+import type { Stream } from '..';
+import type { Optional } from '..';
 import { testIterator } from './testIterator';
-import { ArrayStream, InputArrayStream, IteratorStream, RandomAccessStream, SimpleOptional } from '../streamImpl';
+import { optional, stream } from '..';
 
 export function forStreamInput<T, Out extends Stream<unknown> | Optional<unknown>>(
     input: T[],
@@ -13,18 +12,21 @@ export function forStreamInput<T, Out extends Stream<unknown> | Optional<unknown
     forInput<T, Stream<T>, Out>(
         input,
         [
-            a => new IteratorStream(() => a[Symbol.iterator]()),
-            a => new InputArrayStream(a),
-            a => new RandomAccessStream(i => a[i], () => a.length),
-            a => delegateStream(() => new ArrayStream([...a])),
+            a => stream({
+                [Symbol.iterator]() {
+                    return a[Symbol.iterator]()
+                }
+            }),
+            a => stream(a),
+            a => stream(a).reverse().reverse(),
         ],
         build,
         sink,
         testItr,
-    );
+    )
 }
 
-export const streamInputRuns = 4;
+export const streamInputRuns = 3;
 
 export function forOptionalInput<T, Out extends Stream<unknown> | Optional<unknown>>(
     input: T[],
@@ -34,8 +36,7 @@ export function forOptionalInput<T, Out extends Stream<unknown> | Optional<unkno
     forInput<T, Optional<T>, Out>(
         input,
         [
-            a => new SimpleOptional(() => a[Symbol.iterator]().next()),
-            a => delegateOptional(() => new SimpleOptional(() => a[Symbol.iterator]().next())),
+            a => optional(a),
         ],
         build,
         sink,

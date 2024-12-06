@@ -3,6 +3,7 @@ import { forStreamInput as forInput, streamInputRuns } from './testUtil/forInput
 import { twice, twiceAsync } from './testUtil/twice';
 import { permutations } from './testUtil/permutations';
 import { variations } from './testUtil/variations';
+import { stream } from '.';
 
 
 test('at neg last', () => forInput(
@@ -488,6 +489,18 @@ test('shuffle', () => {
         false,
     );
 });
+
+test('my shuffle', () => {
+    const input = ['a', 'b', 'c']
+    const ho = stream(input)
+        .shuffle()
+        .head()
+    const s = new Set()
+    for (let i = 0; i < 30; i++) {
+        s.add(ho.get())
+    }
+    expect(s.size).toEqual(input.length)
+})
 
 test('single', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input => forInput(
     input,

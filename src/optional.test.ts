@@ -1,7 +1,7 @@
 import './testUtil/extendExpect';
 import { forOptionalInput as forInput } from './testUtil/forInput';
 import { twice } from './testUtil/twice';
-import { optional } from '../factories';
+import { optional } from '.';
 
 test('filter', () => [['a'], ['b'], []].forEach(input => forInput(
     input,

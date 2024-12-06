@@ -1,3 +1,4 @@
+// @ts-ignore
 import MatcherContext = jest.MatcherContext;
 
 export {};  // declare global needs to be in module

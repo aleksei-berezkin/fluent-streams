@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
-    "importHelpers": true,
-    "target": "es5",
-    "module": "es6",
-    "outDir": "dist/esm",
+    "declaration": true,
+    "module": "esnext",
   },
-  "exclude": ["**/*.test.ts", "**/testUtil/*"],
-  "extends": "./tsconfig.json",
-  "include": ["src"]
+  "extends": "./tsconfig.build.json",
 }

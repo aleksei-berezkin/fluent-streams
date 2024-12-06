@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "skipLibCheck": true,
+        "target": "esnext",
+    },
+    "exclude": ["**/*.test.ts", "**/testUtil/*", "node_modules/**"],
+    "extends": "./tsconfig.json",
+    "include": ["src"]
+}

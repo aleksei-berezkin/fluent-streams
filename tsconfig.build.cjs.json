@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
-    "importHelpers": true,
-    "target": "es5",
     "module": "commonjs",
-    "outDir": "dist/cjs",
+    "verbatimModuleSyntax": null,
   },
-  "exclude": ["**/*.test.ts", "**/testUtil/*"],
-  "extends": "./tsconfig.json",
-  "include": ["src"]
+  "extends": "./tsconfig.build.json",
 }

@@ -1,12 +1,9 @@
-import fluentStreams from './dist/cjs/index.js';
-const { stream, streamOf } = fluentStreams;
+import { stream, streamOf } from './dist/index.mjs';
 
 const output = stream(['a', 'b', 'c'])
     .map(s => s.toUpperCase())
     .concatAll(streamOf('D', 'E', 'F'))
-    .map(s => s + 'x')
-    .toArray();
+    .join('')
 
-if (output[4] !== 'Ex') {
+if (output !== 'ABCDEF')
     throw new Error(String(output))
-}
