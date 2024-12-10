@@ -17,6 +17,17 @@ test('stream', () => {
     twice(() => expect(s.toArray()).toEqual(['a', 'b']));
 });
 
+test ('stream from readme', () => {
+    const a = stream(['Aspire', 'to', 'inspire', 'before', 'we', 'expire'])
+        .flatMap(word => word)
+        .groupBy(char => char)
+        .map(([char, chars]) => ([char, chars.length]))
+        .sortBy(([_, count]) => -count)
+        .take(3)
+        .toArray()
+    expect(a).toEqual([['e', 7], ['i', 4], ['r', 4]])
+})
+
 test('streamFromModifiable', () => {
     const s = streamFromModifiable(['a', 'b']);
     twice(() => expect(s.toArray()).toEqual(['a', 'b']));

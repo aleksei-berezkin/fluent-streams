@@ -15,15 +15,15 @@ test('has', () => [['a'], ['b'], []].forEach(input => forInput(
     input,
     o => o,
     (o, inputHint) => twice(runHint =>
-        expect(o.has(i => i === 'a')).toBeWithHint(input.includes('a'), inputHint, runHint)
+        expect(o.some(i => i === 'a')).toBeWithHint(input.includes('a'), inputHint, runHint)
     ),
 )));
 
-test('hasNot', () => [['a'], ['b'], []].forEach(input => forInput(
+test('every', () => [['a'], ['b'], []].forEach(input => forInput(
     input,
     o => o,
     (o, inputHint) => twice(runHint =>
-        expect(o.hasNot(i => i === 'a')).toBeWithHint(!input.includes('a'), inputHint, runHint)
+        expect(o.every(i => i !== 'a')).toBeWithHint(!input.includes('a'), inputHint, runHint)
     ),
 )));
 
