@@ -4,9 +4,9 @@
 [![NPM version](https://img.shields.io/npm/v/fluent-streams.svg)](https://www.npmjs.com/package/fluent-streams)
 [![Read the docs](https://img.shields.io/badge/docs-available-44cc11.svg)](https://aleksei-berezkin.github.io/fluent-streams-docs/)
 
-Fluent Streams is a JavaScript and TypeScript library offering a rich API for processing lazy iterables (e.g., arrays, sets, and more).  
+Fluent Streams is a JavaScript and TypeScript library offering a rich API for processing lazy [iterables](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterable_protocol) (e.g., arrays, sets, and more).  
 
-The core concept is the [Stream](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html), a lightweight, stateless wrapper around an iterable. Additionally, the library includes [Optional](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/optional.html), a construct for representing a value that may or may not exist.  
+The core concept is the [Stream](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Stream.html), a lightweight, stateless wrapper around an iterable. Additionally, the library includes [Optional](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Optional.html), a construct for representing a value that may or may not exist.  
 
 ## Install
 
@@ -16,7 +16,7 @@ npm i fluent-streams
 
 ## Use
 
-To create a `Stream` or an `Optional`, use functions described in [online documentation](https://aleksei-berezkin.github.io/fluent-streams-docs/globals.html). The most generic is [`stream()`](https://aleksei-berezkin.github.io/fluent-streams-docs/globals.html#stream) which creates a stream from any iterable.
+To create a `Stream` or an `Optional`, use functions described in the [documentation](https://aleksei-berezkin.github.io/fluent-streams-docs/). The most generic is [`stream()`](https://aleksei-berezkin.github.io/fluent-streams-docs/functions/stream-1.html) which creates a stream from any iterable.
 
 ```typescript
 import { stream } from 'fluent-streams';
@@ -39,7 +39,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - `Stream` and `Optional` are fully iterable, making them compatible with `for-of` loops.
   - When the input or an intermediate result is an array, the library optimizes its use as a random-access container.
 - **Compact Size:**
-  - Minified: 8.2 kB
+  - Minified: 8.4 kB
   - Gzipped: 2.5 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
@@ -56,14 +56,14 @@ Fluent Streams relies on [widely available](https://web.dev/baseline) ES6+ featu
 
 However, it is possible to use the library in an ES5 environment by transpiling it to ES5 and adding the following polyfills:  
 
-- `Array.isArray()`  
-- `Array.prototype.forEach()`  
-- `Array.prototype[@@iterator]()`  
-- `Map`  
-- `Object.keys()`  
-- `Set`  
-- `Symbol`  
-- `Symbol.iterator`  
+- `Array.isArray()`
+- `Array.prototype.forEach()`
+- `Array.prototype[@@iterator]()`
+- `Map`
+- `Object.keys()`
+- `Set`
+- `Symbol`
+- `Symbol.iterator`
 
 **Optionally:**  
 
@@ -74,7 +74,7 @@ However, it is possible to use the library in an ES5 environment by transpiling 
 Fluent Streams [is compared](https://github.com/aleksei-berezkin/fluent-streams-docs/tree/master/benchmarks) to the native JavaScript `Array` and two other similar libraries. The library demonstrates generally reasonable performance, though it is slightly slower in some benchmarks. This can be attributed to the following factors:  
 
 - **Use of Generators.** Generators enable iteration with very compact syntax, which helps keep the bundle size small. However, they are typically somewhat slower than simpler iterator implementations.  
-- **Standard Iteration Protocol.** Both `Stream` and `Optional` implement the standard iteration protocol, allowing them to be used with the `for-of` loop. This makes the syntax compact for both the library and client code. However, custom protocols, while potentially less readable, can sometimes be faster.  
+- **Standard Iteration Protocol.** Both `Stream` and `Optional` implement the standard iteration protocol, allowing them to be used with the `for-of` loop. This makes the syntax compact for both the library and client code. However, custom protocols, while potentially less convenient, can sometimes be faster.  
 
 ## Inspirations and Acknowledgements  
 

@@ -689,6 +689,26 @@ test('toObject not pair', () =>
     )
 );
 
+test('toObject example', () => {
+    const o1 = stream(['a', 'b'] as const)
+        .map(key => [key, 0] as const)
+        .toObject()   // => type is {a: 0, b: 0}
+
+    expect(o1).toEqual({a: 0, b: 0})
+
+    const o2 = stream(['a', 'b'])
+        .map(key => [key, 0] as const)
+        .toObject()   // => type is {[p: string]: 0}
+
+    expect(o2).toEqual({a: 0, b: 0})
+
+    const o3 = stream(['a', 'b'])
+        .map(key => [key, 0])
+        .toObject()   // => type is unknown
+
+    expect(o3).toEqual({a: 0, b: 0})
+})
+
 test('transform gen', () => forInput(
     ['a', 'b', 'c'],
     s => s.transform(function* (input) {
