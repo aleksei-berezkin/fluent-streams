@@ -67,7 +67,7 @@ However, it is possible to use the library in an ES5 environment by transpiling 
 
 **Optionally:**  
 
-- `Promise.all` — required only for [`Stream.awaitAll()`](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/stream.html#awaitall).  
+- `Promise.all` — required only for [`Stream.awaitAll()`](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Stream.html#awaitall).  
 
 ## Benchmarks  
 
