@@ -143,6 +143,14 @@ test('concatAll suspended', () => {
     );
 });
 
+test('concatAll RandomAccessStream', () =>  forInput(
+    ['a', 'b'],
+    s => s.concatAll(stream(['c', 'd'])),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(['a', 'b', 'c', 'd'], inputHint, runHint),
+    ),
+));
+
 test('concat null itr', () => forInput(
     ['a', 'b'],
     s => s.concatAll({
@@ -162,6 +170,23 @@ test('distinctBy', () => forInput(
             [
                 {k: 'a', v: 1},
                 {k: 'b', v: 2},
+            ],
+            inputHint,
+            runHint,
+        )
+    ),
+));
+
+test('distinctBy with index', () => forInput(
+    [['a', 1], ['a', 2], ['a', 3], ['b', 1], ['b', 2], ['b', 3]],
+    s => s.distinctBy(([c], index) => c + String(Math.floor(index / 2))),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(
+            [
+                ['a', 1],
+                ['a', 3],
+                ['b', 1],
+                ['b', 2]
             ],
             inputHint,
             runHint,
@@ -210,9 +235,9 @@ test('equals neg', () =>
 );
 
 test('every', () =>  forInput(
-    ['ax', 'bx', 'cx'],
+    ['ax', 'b', 'cx'],
     s => s,
-    (s, inputHint) => twice(runHint => expect(s.every(i => i.endsWith('x'))).toBeWithHint(true, inputHint, runHint)),
+    (s, inputHint) => twice(runHint => expect(s.every((i, ix) => ix === 1 || i.endsWith('x'))).toBeWithHint(true, inputHint, runHint)),
 ));
 
 test('every neg', () => forInput(
@@ -223,20 +248,20 @@ test('every neg', () => forInput(
 
 test('filter', () =>
     forInput(
-        ['a', 'b', 'c'],
-        s => s.filter(s => s !== 'b'),
+        ['a', 'b', 'c', 'd'],
+        s => s.filter((s, index) => s !== 'b' && !!index),
         (s, inputHint) => twice(runHint =>
-            expect(s.toArray()).toEqualWithHint(['a', 'c'], inputHint, runHint),
+            expect(s.toArray()).toEqualWithHint(['c', 'd'], inputHint, runHint),
         ),
     )
 );
 
 test('filterWithAssertion', () => {
     function isString(s: string | number): s is string {
-        return typeof s === 'string';
+        return typeof s === 'string' && s !== 'not a string';
     }
     forInput(
-        ['a', 1, 'c'],
+        ['a', 1, 'c', 'not a string'],
         s => s.filterWithAssertion(isString),
         (s, inputHint) => twice(runHint => {
             const r: string[] = s.filterWithAssertion(isString).toArray();
@@ -245,14 +270,12 @@ test('filterWithAssertion', () => {
     );
 });
 
-test('find', () => [[], ['a'], ['a', 'b'], ['b', 'a']].forEach(input => forInput(
+test('find', () => [[], ['a'], ['a', 'b'], ['b', 'a']].forEach((input, iIndex) => forInput(
     input,
-    s => s.find(i => i === 'b'),
+    s => s.find((i, index) => i === 'b' && !!index),
     (o, inputHint) => twice(runHint =>
-        expect(o.resolve()).toEqualWithHint(
-            input.includes('b')
-                ? {has: true, val: 'b'}
-                : {has: false},
+        expect(o.orElseUndefined()).toEqualWithHint(
+            iIndex === 2 ? 'b' : undefined,
             inputHint,
             runHint,
         )
@@ -264,13 +287,21 @@ test('flatMap', () =>
         [[]],
         [['a']],
         [[], [], ['a']],
-        [['a'], [], []],
+        [['a'], [], [], []],
         [['a'], [], ['b', 'c', 'd'], [], [], ['e', 'f'], ['g']]
-    ].forEach(input => forInput(
+    ].forEach((input, iIndex) => forInput(
         input,
-        s => s.flatMap(i => i),
+        s => s.flatMap((s, ix) => ix === 2 && !s.length ? ['x', 'xx'] : s),
         (s, inputHint) => twice(runHint =>
-            expect(s.toArray()).toEqualWithHint(input.flatMap(i => i), inputHint, runHint)
+            expect(s.toArray()).toEqualWithHint(
+                iIndex === 0 ? []
+                    : (iIndex === 1 || iIndex === 2) ? ['a']
+                    : iIndex === 3 ? ['a', 'x', 'xx']
+                    : iIndex === 4 ? ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+                    : {} as never,
+                inputHint,
+                runHint
+            )
         ),
     ))
 );
@@ -285,12 +316,42 @@ test('forEach', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
     }),
 )));
 
+test('forEachUntil', () => [[], ['a'], ['a', 'b', 'c', 'c', 'd']].forEach((input, iInput) => forInput(
+    input,
+    s => s,
+    (s, inputHint) => twice(runHint => {
+        const o: string[] = [];
+        s.forEachUntil((c, index)  => {
+            if (c === 'c' && index === 3) return true
+            o.push(c)
+            return false
+        });
+        expect(o).toEqualWithHint(
+            iInput === 0 ? [] : iInput === 1 ? ['a'] : ['a', 'b', 'c'],
+            inputHint,
+            runHint
+        );
+    }),
+)));
+
 test('groupBy', () => forInput(
     [{k: 'a', v: 1}, {k: 'a', v: 2}, {k: 'b', v: 3}],
     s => s.groupBy(i => i.k),
     (s, inputHint) => twice(runHint =>
         expect(s.toArray()).toEqualWithHint(
             [['a', [{k: 'a', v: 1}, {k: 'a', v: 2}]], ['b', [{k: 'b', v: 3}]]],
+            inputHint,
+            runHint,
+        )
+    ),
+));
+
+test('groupBy with index', () => forInput(
+    ['a', 'a', 'a', 'b', 'b', 'b', 'b', 'b', 'c'],
+    s => s.groupBy((c, index) => c + String(index % 2)),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(
+            [['a0', ['a', 'a']], ['a1', ['a']], ['b1', ['b', 'b', 'b']], ['b0', ['b', 'b']], ['c0', ['c']]],
             inputHint,
             runHint,
         )
@@ -354,8 +415,8 @@ test('joinBy', () => forInput(
     ['a', 'b', 'c', 'd', 'e', 'b'],
     s => s,
     (s, inputHint) => twice(runHint =>
-        expect(s.joinBy((l, r) => (l === 'b' || r === 'e') ? '; ' : ', ')).toBeWithHint(
-            'a, b; c, d; e, b', inputHint, runHint
+        expect(s.joinBy((l, r, lIndex) => (l === 'b' || r === 'e' || lIndex === 4) ? '; ' : ', ')).toBeWithHint(
+            'a, b; c, d; e; b', inputHint, runHint
         )
     ),
 ));
@@ -376,9 +437,9 @@ test('last', () => [[], ['c'], ['a', 'b', 'c']].forEach(input =>
 
 test('map', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
-    s => s.map(c => c.toUpperCase()),
+    s => s.map((c, index) => c.toUpperCase() + String(index)),
     (s, inputHint) => twice(runHint =>
-        expect(s.toArray()).toEqualWithHint(input.map(c => c.toUpperCase()), inputHint, runHint)
+        expect(s.toArray()).toEqualWithHint(input.map((c, index) => c.toUpperCase() + String(index)), inputHint, runHint)
     ),
 )));
 
@@ -387,8 +448,8 @@ test('peek', () => forInput(
     s => s,
     (s, inputHint) => twice(runHint => {
         const collector: string[] = [];
-        expect(s.peek(c => collector.push(c)).toArray()).toEqualWithHint(['a', 'b', 'c'], inputHint, runHint);
-        expect(collector).toEqualWithHint(['a', 'b', 'c'], inputHint, `${runHint} -- checking collector`);
+        expect(s.peek((c, index) => collector.push(c, String(index))).toArray()).toEqualWithHint(['a', 'b', 'c'], inputHint, runHint);
+        expect(collector).toEqualWithHint(['a', '0', 'b', '1', 'c', '2'], inputHint, `${runHint} -- checking collector`);
     }),
 ));
 
@@ -490,18 +551,6 @@ test('shuffle', () => {
     );
 });
 
-test('my shuffle', () => {
-    const input = ['a', 'b', 'c']
-    const ho = stream(input)
-        .shuffle()
-        .head()
-    const s = new Set()
-    for (let i = 0; i < 30; i++) {
-        s.add(ho.get())
-    }
-    expect(s.size).toEqual(input.length)
-})
-
 test('single', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s.single(),
@@ -525,13 +574,13 @@ test('size', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(
 test('some', () => forInput(
     ['a', 'b'],
     s => s,
-    (s, inputHint) => twice(runHint => expect(s.some(i => i === 'a')).toBeWithHint(true, inputHint, runHint)),
+    (s, inputHint) => twice(runHint => expect(s.some((c, index) => c === 'b' && index === 1)).toBeWithHint(true, inputHint, runHint)),
 ));
 
 test('some neg', () => forInput(
     ['a', 'b'],
     s => s,
-    (s, inputHint) => twice(runHint => expect(s.some(i => i === 'c')).toBeWithHint(false, inputHint, runHint)),
+    (s, inputHint) => twice(runHint => expect(s.some((c, index) => c === 'b' && index === 0)).toBeWithHint(false, inputHint, runHint)),
 ));
 
 test('sort', () => [[], ['a'], ['c', 'a', 'd', 'e', 'b']].forEach(input => forInput(
@@ -579,11 +628,11 @@ test('splitWhen each', () => forInput(
 ));
 
 test('splitWhen some', () => forInput(
-    ['a', 'b', 'c', 'd', 'e'],
-    s => s.splitWhen((l, r) => r === 'a' || l === 'b' || r === 'd' || l === 'e'),
+    ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+    s => s.splitWhen((l, r, lIndex) => r === 'a' || l === 'b' || r === 'd' || lIndex === 4 || l === 'g'),
     (s, inputHint) => twice(runHint =>
         expect(s.toArray()).toEqualWithHint(
-            [['a', 'b'], ['c'], ['d', 'e']], inputHint, runHint
+            [['a', 'b'], ['c'], ['d', 'e'], ['f', 'g']], inputHint, runHint
         )
     ),
 ));
@@ -675,7 +724,7 @@ test('toObject', () => {
 
 test('toObject not key', () =>
     forInput(
-        [[{}, 1, 1212]],
+        [[{}]],
         s => s,
         s => twice(() => expect(() => s.toObject()).toThrow()),
     )
@@ -689,25 +738,13 @@ test('toObject not pair', () =>
     )
 );
 
-test('toObject example', () => {
-    const o1 = stream(['a', 'b'] as const)
-        .map(key => [key, 0] as const)
-        .toObject()   // => type is {a: 0, b: 0}
-
-    expect(o1).toEqual({a: 0, b: 0})
-
-    const o2 = stream(['a', 'b'])
-        .map(key => [key, 0] as const)
-        .toObject()   // => type is {[p: string]: 0}
-
-    expect(o2).toEqual({a: 0, b: 0})
-
-    const o3 = stream(['a', 'b'])
-        .map(key => [key, 0])
-        .toObject()   // => type is unknown
-
-    expect(o3).toEqual({a: 0, b: 0})
-})
+test('toObject bad key', () =>
+    forInput(
+        [[{}, 1]],
+        s => s,
+        s => twice(() => expect(() => s.toObject()).toThrow()),
+    )
+);
 
 test('transform gen', () => forInput(
     ['a', 'b', 'c'],

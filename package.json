@@ -11,6 +11,7 @@
     "clear@dist": "rm -rf dist",
     "clear@jest": "jest --clearCache",
     "test": "jest",
+    "cover": "jest --collect-coverage",
     "compile": "npm-run-all compile@esm compile@cjs",
     "compile@esm": "tsc --project tsconfig.build.esm.json && mv dist/index.js dist/index.mjs",
     "compile@cjs": "tsc --project tsconfig.build.cjs.json",

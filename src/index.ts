@@ -125,10 +125,11 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * algorithm.
      * 
      * @param getKey - A function that extracts a key from each item to determine uniqueness.
+     * Receives an item and its index in the stream.
      * 
      * @returns A {@link Stream} containing only the distinct items based on their keys.
      */
-    distinctBy(getKey: (item: T) => any): Stream<T>
+    distinctBy(getKey: (item: T, index: number) => any): Stream<T>
 
     /**
      * Returns `true` if the `other` iterable contains the same number of items as this
@@ -149,21 +150,23 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * as the `predicate` returns `false` for any item.
      * 
      * @param predicate - A function to test each item in the stream.
+     * Receives an item and its index in the stream.
      * 
      * @returns `true` if all items satisfy the predicate or the stream is empty,
      *          otherwise `false`.
      */
-    every(predicate: (item: T) => boolean): boolean
+    every(predicate: (item: T, index: number) => boolean): boolean
 
     /**
      * Returns a stream containing only the items of this stream that match the provided
      * `predicate`.
      * 
      * @param predicate - A function to test each item in the stream.
+     * Receives an item and its index in the stream.
      * 
      * @returns A {@link Stream} containing the items that satisfy the predicate.
      */
-    filter(predicate: (item: T) => boolean): Stream<T>
+    filter(predicate: (item: T, index: number) => boolean): Stream<T>
 
     /**
      * Similar to {@link filter}, but allows narrowing the output type. This is 
@@ -182,21 +185,23 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * identically to {@link filter}.
      * 
      * @param assertion - A type guard function to test and narrow the type of each item.
+     * Receives an item and its index in the stream.
      * 
      * @returns A {@link Stream} containing the items that satisfy the assertion.
      */
-    filterWithAssertion<U extends T>(assertion: (item: T) => item is U): Stream<U>
+    filterWithAssertion<U extends T>(assertion: (item: T, index: number) => item is U): Stream<U>
 
     /**
      * Returns an {@link Optional} which resolves to the first item that matches the 
      * predicate, or to empty if no such item is found.
      * 
      * @param predicate - The function to test each item in the stream.
+     * Receives an item and its index in the stream.
      * 
      * @returns An {@link Optional} that contains the first matching item or is empty 
      *          if no item matches.
      */
-    find(predicate: (item: T) => boolean): Optional<T>
+    find(predicate: (item: T, index: number) => boolean): Optional<T>
 
     /**
      * Returns a stream with the following behavior:
@@ -209,6 +214,7 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * 
      * @param mapper - A function that transforms each item in the stream into an 
      *                 iterable of items to be flattened.
+     *                 Receives an item and its index in the stream.
      * 
      * @returns A new {@link Stream} containing all items produced by the `mapper` 
      *          function, flattened into a single level.
@@ -216,14 +222,14 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * @typeParam U - The type of items produced by the `mapper` function, and type of 
      *                items in the resulting stream.
      */
-    flatMap<U>(mapper: (item: T) => Iterable<U>): Stream<U>
+    flatMap<U>(mapper: (item: T, index: number) => Iterable<U>): Stream<U>
 
     /**
      * Invokes `effect` for each item of this stream.
      *
-     * @param effect - The effect to apply to each item.
+     * @param effect - The effect to apply to each item. Receives an item and its index in the stream.
      */
-    forEach(effect: (item: T) => void): void;
+    forEach(effect: (item: T, index: number) => void): void;
 
     /**
      * Invokes the specified `effect` function for each item in this stream until the 
@@ -231,11 +237,12 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * 
      * @param effect - A function to apply to each item in the stream. The function 
      *                 can return a value that determines whether iteration should stop.
+     *                 Receives an item and its index in the stream.
      * 
      * @returns `true` if the iteration was stopped because the `effect` function 
      *          returned `true`, otherwise `false`.
      */
-    forEachUntil(effect: (item: T) => boolean | undefined | void): boolean
+    forEachUntil(effect: (item: T, index: number) => boolean | undefined | void): boolean
 
     /**
      * Returns a stream whose elements are `[key, items[]]` pairs. Keys are 
@@ -247,7 +254,7 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * [SameValueZero](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map#key_equality) 
      * algorithm.
      * 
-     * @param getKey A function to retrieve the key for each item.
+     * @param getKey A function to retrieve the key for each item. Receives an item and its index in the stream.
      * @returns A {@link Stream} of `[key, items[]]` pairs.
      */
     groupBy<K>(getKey: (item: T, index: number) => K): Stream<[K, T[]]>
@@ -290,11 +297,13 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * Like {@link join} but retrieves the separator by calling `getSep` for each pair 
      * of adjacent items.
      * 
-     * @param getSep - A function to get the separator for each pair of adjacent items.
+     * @@param getSep - A function that returns the separator for each pair of adjacent items.
+     * Receives the left item, the right item, and the index of the left item in the stream.
+     * 
      * @returns A string representing the concatenated stream items with custom 
      * separators.
      */
-    joinBy(getSep: (l: T, r: T) => string): string
+    joinBy(getSep: (l: T, r: T, lIndex: number) => string): string
 
     /**
      * Returns an optional resolving to the last item of this stream if it's nonempty, 
@@ -308,28 +317,28 @@ export interface Stream<T> extends Iterable<T, undefined> {
     /**
      * Returns a stream where each item is transformed by `mapper`.
      * 
-     * @param mapper A function to transform each item.
+     * @param mapper A function to transform each item. Receives an item and its index in the stream.
      * @returns A new {@link Stream} containing the transformed items.
      */
-    map<U>(mapper: (item: T) => U): Stream<U>
+    map<U>(mapper: (item: T, index: number) => U): Stream<U>
 
     /**
      * Returns a stream whose items are transformed by `mapper`, 
      * with `null` and `undefined` results filtered out.
      * 
-     * @param mapper The function to transform each item.
+     * @param mapper The function to transform each item. Receives an item and its index in the stream.
      * @returns A new {@link Stream} with the non-null and non-undefined transformed items.
      */
-    mapNullable<U>(mapper: (item: T) => U | null | undefined): Stream<U>
+    mapNullable<U>(mapper: (item: T, index: number) => U | null | undefined): Stream<U>
 
     /**
      * Returns a stream that executes an effect for each item, returning the item unchanged.
      * This method can be used, for example, to mutate items in place.
      * 
-     * @param effect The effect to execute on each item.
+     * @param effect The effect to execute on each item. Receives an item and its index in the stream.
      * @returns A new {@link Stream} with the same items, after executing the effect.
      */
-    peek(effect: (item: T) => void): Stream<T>
+    peek(effect: (item: T, index: number) => void): Stream<T>
 
     /**
      * Returns an optional that resolves to a random item from this stream, or resolves
@@ -432,10 +441,10 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * returns `false` otherwise. This is a short-circuiting operation, meaning it 
      * skips the remaining items once the `predicate` returns `true` for any item.
      * 
-     * @param predicate A function to test each item.
+     * @param predicate A function to test each item. Receives an item and its index in the stream.
      * @returns `true` if any item satisfies the predicate, `false` otherwise.
      */
-    some(predicate: (item: T) => boolean): boolean
+    some(predicate: (item: T, index: number) => boolean): boolean
 
     /**
      * Returns a stream whose items are sorted items of this stream. The implementation relies on
@@ -467,11 +476,11 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * between items for which `isSplit` returns `true`.
      * 
      * @param isSplit A function to check if the items sequence should be split between `l` 
-     * and `r` items.
+     * and `r` items. Receives an item and its index in the stream.
      * 
      * @returns A {@link Stream} containing groups of adjacent items.
      */
-    splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]>
+    splitWhen(isSplit: (l: T, r: T, lIndex: number) => boolean): Stream<T[]>
 
     /**
      * Returns a stream that contains all but the first item of this stream. If the stream 
@@ -644,33 +653,38 @@ export interface Optional<T> extends Iterable<T, undefined> {
      * Returns `true` if the optional has an item and the `predicate` evaluates to 
      * `true` for it, or if the optional is empty.
      * 
-     * @param predicate A function to test the item.
+     * @param predicate A function to test the item. For compatibility with {@link Stream},
+     * it receives the index as a second argument, which is always 0 in this case.
      * @returns `true` if the predicate evaluates to `true` or the optional is empty,
      * `false` otherwise.
      */
-    every(predicate: (item: T) => boolean): boolean
+    every(predicate: (item: T, index: 0) => boolean): boolean
 
     /**
      * Returns an optional resolving to the original item if this optional has an 
      * item and the `predicate` evaluates to `true` for it, or resolving to empty 
      * otherwise.
      * 
-     * @param predicate A function to evaluate the item.
+     * @param predicate A function to evaluate the item. For compatibility with {@link Stream},
+     * it receives the index as a second argument, which is always 0 in this case.
      * 
      * @returns An optional containing the item if the predicate evaluates to `true`
      * for it.
      */
-    filter(predicate: (item: T) => boolean): Optional<T>
+    filter(predicate: (item: T, index: 0) => boolean): Optional<T>
 
     /**
      * Similar to {@link Stream.filterWithAssertion}.
      * 
      * @param assertion A type assertion function to test the item.
+     * For compatibility with {@link Stream}, it receives the index as a second argument,
+     * which is always 0 in this case.
+     * 
      * 
      * @returns An optional containing the item if the assertion is satisfied; 
      * otherwise, an empty optional.
      */
-    filterWithAssertion<U extends T>(assertion: (item: T) => item is U): Optional<U>
+    filterWithAssertion<U extends T>(assertion: (item: T, index: 0) => item is U): Optional<U>
   
     /**
      * Creates an optional with the following behavior:
@@ -680,11 +694,12 @@ export interface Optional<T> extends Iterable<T, undefined> {
      * - If this optional is empty, resolves to empty.
      * 
      * @param mapper A function that takes an item and returns an iterable to create 
-     * an optional from.
+     * an optional from. For compatibility with {@link Stream}, it receives the index
+     * as a second argument, which is always 0 in this case.
      * @returns An optional containing the first item of the iterable returned by 
      * `mapper`, or empty if the iterable has no items or this optional is empty.
      */
-    flatMap<U>(mapper: (item: T) => Iterable<U>): Optional<U>
+    flatMap<U>(mapper: (item: T, index: 0) => Iterable<U>): Optional<U>
 
     /**
      * Creates a {@link Stream} with the following behavior:
@@ -693,11 +708,13 @@ export interface Optional<T> extends Iterable<T, undefined> {
      * - If this optional is empty, the created stream is empty.
      * 
      * @param mapper A function that takes an item and returns an iterable to create 
-     * a new stream from.
+     * a new stream from. For compatibility with {@link Stream}, it receives the index
+     * as a second argument, which is always 0 in this case.
+     * 
      * @returns A stream created from the iterable returned by `mapper`, or an empty 
      * stream if this optional is empty.
      */
-    flatMapToStream<U>(mapper: (item: T) => Iterable<U>): Stream<U>
+    flatMapToStream<U>(mapper: (item: T, index: 0) => Iterable<U>): Stream<U>
 
     /**
      * If this optional contains an item, returns that item; otherwise, throws an 
@@ -740,11 +757,12 @@ export interface Optional<T> extends Iterable<T, undefined> {
      *   value returned by `mapper`.
      * - If this optional is empty, resolves to empty.
      * 
-     * @param mapper The function to transform an item with
+     * @param mapper The function to transform an item with. For compatibility with {@link Stream},
+     * it receives the index as a second argument, which is always 0 in this case.
      * @returns An optional containing the non-null and non-undefined result of applying
      * `mapper` to the item, or an empty optional otherwise
      */
-    mapNullable<U>(mapper: (item: T) => U | null | undefined): Optional<U>;
+    mapNullable<U>(mapper: (item: T, index: 0) => U | null | undefined): Optional<U>;
 
     /**
      * If this optional has an item, returns that item; otherwise, returns `other`.
@@ -786,11 +804,14 @@ export interface Optional<T> extends Iterable<T, undefined> {
      * Returns an optional that resolves just like this optional, but when resolving
      * to an item, additionally executes `effect` on that item before yielding it.
      * One possible usage for this method is mutating the item in place.
-     * @param effect The effect to execute
+     * 
+     * @param effect The effect to execute. For compatibility with {@link Stream},
+     * it receives the index as a second argument, which is always 0 in this case.
+     * 
      * @returns The optional that resolves just like this one, but executes
      * `effect` on the item before it is yielded
      */
-    peek(effect: (item: T) => void): Optional<T>
+    peek(effect: (item: T, index: 0) => void): Optional<T>
 
     /**
      * Returns `{has: true, val: item}` if this optional contains an item, or `{has: false}`
@@ -803,10 +824,13 @@ export interface Optional<T> extends Iterable<T, undefined> {
     /**
      * Returns `true` if this optional has an item and `predicate` evaluates to `true` for it;
      * `false` otherwise.
-     * @param predicate The predicate to test an item
+     * 
+     * @param predicate The predicate to test an item. For compatibility with {@link Stream},
+     * it receives the index as a second argument, which is always 0 in this case.
+     * 
      * @returns `true` if the optional has an item and the predicate returns `true`, otherwise `false`.
      */
-    some(predicate: (item: T) => boolean): boolean
+    some(predicate: (item: T, index: 0) => boolean): boolean
 
     /**
      * If this optional has an item, returns an array containing that item as the only
@@ -981,7 +1005,11 @@ export function optionalOfNullable<T>(getInput: () => T | null | undefined): Opt
 
 type StreamOrOptional<T, S extends 'Stream' | 'Optional'> = S extends 'Stream' ? Stream<T> : Optional<T>
 
-abstract class Base<T, S extends 'Stream' | 'Optional'> implements Iterable<T> {
+abstract class Base<
+    T,
+    S extends 'Stream' | 'Optional',
+    NumberOrZero = S extends 'Stream' ? number : 0
+> implements Iterable<T> {
     #build: <U>(createIter: () => Iterator<U>) => StreamOrOptional<U, S>
 
     constructor(build: <U>(createIter: () => Iterator<U>) => StreamOrOptional<U, S>) {
@@ -990,50 +1018,57 @@ abstract class Base<T, S extends 'Stream' | 'Optional'> implements Iterable<T> {
 
     abstract [Symbol.iterator](): Iterator<T>
 
-    every(predicate: (item: T) => boolean): boolean {
+    every(predicate: (item: T, index: NumberOrZero) => boolean): boolean {
+        let i = 0
         for (const item of this) {
-            if (!predicate(item)) return false
+            if (!predicate(item, i++ as NumberOrZero)) return false
         }
         return true
     }
 
-    filter(predicate: (item: T) => boolean): StreamOrOptional<T, S> {
-        return this.filterWithAssertion(predicate as (item: T) => item is T);
+    filter(predicate: (item: T, index: NumberOrZero) => boolean): StreamOrOptional<T, S> {
+        return this.filterWithAssertion(predicate as (item: T, index: NumberOrZero) => item is T);
     }
 
-    filterWithAssertion<U extends T>(assertion: (item: T) => item is U): StreamOrOptional<U, S> {
+    filterWithAssertion<U extends T>(assertion: (item: T, index: NumberOrZero) => item is U): StreamOrOptional<U, S> {
         const ths = this
         return this.#build(function* () {
+            let i = 0
             for (const item of ths) {
-                if (assertion(item)) yield item
+                if (assertion(item, i++ as NumberOrZero)) yield item
             }
         })
     }
 
-    flatMap<U>(mapper: (item: T) => Iterable<U>): StreamOrOptional<U, S> {
-        return this.#build(flatMap.bind<Iterable<T>, [(i: T) => Iterable<U>], never, Iterator<U>>(this, mapper))
+    flatMap<U>(mapper: (item: T, index: NumberOrZero) => Iterable<U>): StreamOrOptional<U, S> {
+        return this.#build(flatMap.bind<Iterable<T>, [(i: T, index: NumberOrZero) => Iterable<U>], never, Iterator<U>>(this, mapper))
     }
 
-    map<U>(mapper: (item: T) => U): StreamOrOptional<U, S> {
+    map<U>(mapper: (item: T, index: NumberOrZero) => U): StreamOrOptional<U, S> {
         const ths = this
         return this.#build(function* () {
+            let i = 0
             for (const item of ths) {
-                yield mapper(item)
+                yield mapper(item, i++ as NumberOrZero)
             }
         })
     }
 
-    mapNullable<U>(mapper: (item: T) => (U | null | undefined)): StreamOrOptional<U, S> {
+    mapNullable<U>(mapper: (item: T, index: NumberOrZero) => (U | null | undefined)): StreamOrOptional<U, S> {
         return (this.map(mapper) as unknown as Base<U, S>).filterWithAssertion((item => item != null))
     }
 
-    peek(effect: (item: T) => void): StreamOrOptional<T, S> {
-        return this.map(item => {effect(item); return item})
+    peek(effect: (item: T, index: NumberOrZero) => void): StreamOrOptional<T, S> {
+        return this.map((item, index) => {
+            effect(item, index as NumberOrZero)
+            return item
+        })
     }
 
-    some(predicate: (item: T) => boolean): boolean {
+    some(predicate: (item: T, index: NumberOrZero) => boolean): boolean {
+        let i = 0
         for (const item of this) {
-            if (predicate(item)) return true
+            if (predicate(item, i++ as NumberOrZero)) return true
         }
         return false
     }
@@ -1068,10 +1103,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             } else {
                 let i = 0
                 for (const item of ths) {
-                    if (i++ === index) {
-                        yield item
-                        break
-                    }
+                    if (i++ === index) yield item
                 }
             }
         })
@@ -1108,12 +1140,13 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         })
     }
 
-    distinctBy(getKey: (item: T) => any): Stream<T> {
+    distinctBy(getKey: (item: T, index: number) => any): Stream<T> {
         const ths = this
         return new IteratorStream(function* () {
             const keys = new Set<any>()
+            let i = 0
             for (const item of ths) {
-                const k = getKey(item)
+                const k = getKey(item, i++)
                 if (!keys.has(k)) {
                     keys.add(k)
                     yield item
@@ -1133,25 +1166,24 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return !!itr.next().done
     }
 
-    find(predicate: (item: T) => boolean): Optional<T> {
+    find(predicate: (item: T, index: number) => boolean): Optional<T> {
         const ths = this
         return new SimpleOptional(function* () {
+            let i = 0
             for (const item of ths) {
-                if (predicate(item)) {
-                    yield item
-                    return
-                }
+                if (predicate(item, i++)) yield item
             }
         })
     }
 
-    forEach(effect: (item: T) => void): void {
-        this.forEachUntil(item => void effect(item));
+    forEach(effect: (item: T, index: number) => void): void {
+        this.forEachUntil((item, index) => void effect(item, index));
     }
 
-    forEachUntil(effect: (item: T) => boolean | undefined | void) {
+    forEachUntil(effect: (item: T, index: number) => boolean | undefined | void) {
+        let i = 0
         for (const item of this) {
-            if (effect(item) === true) return true
+            if (effect(item, i++) === true) return true
         }
         return false
     }
@@ -1195,13 +1227,15 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return result;
     }
 
-    joinBy(getSep: (l: T, r: T) => string): string {
+    joinBy(getSep: (l: T, r: T, lIndex: number) => string): string {
         let result = '';
-        let prev: T | Empty = empty;
+        let prev: T | undefined;
+        let i = 0
         for (const item of this) {
-            if (prev !== empty) result += getSep(prev as T, item)
+            if (i > 0) result += getSep(prev as T, item, i - 1)
             result += String(item)
             prev = item
+            i++
         }
         return result;
     }
@@ -1286,19 +1320,21 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return new LazyArrayStream(() => sortBy(this.toArray(), getComparable))
     }
 
-    splitWhen(isSplit: (l: T, r: T) => boolean): Stream<T[]> {
+    splitWhen(isSplit: (l: T, r: T, lIndex: number) => boolean): Stream<T[]> {
         const ths = this
         return new IteratorStream(function* () {
             let chunk: T[] | undefined = undefined
+            let i = 0
             for (const item of ths) {
                 if (!chunk) {
                     chunk = [item]
-                } else if (isSplit(chunk[chunk.length - 1], item)) {
+                } else if (isSplit(chunk[chunk.length - 1], item, i - 1)) {
                     yield chunk
                     chunk = [item]
                 } else {
                     chunk.push(item)
                 }
+                i++
             }
             if (chunk) yield chunk
         })
@@ -1501,11 +1537,11 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         return super.concatAll(items)
     }
 
-    map<U>(mapper: (item: T) => U): Stream<U> {
+    map<U>(mapper: (item: T, index: number) => U): Stream<U> {
         return new RandomAccessStream(() => {
             const {i, s} = this.#getRandomAccess()
             return {
-                i: ix => mapper(i(ix)),
+                i: ix => mapper(i(ix), ix),
                 s,
             }
         })
@@ -1652,8 +1688,8 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
         }
     }
 
-    flatMapToStream<U>(mapper: (item: T) => Iterable<U>): Stream<U> {
-        return new IteratorStream(flatMap.bind<Iterable<T>, [(i: T) => Iterable<U>], never, Iterator<U>>(this, mapper))
+    flatMapToStream<U>(mapper: (item: T, number: 0) => Iterable<U>): Stream<U> {
+        return new IteratorStream(flatMap.bind<Iterable<T>, [(i: T, index: 0) => Iterable<U>], never, Iterator<U>>(this, mapper))
     }
 
     get(): T {
@@ -1724,9 +1760,10 @@ function collectLast<T>(input: Iterable<T>, n: number): RingBuffer<T> {
     return {a, p}
 }
 
-function* flatMap<T, U>(this: Iterable<T>, mapper: (item: T) => Iterable<U>): Iterator<U> {
+function* flatMap<T, U>(this: Iterable<T>, mapper: (item: T, index: number) => Iterable<U>): Iterator<U> {
+    let i = 0
     for (const item of this) {
-        yield* mapper(item)
+        yield* mapper(item, i++)
     }
 }
 

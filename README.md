@@ -19,16 +19,20 @@ npm i fluent-streams
 To create a `Stream` or an `Optional`, use functions described in the [documentation](https://aleksei-berezkin.github.io/fluent-streams-docs/). The most generic is [`stream()`](https://aleksei-berezkin.github.io/fluent-streams-docs/functions/stream-1.html) which creates a stream from any iterable.
 
 ```typescript
-import { stream } from 'fluent-streams';
+import { abc, stream } from 'fluent-streams'
 
-stream(['Aspire', 'to', 'inspire', 'before', 'we', 'expire'])
-    .flatMap(word => word)
-    .groupBy(char => char)
-    .map(([char, chars]) => ([char, chars.length]))
-    .sortBy(([_, count]) => -count)
-    .take(3)
-    .toArray()     // => [['e', 7], ['i', 4], ['r', 4]]
+// Check if it's really a pangram
+stream('The quick brown fox jumps over the lazy dog')
+    .filter(c => c !== ' ')
+    .map(c => c.toLowerCase())
+    .distinctBy(c => c)
+    .sort()
+    .equals(abc())
+
+// => true, indeed a pangram
 ```
+
+Note that we created a stream from the string — this is possible because strings implement the iterable protocol, just like Arrays and Sets.
 
 ## Why Choose Fluent Streams?  
 
@@ -36,17 +40,20 @@ Fluent Streams is not the first library to offer this kind of functionality, but
 
 - **Prioritizes Standard Array and Iteration Protocols:**
   - `Stream` uses names and method signatures similar to those of the standard `Array`, making it easy to integrate or remove the library when needed.
+  - Most iterative methods, like their `Array` counterparts, pass the `index` as a second parameter to the callback, eliminating the need to invoke `zipWithIndex()` beforehand.
   - `Stream` and `Optional` are fully iterable, making them compatible with `for-of` loops.
-  - When the input or an intermediate result is an array, the library optimizes its use as a random-access container.
+  - Any intermediate arrays created by operations like `sort()` are not discarded immediately; instead, they are reused in subsequent steps to reduce memory traffic.
 - **Compact Size:**
-  - Minified: 8.4 kB
+  - Minified: 8.5 kB
   - Gzipped: 2.5 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
-  - Clearly distinguishes between `undefined` as a value and the absence of a value.
+  - Clearly distinguishes between `null` or `undefined` as a value, and the absence of a value.
   - Allows conversion of `Optional` back to `Stream` to continue the fluent pipeline.
 - **Extensive Testing:**  
   - The library is rigorously tested to ensure reliability.
+  - Over 150 tests meticulously cover 100% of the library's source code, validating various stream types in multiple combinations.
+  - Laziness and statelessness are also thoroughly tested.
 
 ## Using in Older Environments  
 
