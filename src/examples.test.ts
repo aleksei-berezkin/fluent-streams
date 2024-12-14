@@ -49,16 +49,11 @@ test('poker', () => {
     const playersNumber = 3
     const [flop, turn, river, ...hands] = stream(deck)
         .takeRandom(3 + 1 + 1 + playersNumber * 2)
-        .zipWithIndex()
-        .splitWhen((_, [, j]) =>
-            j === 3             // flop
-            || j === 4          // turn
-            || j >= 5           // river
-                && j % 2 === 1  // ...players' hands
-        )
-        .map(
-            // Unzip index
-            chunk => chunk.map(([card]) => card)
+        .splitWhen((_l, _r, i) =>
+            i === 2             // flop
+            || i === 3          // turn
+            || i >= 4           // river
+                && i % 2 === 0  // ...players' hands
         )
     expect(flop).not.toEqual(deck.slice(0, 3))
     expect(flop.length).toBe(3)
