@@ -475,6 +475,7 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * 
      * @param compareFn Comparison function with semantics described in MDN
      * [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#comparefn).
+     * If not provided, the underlying `Array.sort()` will convert items to strings and compare them lexicographically.
      * 
      * @returns A {@link Stream} with sorted items.
      */
