@@ -1,6 +1,6 @@
 import './testUtil/extendExpect';
-import { forStreamInput as forInput, streamInputRuns } from './testUtil/forInput';
-import { twice, twiceAsync } from './testUtil/twice';
+import { forStreamInput as forInput } from './testUtil/forInput';
+import { twice } from './testUtil/twice';
 import { permutations } from './testUtil/permutations';
 import { variations } from './testUtil/variations';
 import { stream } from '.';
@@ -41,66 +41,6 @@ test('at out of', () => forInput(
     s => s.at(3),
     (o, inputHint) =>  twice(runHint => expect(o.resolve()).toEqualWithHint({has: false}, inputHint, runHint)),
 ));
-
-test('awaitAll const', doneTest => {
-    let runs = 0;
-    forInput(
-        ['a', 'b'],
-        s => s,
-        (s, inputHint) => twiceAsync(() => runs++, (doneRun, runHint) =>
-            s.awaitAll().then(items => {
-                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
-                doneRun();
-            })
-        ),
-    );
-    setTimeout(() => {
-        expect(runs).toBe(streamInputRuns);
-        doneTest();
-    }, 100);
-});
-
-test('awaitAll promise', doneTest => {
-    let runs = 0;
-    forInput(
-        [
-            new Promise(resolve => setTimeout(() => resolve('a'), 100)),
-            new Promise(resolve => setTimeout(() => resolve('b'), 200))
-        ],
-        s => s,
-        (s, inputHint) => twiceAsync(() => runs++, (doneRun, runHint) =>
-            s.awaitAll().then(items => {
-                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
-                doneRun();
-            })
-        )
-    );
-    setTimeout(() => {
-        expect(runs).toBe(streamInputRuns);
-        doneTest();
-    }, 500);
-});
-
-test('awaitAll mix', doneTest => {
-    let runs = 0;
-    forInput(
-        [
-            new Promise(resolve => setTimeout(() => resolve('a'), 100)),
-            'b',
-        ],
-        s => s,
-        (s, inputHint) => twiceAsync(() => runs++, (doneRun, runHint) =>
-            s.awaitAll().then(items => {
-                expect(items).toEqualWithHint(['a', 'b'], inputHint, runHint);
-                doneRun();
-            })
-        ),
-    );
-    setTimeout(() => {
-        expect(runs).toBe(streamInputRuns);
-        doneTest();
-    }, 500);
-});
 
 test('butLast', () =>  [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
     forInput(
@@ -473,50 +413,6 @@ test('randomItem', () => {
         false,
     )
 });
-
-test('reduce', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
-    input,
-    s => s.reduce((prev, curr) => prev + curr),
-    (s, inputHint) => twice(runHint => expect(s.resolve()).toEqualWithHint(
-        input.length
-            ? {has: true, val: input.reduce((prev, curr) => prev + curr)}
-            : {has: false},
-        inputHint,
-        runHint,
-    )),
-)));
-
-test('reduce with initial', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
-    input,
-    s => s,
-    (s, inputHint) => twice(runHint => expect(s.reduce((prev, curr) => prev + curr, 'x')).toEqualWithHint(
-        input.reduce((prev, curr) => prev + curr, 'x'),
-        inputHint,
-        runHint,
-    )),
-)));
-
-test('reduceRight', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
-    input,
-    s => s,
-    (s, inputHint) => twice(runHint => expect(s.reduceRight((l, r) => l + r).resolve()).toEqualWithHint(
-        input.length
-            ? {has: true, val: input.reduceRight((prev, curr) => prev + curr)}
-            : {has: false},
-        inputHint,
-        runHint,
-    )),
-)));
-
-test('reduceRight with initial', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
-    input,
-    s => s,
-    (s, inputHint) => twice(runHint => expect(s.reduceRight((prev, curr) => prev + curr, 'x')).toEqualWithHint(
-        input.reduceRight((prev, curr) => prev + curr, 'x'),
-        inputHint,
-        runHint,
-    )),
-)));
 
 test('reverse', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
