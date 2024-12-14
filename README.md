@@ -44,8 +44,8 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - `Stream` and `Optional` are fully iterable, making them compatible with `for-of` loops.
   - Any intermediate arrays created by operations like `sort()` are not discarded immediately; instead, they are reused in subsequent steps to reduce memory traffic.
 - **Compact Size:**
-  - Minified: 8.5 kB
-  - Gzipped: 2.5 kB
+  - Minified: 8.7 kB
+  - Gzipped: 2.6 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
   - Clearly distinguishes between `null` or `undefined` as a value, and the absence of a value.

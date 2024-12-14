@@ -353,55 +353,78 @@ export interface Stream<T> extends Iterable<T, undefined> {
 
     /**
      * Returns an optional with the following behavior:
-     * - If this stream is empty, resolves to empty.
-     * - If this stream has one item, resolves to that item.
-     * - Otherwise, applies `reducer` to the first and second items, then applies 
-     *   `reducer` to the previously returned result and the third item, and so on, 
-     *   resolving to the value returned by the last `reducer` invocation.
-     * 
-     * @param reducer The function to reduce items.
-     * @returns An {@link Optional} containing the reduced value, or empty if the 
+     * - Resolves to empty if the stream is empty.
+     * - Resolves to the single item if the stream contains exactly one item.
+     * - Resolves to the final value produced by repeatedly applying the `reducer`
+     *   function. The `reducer` is first applied to the items at index 0 and index 1,
+     *   then to the result of the previous invocation and the item at the next index,
+     *   and so on. 
+     * @param reducer A function that reduces the stream's items. It receives the 
+     * following parameters:
+     *        - accumulator - The result of the previous `reducer` invocation, or,
+     *          for the first invocation, the item at index 0.
+     *        - currentItem - The current item of the stream. For the first invocation,
+     *          the item at index 1.
+     *        - currentIndex - The index of the current item in the stream. For the 
+     *          first invocation, this is 1.
+     * @returns An {@link Optional} containing the reduced value, or empty if the
      * stream is empty.
      */
-    reduce(reducer: (prev: T, curr: T) => T): Optional<T>
+    reduce(reducer: (accumulator: T, currentItem: T, currentIndex: number) => T): Optional<T>
 
     /**
-     * If this stream is empty, returns `initial`. Otherwise, applies `reducer` to 
-     * `initial` and the first item, then applies `reducer` to the previously 
-     * returned result and the second item, and so on, returning the result from 
-     * the last `reducer` invocation.
+     * If this stream is empty, returns `initialValue`. Otherwise, applies `reducer` to 
+     * `initialValue` and the item at index 0, then applies `reducer` to the previously 
+     * returned result and the item at index 1, and so on, returning the result from the 
+     * last `reducer` invocation.
      * 
-     * @param reducer The function to reduce items.
-     * @param initial The initial value.
+     * @param reducer The function to reduce items. Takes the following parameters:
+     *        - accumulator - The result of the previous `reducer` invocation, or,
+     *          for the first invocation, `initialValue`.
+     *        - currentItem - The current item of the stream.
+     *        - currentIndex - The index of the current item in the stream. For the 
+     *          first invocation, this is 0.
+     * @param initialValue The initial value for the reduction process.
      * @returns The result of the reduction process.
      */
-    reduce<U>(reducer: (prev: U, curr: T) => U, initial: U): U
+    reduce<U>(reducer: (accumulator: U, currentItem: T, currentIndex: number) => U, initialValue: U): U
 
     /**
      * Returns an optional with the following behavior:
      * - If this stream is empty, resolves to empty.
      * - If this stream has one item, resolves to that item.
-     * - Otherwise, applies `reducer` to the last and second-to-last items, then 
-     *   applies `reducer` to the previously returned result and the third-to-last 
-     *   item, and so on, resolving to the value returned by the final `reducer` 
-     *   invocation.
+     * - Otherwise, applies `reducer` to the item at index `size - 1` and the item at 
+     *   index `size - 2`, then applies `reducer` to the previously returned result 
+     *   and the item at index `size - 3`, and so on, resolving to the value returned 
+     *   by the final `reducer` invocation.
      * 
-     * @param reducer The function to reduce items.
-     * @returns An {@link Optional} containing the result of the reduction or empty.
+     * @param reducer The function to reduce items. Takes the following parameters:
+     *        - accumulator - The result of the previous `reducer` invocation, or, 
+     *          for the first invocation, the item at index `size - 1`.
+     *        - currentItem - The current item of the stream.
+     *        - currentIndex - The index of the current item in the stream, starting 
+     *          from `size - 2` and decreasing toward 0.
+     * @returns An {@link Optional} containing the result of the reduction, or empty if 
+     *          the stream is empty.
      */
-    reduceRight(reducer: (prev: T, curr: T) => T): Optional<T>
+    reduceRight(reducer: (accumulator: T, currentItem: T, currentIndex: number) => T): Optional<T>
 
     /**
-     * If this stream is empty, returns `initial`. Otherwise, applies `reducer` to 
-     * `initial` and the last item, then applies `reducer` to the previously 
-     * returned result and the second-to-last item, and so on, returning the result 
-     * from the final `reducer` invocation.
+     * If this stream is empty, returns `initialValue`. Otherwise, applies `reducer` to 
+     * `initialValue` and the item at the index `size - 1`, then applies `reducer` to the 
+     * previously returned result and the item at index `size - 2`, and so on, 
+     * returning the result from the final `reducer` invocation.
      * 
-     * @param reducer The function to reduce items.
-     * @param initial The initial value.
-     * @returns The result of the reduction.
+     * @param reducer The function to reduce items. Takes the following parameters:
+     *        - accumulator - The result of the previous `reducer` invocation, or,
+     *          for the first invocation, `initialValue`.
+     *        - currentItem - The current item of the stream.
+     *        - currentIndex - The index of the current item in the stream, starting 
+     *          from the index `size - 1` and decreasing toward 0.
+     * @param initialValue The initial value for the reduction process.
+     * @returns The result of the reduction process.
      */
-    reduceRight<U>(reducer: (prev: U, curr: T) => U, initial: U): U
+    reduceRight<U>(reducer: (accumulator: U, currentItem: T, currentIndex: number) => U, initialValue: U): U
 
     /**
      * Returns a stream whose elements are the elements of this stream in reversed 
@@ -1118,7 +1141,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return new IteratorStream(function* ()  {
             let prev: T | Empty = empty
             for (const item of ths) {
-                if (prev !== empty) yield prev as T
+                if (!isEmpty(prev)) yield prev
                 prev = item
             }
         })
@@ -1254,36 +1277,26 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         });
     }
 
-    reduce<U>(reducer: (prev: U, curr: T) => U, initial?: U): Optional<U> | U {
-        if (arguments.length > 1) {
-            let curr: U = initial!
-            for (const item of this) {
-                curr = reducer(curr, item)
-            }
-            return curr;
-        }
+    reduce<U>(reducer: (acc: U, curr: T, index: number) => U, initial?: U): Optional<U> | U {
+        if (arguments.length > 1)
+            return reduce(this, reducer, initial!)
 
         const ths = this
         return new SimpleOptional<U>(function* () {
-            let curr: U | Empty = empty
-            for (const item of ths) {
-                if (curr === empty) {
-                    curr = item as unknown as U  // no initial, U=T
-                } else {
-                    curr = reducer(curr as U, item)
-                }
-            }
-            if (curr !== empty) yield curr as U
+            const reduced = reduce(ths, reducer, empty)
+            if (!isEmpty(reduced)) yield reduced
         });
     }
 
-    reduceRight<U>(reducer: (prev: U, curr: T) => U, initial?: U): Optional<U> | U {
-        if (arguments.length > 1) {
-            return this.reverse().reduce(reducer, initial!);
-        }
+    reduceRight<U>(reducer: (prev: U, curr: T, index: number) => U, initial?: U): Optional<U> | U {
+        const reversed = this.reverse().toArray()
+        if (arguments.length > 1)
+            return reduce(reversed, reducer, initial!, reversed.length)
 
-        // No initial, U=T
-        return this.reverse().reduce(reducer as any) as any;
+        return new SimpleOptional<U>(function* () {
+            const reduced = reduce(reversed, reducer, empty, reversed.length)
+            if (!isEmpty(reduced)) yield reduced
+        })
     }
 
     reverse(): Stream<T> {
@@ -1299,10 +1312,10 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return new SimpleOptional(function* () {
             let foundItem: T | Empty = empty
             for (const item of ths) {
-                if (foundItem !== empty) return
+                if (!isEmpty(foundItem)) return
                 foundItem = item
             }
-            if (foundItem !== empty) yield foundItem as T
+            if (!isEmpty(foundItem)) yield foundItem
         })
     }
 
@@ -1679,7 +1692,7 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
         let n: IteratorResult<T> | Empty = this.#createIter().next()
         return {
             next() {
-                if (n === empty) return {done: true, value: undefined}
+                if (isEmpty(n)) return {done: true, value: undefined}
 
                 const m = n as IteratorResult<T>
                 n = empty
@@ -1688,7 +1701,7 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
         }
     }
 
-    flatMapToStream<U>(mapper: (item: T, number: 0) => Iterable<U>): Stream<U> {
+    flatMapToStream<U>(mapper: (item: T, index: 0) => Iterable<U>): Stream<U> {
         return new IteratorStream(flatMap.bind<Iterable<T>, [(i: T, index: 0) => Iterable<U>], never, Iterator<U>>(this, mapper))
     }
 
@@ -1767,6 +1780,32 @@ function* flatMap<T, U>(this: Iterable<T>, mapper: (item: T, index: number) => I
     }
 }
 
+function reduce<
+    T,
+    Initial,
+    U = Initial extends Empty ? T : Initial,
+>(
+    itr: Iterable<T>,
+    reducer: (accumulator: U, currentItem: T, currentIndex: number) => U,
+    initial: Initial,
+    lengthIfReduceRight?: number,
+): Initial | U {
+    let acc: Initial | U = initial
+    let i = isEmpty(initial) ? 1 : 0
+    for (const item of itr) {
+        if (isEmpty(acc))
+            // No initial, U = T
+            acc = item as undefined as U
+        else
+            acc = reducer(
+                acc as U,
+                item,
+                lengthIfReduceRight != null ? lengthIfReduceRight - 1 - (i++) : i++
+            )
+    }
+    return acc
+}
+
 function shuffle<T>(a: T[], n: number = a.length) {
     const r = n < a.length ? n : n - 1
     for (let i = 0; i < r; i++) {
@@ -1788,5 +1827,8 @@ function sortBy<T>(a: T[], getComparable: (item: T) => (number | string | boolea
     })
 }
 
-const empty = {} satisfies {_brand?: never}
-type Empty = typeof empty
+type Empty = {_brand?: never}
+const empty: Empty = {}
+function isEmpty(a: unknown): a is Empty {
+    return a === empty
+}
