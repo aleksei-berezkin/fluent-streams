@@ -132,6 +132,15 @@ export interface Stream<T> extends Iterable<T, undefined> {
     distinctBy(getKey: (item: T, index: number) => any): Stream<T>
 
     /**
+     * Returns a stream containing all items except the first `n` items of this stream. 
+     * If the stream contains `n` or fewer items, the resulting stream will be empty.
+     * 
+     * @param n The number of items to drop from the start of the stream.
+     * @returns A {@link Stream} containing all items except the first `n`.
+     */
+    drop(n: number): Stream<T>
+
+    /**
      * Returns `true` if the `other` iterable contains the same number of items as this
      * stream and all corresponding items are equal using the `===` operator.
      * 
@@ -611,6 +620,17 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * iterator, or empty if no items are yielded.
      */
     transformToOptional<U>(operator: (input: Iterable<T>) => Iterator<U>): Optional<U>
+
+    /**
+     * Returns a stream with the element at the specified `index` replaced by the 
+     * provided `value`, while all other elements remain unchanged.
+     * If the length of this stream is less than `index + 1`, the resulting stream remains unchanged.
+     * 
+     * @param index The index of the element to replace.
+     * @param value The value to insert at the specified index.
+     * @returns A {@link Stream} with the element at the specified `index` replaced by the provided `value`.
+     */
+    with(index: number, value: T): Stream<T>
 
     /**
      * Returns a stream whose elements are pairs, where the first element is an
@@ -1179,6 +1199,16 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         })
     }
 
+    drop(n: number): Stream<T> {
+        const ths = this
+        return new IteratorStream(function* () {
+            let i = 0
+            for (const item of ths) {
+                if (i++ >= n) yield item
+            }
+        })
+    }
+
     equals(other: Iterable<T>): boolean {
         const itr = other[Symbol.iterator]()
         for (const item of this) {
@@ -1421,6 +1451,10 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return new SimpleOptional(() => operator(this));
     }
 
+    with(index: number, value: T): Stream<T> {
+        return this.map((item, i) => i === index ? value : item)
+    }
+
     zip<U>(other: Iterable<U>): Stream<[T, U]> {
         return this.#zip(other)
     }
@@ -1551,6 +1585,16 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         return super.concatAll(items)
     }
 
+    drop(n: number): Stream<T> {
+        return new RandomAccessStream(() => {
+            const {i, s} = this.#getRandomAccess()
+            return {
+                i: ix => i(ix + n),
+                s: Math.max(0, s - n),
+            }
+        })
+    }
+
     map<U>(mapper: (item: T, index: number) => U): Stream<U> {
         return new RandomAccessStream(() => {
             const {i, s} = this.#getRandomAccess()
@@ -1576,14 +1620,6 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
                 i: ix => i(s - 1 - ix),
                 s,
             }
-        })
-    }
-
-    single(): Optional<T> {
-        const ths = this
-        return new SimpleOptional<T>(function* () {
-            const {i, s} = ths.#getRandomAccess()
-            if (s === 1) yield i(0)
         })
     }
 

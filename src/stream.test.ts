@@ -140,6 +140,16 @@ test('distinctBy empty', () => forInput(
     (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint([], inputHint, runHint)),
 ));
 
+test('drop', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input => forInput(
+    input,
+    s => s.drop(2),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(
+            input.slice(2), inputHint, runHint
+        ),
+    )
+)))
+
 test('equals', () =>
     forInput(
         ['a', 'b', 'c'],
@@ -692,6 +702,22 @@ test('transformToOptional empty', () => forInput(
     s => s.transformToOptional(function* () {}),
     (o, inputHint) => twice(runHint => expect(o.resolve()).toEqualWithHint({has: false}, inputHint, runHint)),
 ));
+
+test('with', () => forInput(
+    ['a', 'b', 'c', 'd', 'e'],
+    s => s
+        .with(0, 'x')
+        .with(2, 'y')
+        .with(4, 'z')
+        .with(5, 'zz')
+        .with(-1, 'zzz'),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(['x', 'b', 'y', 'd', 'z'],
+            inputHint,
+            runHint,
+        )
+    ),
+))
 
 test('zip', () => [[], ['i'], ['i', 'j'], ['i', 'j', 'k']].forEach(input => forInput(
     ['a', 'b'],
