@@ -967,12 +967,15 @@ export function entryStream<O extends {[k: string]: any}>(object: O): Stream<rea
 }
 
 /**
- * Creates a {@link Stream} of ascending numbers starting with `from` up to `bound` exclusively.
- * @param from Start value inclusively
- * @param bound End value exclusively. Pass `Number.POSITIVE_INFINITY` to create an infinite stream.
- * @returns A stream of ascending numbers from `from` to `bound`, exclusive.
+ * Creates a {@link Stream} of ascending numbers starting from `from` and ending 
+ * just before `bound`. If `bound` is omitted, the stream will continue indefinitely.
+ * @param from The starting value (inclusive).
+ * @param bound The end value (exclusive). Defaults to `Number.POSITIVE_INFINITY`, 
+ * resulting in an endless stream.
+ * @returns A stream of ascending numbers starting from `from` and, if `bound` is 
+ * provided, ending just before `bound`.
  */
-export function range(from: number, bound: number): Stream<number> {
+export function range(from: number, bound: number = Number.POSITIVE_INFINITY): Stream<number> {
     return new RandomAccessStream(() => ([
         ix => from + ix,
         Math.max(0, bound - from),
@@ -1385,11 +1388,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     tail(): Stream<T> {
-        return new IteratorStream(() => {
-            const itr = this[Symbol.iterator]()
-            itr.next()
-            return itr
-        })
+        return this.drop(1)
     }
 
     take(n: number): Stream<T> {
@@ -1463,6 +1462,10 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this.#zip(other, true)
     }
 
+    zipWithIndex(): Stream<[T, number]> {
+        return this.#zip(range(0))
+    }
+
     #zip<U>(other: Iterable<U>, strict = false): Stream<[T, U]> {
         const ths = this
         return new IteratorStream(function* () {
@@ -1471,22 +1474,12 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             for ( ; ; ) {
                 const {done: d1, value: v1} = it1.next()
                 const {done: d2, value: v2} = it2.next()
-                if (d1 && d2) break
-                if (!d1 && !d2) yield [v1, v2] satisfies [T, U]
                 if (strict) {
                     if (d1 && !d2) throw new Error('Too small this')
                     if (!d1 && d2) throw new Error('Too small other')
                 }
-            }
-        })
-    }
-
-    zipWithIndex(): Stream<[T, number]> {
-        const ths = this
-        return new IteratorStream(function* () {
-            let i = 0
-            for (const item of ths) {
-                yield [item, i++] satisfies [T, number]
+                if (d1 || d2) break
+                if (!d1 && !d2) yield [v1, v2] satisfies [T, U]
             }
         })
     }
@@ -1610,13 +1603,6 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         return this.#newRandomAccessStream((getItem, size) => ([
             ix => getItem(size - 1 - ix),
             size,
-        ]))
-    }
-
-    tail(): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => ([
-            ix => getItem(ix + 1),
-            Math.max(0, size - 1),
         ]))
     }
 
