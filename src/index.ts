@@ -913,10 +913,10 @@ export interface Optional<T> extends Iterable<T, undefined> {
  */
 export function stream<T>(input: Iterable<T>): Stream<T> {
     return Array.isArray(input)
-        ? new RandomAccessStream<T>(() => ({
-            i: ix => input[ix],
-            s: input.length,
-        }))
+        ? new RandomAccessStream<T>(() => ([
+            ix => input[ix],
+            input.length,
+        ]))
         : new IteratorStream<T>(() => input[Symbol.iterator]())
 }
 
@@ -959,10 +959,10 @@ export function streamOf<T>(...input: T[]): Stream<T> {
 export function entryStream<O extends {[k: string]: any}>(object: O): Stream<readonly [keyof O, O[keyof O]]> {
     return new RandomAccessStream<readonly [keyof O, O[keyof O]]>(() => {
         const keys = Object.keys(object)
-        return {
-            i: ix => [keys[ix], object[keys[ix]]] as const,
-            s: keys.length,
-        }
+        return [
+            ix => [keys[ix], object[keys[ix]]] as const,
+            keys.length,
+        ]
     })
 }
 
@@ -973,10 +973,10 @@ export function entryStream<O extends {[k: string]: any}>(object: O): Stream<rea
  * @returns A stream of ascending numbers from `from` to `bound`, exclusive.
  */
 export function range(from: number, bound: number): Stream<number> {
-    return new RandomAccessStream(() => ({
-        i: ix => from + ix,
-        s: Math.max(0, bound - from),
-    }))
+    return new RandomAccessStream(() => ([
+        ix => from + ix,
+        Math.max(0, bound - from),
+    ]))
 }
 
 /**
@@ -986,10 +986,10 @@ export function range(from: number, bound: number): Stream<number> {
 export function abc(): Stream<string> {
     return new RandomAccessStream(() => {
         const size = 'z'.charCodeAt(0) + 1 - 'a'.charCodeAt(0);
-        return {
-            i: ix => String.fromCharCode('a'.charCodeAt(0) + ix),
-            s: size,
-        }
+        return [
+            ix => String.fromCharCode('a'.charCodeAt(0) + ix),
+            size,
+        ]
     })
 }
 
@@ -1503,11 +1503,10 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 }
 
-type RandomAccess<T> = {
-    // Minifiers cannot mangle these, shortening manually
-    i: (ix: number) => T,
-    s: number,
-}
+type RandomAccess<T> = [
+    getItem: (ix: number) => T,
+    size: number,
+]
 
 class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     /**
@@ -1522,12 +1521,12 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     [Symbol.iterator](): Iterator<T> {
-        const {i, s} = this.#getRandomAccess()
+        const [getItem, size] = this.#getRandomAccess()
         let ix = 0
         return {
             next() {
-                if (ix < s)
-                    return {done: false, value: i(ix++)}
+                if (ix < size)
+                    return {done: false, value: getItem(ix++)}
                 else
                     return {done: true, value: undefined}
             }
@@ -1537,33 +1536,33 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     at(index: number): Optional<T> {
         const ths = this
         return new SimpleOptional(function* () {
-            const {i, s} = ths.#getRandomAccess()
+            const [getItem, s] = ths.#getRandomAccess()
             if (0 <= index && index < s) {
-                yield i(index)
+                yield getItem(index)
             } else if (-s <= index && index < 0) {
-                yield i(s + index)
+                yield getItem(s + index)
             }
         })
+    }
+
+    #newRandomAccessStream<U>(createNew: (i: (ix: number) => T, s: number) => RandomAccess<U>): RandomAccessStream<U> {
+        return new RandomAccessStream(() =>
+            createNew(...this.#getRandomAccess())
+        )
     }
 
     butLast(): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {i, s} = this.#getRandomAccess()
-            return {
-                i,
-                s: Math.max(s - 1, 0),
-            }
-        })
+        return this.#newRandomAccessStream((getItem, size) => ([
+            getItem,
+            Math.max(size - 1, 0),
+        ]))
     }
 
     concat(newItem: T): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {i, s} = this.#getRandomAccess()
-            return {
-                i: ix => ix === s ? newItem : i(ix),
-                s: s + 1,
-            }
-        })
+        return this.#newRandomAccessStream((getItem, size) => ([
+            ix => ix === size ? newItem : getItem(ix),
+            size + 1,
+        ]))
     }
 
     concatAll(items: Iterable<T>): Stream<T> {
@@ -1573,12 +1572,12 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
 
         if (itemsStream) {
             return new RandomAccessStream(() => {
-                const {i: i1, s: s1} = this.#getRandomAccess()
-                const {i: i2, s: s2} = itemsStream.#getRandomAccess()
-                return {
-                    i: i => i >= s1 ? i2(i - s1) as T : i1(i),
-                    s: s1 + s2,
-                }
+                const [get1, size1] = this.#getRandomAccess()
+                const [get2, size2] = itemsStream.#getRandomAccess()
+                return [
+                    i => i >= size1 ? get2(i - size1) as T : get1(i),
+                    size1 + size2,
+                ]
             })
         }
 
@@ -1586,80 +1585,62 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     drop(n: number): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {i, s} = this.#getRandomAccess()
-            return {
-                i: ix => i(ix + n),
-                s: Math.max(0, s - n),
-            }
-        })
+        return this.#newRandomAccessStream((getItem, size) => ([
+            ix => getItem(ix + n),
+            Math.max(0, size - n),
+        ]))
     }
 
     map<U>(mapper: (item: T, index: number) => U): Stream<U> {
-        return new RandomAccessStream(() => {
-            const {i, s} = this.#getRandomAccess()
-            return {
-                i: ix => mapper(i(ix), ix),
-                s,
-            }
-        })
+        return this.#newRandomAccessStream((getItem, size) => ([
+            ix => mapper(getItem(ix), ix),
+            size,
+        ]))
     }
 
     randomItem(): Optional<T> {
         const ths = this
         return new SimpleOptional(function* () {
-            const {i, s} = ths.#getRandomAccess()
-            if (s) yield i(Math.floor(Math.random() * s))
+            const [getItem, size] = ths.#getRandomAccess()
+            if (size) yield getItem(Math.floor(Math.random() * size))
         })
     }
 
     reverse(): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {i, s} = this.#getRandomAccess()
-            return {
-                i: ix => i(s - 1 - ix),
-                s,
-            }
-        })
+        return this.#newRandomAccessStream((getItem, size) => ([
+            ix => getItem(size - 1 - ix),
+            size,
+        ]))
     }
 
     tail(): Stream<T> {
-        return new RandomAccessStream<T>(() => {
-            const {i, s} = this.#getRandomAccess()
-            return {
-                i: ix => i(ix + 1),
-                s: Math.max(0, s - 1),
-            }
-        })
+        return this.#newRandomAccessStream((getItem, size) => ([
+            ix => getItem(ix + 1),
+            Math.max(0, size - 1),
+        ]))
     }
 
     take(n: number): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {i, s} = this.#getRandomAccess()
-            return {
-                i,
-                s: Math.max(0, Math.min(n, s)),
-            }
-        })
+        return this.#newRandomAccessStream((getItem, size) => ([
+            getItem,
+            Math.max(0, Math.min(n, size)),
+        ]))
     }
 
     takeLast(n: number): Stream<T> {
-        return new RandomAccessStream(() => {
-            const {i, s} = this.#getRandomAccess()
-            return {
-                i: ix => i(Math.max(0, s - n) + ix),
-                s: Math.max(0, Math.min(n, s)),
-            }
-        })
+        return this.#newRandomAccessStream((getItem, size) => ([
+            ix => getItem(Math.max(0, size - n) + ix),
+            Math.max(0, Math.min(n, size)),
+        ]))
     }
 
     toArray(): T[] {
-        const {i, s} = this.#getRandomAccess()
-        return Array.from({length: s}, (_, ix) => i(ix))
+        const [getItem, length] = this.#getRandomAccess()
+        return Array.from({length}, (_, ix) => getItem(ix))
     }
 
     size(): number {
-        return this.#getRandomAccess().s
+        return this.#getRandomAccess()[1]
     }
 
     zipWithIndex(): Stream<[T, number]> {
@@ -1671,19 +1652,14 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     #zipWithIndex<AndLen extends boolean, U = AndLen extends true ? [T, number, number] : [T, number]>(andLen?: AndLen): Stream<U> {
-        return new RandomAccessStream(() => {
-            const {i, s} = this.#getRandomAccess()
-            return {
-                i: ix => andLen ? [i(ix), ix, s] : [i(ix), ix],
-                s,
-            } as RandomAccess<U>
-        })
+        return this.#newRandomAccessStream((getItem, size) => ([
+            ix => andLen ? [getItem(ix), ix, size] : [getItem(ix), ix],
+            size,
+        ] as RandomAccess<U>))
     }
 }
 
-type ArrayAccess<T> = {
-    a: T[]
-} & RandomAccess<T>
+type ArrayAccess<T> = [...RandomAccess<T>, array: T[]]
 
 class LazyArrayStream<T> extends RandomAccessStream<T> implements Stream<T> {
     #getArrayAccess: () => ArrayAccess<T>
@@ -1691,26 +1667,26 @@ class LazyArrayStream<T> extends RandomAccessStream<T> implements Stream<T> {
     constructor(getArray: () => T[]) {
         const getArrayAccess = () => {
             const a = getArray()
-            return {
+            return [
+                ix => a[ix],
+                a.length,
                 a,
-                i: ix => a[ix],
-                s: a.length,
-            } satisfies ArrayAccess<T>
+            ] satisfies ArrayAccess<T>
         }
-        super(getArrayAccess)
+        super(getArrayAccess as unknown as () => RandomAccess<T>)
         this.#getArrayAccess = getArrayAccess
     }
 
     [Symbol.iterator](): Iterator<T> {
-        return this.#getArrayAccess().a[Symbol.iterator]()
+        return this.#getArrayAccess()[2][Symbol.iterator]()
     }
 
     reverse(): Stream<T> {
-        return new LazyArrayStream(() => this.#getArrayAccess().a.reverse())
+        return new LazyArrayStream(() => this.#getArrayAccess()[2].reverse())
     }
 
     toArray(): T[] {
-        return this.#getArrayAccess().a
+        return this.#getArrayAccess()[2]
     }
 }
 
