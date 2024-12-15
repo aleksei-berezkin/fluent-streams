@@ -1499,6 +1499,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
 type RandomAccess<T> = [
     getItem: (ix: number) => T,
     size: number,
+    array?: unknown, // Placeholder for ArrayAccess
 ]
 
 class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
@@ -1538,7 +1539,7 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         })
     }
 
-    #newRandomAccessStream<U>(createNew: (i: (ix: number) => T, s: number) => RandomAccess<U>): RandomAccessStream<U> {
+    #newRandomAccessStream<U>(createNew: (...args: RandomAccess<T>) => RandomAccess<U>): RandomAccessStream<U> {
         return new RandomAccessStream(() =>
             createNew(...this.#getRandomAccess())
         )
@@ -1637,15 +1638,15 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         return this.#zipWithIndex(true)
     }
 
-    #zipWithIndex<AndLen extends boolean, U = AndLen extends true ? [T, number, number] : [T, number]>(andLen?: AndLen): Stream<U> {
+    #zipWithIndex<AndLen extends boolean>(andLen?: AndLen) {
         return this.#newRandomAccessStream((getItem, size) => ([
-            ix => andLen ? [getItem(ix), ix, size] : [getItem(ix), ix],
+            ix => (andLen ? [getItem(ix), ix, size] : [getItem(ix), ix]) as AndLen extends true ? [T, number, number] : [T, number],
             size,
-        ] as RandomAccess<U>))
+        ]))
     }
 }
 
-type ArrayAccess<T> = [...RandomAccess<T>, array: T[]]
+type ArrayAccess<T> = [RandomAccess<T>[0], RandomAccess<T>[1], array: T[]]
 
 class LazyArrayStream<T> extends RandomAccessStream<T> implements Stream<T> {
     #getArrayAccess: () => ArrayAccess<T>
@@ -1659,7 +1660,7 @@ class LazyArrayStream<T> extends RandomAccessStream<T> implements Stream<T> {
                 a,
             ] satisfies ArrayAccess<T>
         }
-        super(getArrayAccess as unknown as () => RandomAccess<T>)
+        super(getArrayAccess)
         this.#getArrayAccess = getArrayAccess
     }
 
