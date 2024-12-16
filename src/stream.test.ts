@@ -150,6 +150,34 @@ test('drop', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input => for
     )
 )))
 
+test('dropLast', () => [-1, 0, 1, 2, 5, 6, 7].forEach(n =>
+    forInput(
+        ['a', 'b', 'c', 'd', 'e', 'f'],
+        s => s.dropLast(n),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(
+                n <= 0 ? ['a', 'b', 'c', 'd', 'e', 'f']
+                    : n === 1 ? ['a', 'b', 'c', 'd', 'e']
+                    : n === 2 ? ['a', 'b', 'c', 'd']
+                    : n === 5 ? ['a']
+                    : [],
+                inputHint,
+                runHint
+            ),
+        )
+    )
+))
+
+test('dropLast empty', () => [-1, 0, 1, 3].forEach(n =>
+    forInput(
+        [],
+        s => s.dropLast(n),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint([], inputHint, runHint),
+        )
+    )
+))
+
 test('equals', () =>
     forInput(
         ['a', 'b', 'c'],

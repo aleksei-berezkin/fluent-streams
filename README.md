@@ -52,7 +52,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - Allows conversion of `Optional` back to `Stream` to continue the fluent pipeline.
 - **Extensive Testing:**  
   - The library is rigorously tested to ensure reliability.
-  - Over 150 tests meticulously cover 100% of the library's source code, validating various stream types in multiple combinations.
+  - Over 160 tests meticulously cover 100% of the library's source code, validating various stream types in multiple combinations.
   - Laziness and statelessness are also thoroughly tested.
 
 ## Using in Older Environments  
