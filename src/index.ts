@@ -1559,10 +1559,10 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     concat(newItem: T): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => ([
+        return this.#newRandomAccessStream((getItem, size) => [
             ix => ix === size ? newItem : getItem(ix),
             size + 1,
-        ]))
+        ])
     }
 
     concatAll(items: Iterable<T>): Stream<T> {
@@ -1585,24 +1585,24 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     drop(n: number): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => ([
+        return this.#newRandomAccessStream((getItem, size) => [
             ix => getItem(ix + n),
             Math.max(0, size - n),
-        ]))
+        ])
     }
 
     dropLast(n: number): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => ([
+        return this.#newRandomAccessStream((getItem, size) => [
             getItem,
             Math.max(0, size - n),
-        ]))
+        ])
     }
 
     map<U>(mapper: (item: T, index: number) => U): Stream<U> {
-        return this.#newRandomAccessStream((getItem, size) => ([
+        return this.#newRandomAccessStream((getItem, size) => [
             ix => mapper(getItem(ix), ix),
             size,
-        ]))
+        ])
     }
 
     randomItem(): Optional<T> {
@@ -1614,24 +1614,24 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     reverse(): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => ([
+        return this.#newRandomAccessStream((getItem, size) => [
             ix => getItem(size - 1 - ix),
             size,
-        ]))
+        ])
     }
 
     take(n: number): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => ([
+        return this.#newRandomAccessStream((getItem, size) => [
             getItem,
             Math.max(0, Math.min(n, size)),
-        ]))
+        ])
     }
 
     takeLast(n: number): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => ([
+        return this.#newRandomAccessStream((getItem, size) => [
             ix => getItem(Math.max(0, size - n) + ix),
             Math.max(0, Math.min(n, size)),
-        ]))
+        ])
     }
 
     toArray(): T[] {
@@ -1652,10 +1652,10 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     #zipWithIndex<AndLen extends boolean>(andLen?: AndLen) {
-        return this.#newRandomAccessStream((getItem, size) => ([
+        return this.#newRandomAccessStream((getItem, size) => [
             ix => (andLen ? [getItem(ix), ix, size] : [getItem(ix), ix]) as AndLen extends true ? [T, number, number] : [T, number],
             size,
-        ]))
+        ])
     }
 }
 
@@ -1707,7 +1707,7 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
             next() {
                 if (isEmpty(n)) return {done: true, value: undefined}
 
-                const m = n as IteratorResult<T>
+                const m = n
                 n = empty
                 return m
             }
@@ -1723,21 +1723,21 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
     }
 
     is(item: T): boolean {
-        return this.some(i => i === item)
+        return this.#get() === item
     }
 
     isPresent(): boolean {
-        return !this.#createIter().next().done
+        return !isEmpty(this.#get())
     }
 
     orElse<U>(other: U): T | U {
-        const {done, value} = this.#createIter().next()
-        return done ? other : value
+        const i = this.#get()
+        return isEmpty(i) ? other : i
     }
 
     orElseGet<U>(get: () => U): T | U {
-        const {done, value} = this.#createIter().next()
-        return done ? get() : value
+        const i = this.#get()
+        return isEmpty(i) ? get() : i
     }
 
     orElseNull(): T | null {
@@ -1745,9 +1745,9 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
     }
 
     orElseThrow(createError: () => Error): T {
-        const {done, value} = this.#createIter().next()
-        if (done) throw createError()
-        return value
+        const i = this.#get()
+        if (isEmpty(i)) throw createError()
+        return i
     }
 
     orElseUndefined(): T | undefined {
@@ -1755,8 +1755,13 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
     }
 
     resolve(): {has: true; val: T} | {has: false, val?: undefined} {
+        const val = this.#get()
+        return isEmpty(val) ? {has: false} : {has: true, val};
+    }
+
+    #get(): T | Empty {
         const {done, value} = this.#createIter().next()
-        return done ? {has: false} : {has: true, val: value};
+        return done ? empty : value
     }
 
     toStream(): Stream<T> {

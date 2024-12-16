@@ -3,7 +3,7 @@ import { forStreamInput as forInput } from './testUtil/forInput';
 import { twice } from './testUtil/twice';
 import { permutations } from './testUtil/permutations';
 import { variations } from './testUtil/variations';
-import { stream } from '.';
+import { same, stream } from '.';
 
 
 test('at neg last', () => forInput(
@@ -758,6 +758,30 @@ test('zip', () => [[], ['i'], ['i', 'j'], ['i', 'j', 'k']].forEach(input => forI
         runHint
     )),
 )));
+
+test('zip first endless', () => forInput(
+    ['a', 'b', 'c'],
+    s => same('x').zip(s),
+    (s, inputHint) =>
+        twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(
+                [['x', 'a'], ['x', 'b'], ['x', 'c']],
+                inputHint,
+                runHint)
+        )
+))
+
+test('zip second endless', () => forInput(
+    ['a', 'b', 'c'],
+    s => s.zip(same('x')),
+    (s, inputHint) =>
+        twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(
+                [['a', 'x'], ['b', 'x'], ['c', 'x']],
+                inputHint,
+                runHint)
+        )
+))
 
 test('zipStrict', () =>
     forInput(

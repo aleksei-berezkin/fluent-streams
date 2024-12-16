@@ -18,8 +18,8 @@
     "testBuild": "npm-run-all testBuild@esm testBuild@cjs",
     "testBuild@esm": "node testBuild.mjs",
     "testBuild@cjs": "node testBuild.cjs",
-    "build": "npm-run-all clear test compile testBuild",
-    "min": "npx terser --mangle --module -- dist/index.mjs > index.min.js && ls -al index.min.js && ls -ahl index.min.js && gzip index.min.js && ls -al index.min.js.gz && ls -ahl index.min.js.gz && rm index.min.js.gz"
+    "min": "node testMin.mjs",
+    "build": "npm-run-all clear test compile testBuild min"
   },
   "files": [
     "dist"

@@ -4,9 +4,9 @@
 [![NPM version](https://img.shields.io/npm/v/fluent-streams.svg)](https://www.npmjs.com/package/fluent-streams)
 [![Read the docs](https://img.shields.io/badge/docs-available-44cc11.svg)](https://aleksei-berezkin.github.io/fluent-streams-docs/)
 
-Fluent Streams is a JavaScript and TypeScript library offering a rich API for processing lazy [iterables](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterable_protocol) (e.g., arrays, sets, and more).  
+Fluent Streams is a JavaScript and TypeScript library that provides a rich API for lazily processing [iterables](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterable_protocol) such as arrays, sets, and more.
 
-The core concept is the [Stream](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Stream.html), a lightweight, stateless wrapper around an iterable. Additionally, the library includes [Optional](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Optional.html), a construct for representing a value that may or may not exist.  
+The core concept is the [Stream](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Stream.html), a lightweight, stateless wrapper around an iterable. Additionally, the library includes [Optional](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Optional.html), a construct for representing a value that may or may not exist.
 
 ## Install
 
@@ -39,20 +39,18 @@ Note that we created a stream from the string — this is possible because strin
 Fluent Streams is not the first library to offer this kind of functionality, but it stands out for several reasons:
 
 - **Prioritizes Standard Array and Iteration Protocols:**
-  - `Stream` uses names and method signatures similar to those of the standard `Array`, making it easy to integrate or remove the library when needed.
-  - Most iterative methods, like their `Array` counterparts, pass the `index` as a second parameter to the callback, eliminating the need to invoke `zipWithIndex()` beforehand.
-  - `Stream` and `Optional` are fully iterable, making them compatible with `for-of` loops.
-  - Any intermediate arrays created by operations like `sort()` are not discarded immediately; instead, they are reused in subsequent steps to reduce memory traffic.
+  - `Stream` follows familiar `Array` naming and method signatures, enabling seamless integration or removal.
+  - `Stream` and `Optional` implement the `Iterable` protocol, making them compatible with JavaScript constructs such as `for-of` loops and spread syntax.
+  - Intermediate arrays created by operations like `sort()` are not immediately discarded; instead, they are reused in subsequent steps to minimize memory allocations.
 - **Compact Size:**
-  - Minified: 8.5 kB
-  - Gzipped: 2.6 kB
+  - Minified: 8.6 kB
+  - Gzipped: 2.7 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
   - Clearly distinguishes between `null` or `undefined` as a value, and the absence of a value.
   - Allows conversion of `Optional` back to `Stream` to continue the fluent pipeline.
 - **Extensive Testing:**  
-  - The library is rigorously tested to ensure reliability.
-  - Over 160 tests meticulously cover 100% of the library's source code, validating various stream types in multiple combinations.
+  - Over 160 tests rigorously cover 100% of the library's source code, validating various stream types in multiple combinations.
   - Laziness and statelessness are also thoroughly tested.
 
 ## Using in Older Environments  
