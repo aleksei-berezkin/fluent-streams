@@ -260,6 +260,20 @@ test('find', () => [[], ['a'], ['a', 'b'], ['b', 'a']].forEach((input, iIndex) =
     ),
 )));
 
+test('flat', () => [-1, 0, 1, 2, 3, 4].forEach(n => forInput(
+    [[[]], [['a'], ['b']], [['c', 'd', 'e']]],
+    s => s.flat(n),
+    (s, inputHint) =>
+        twice(runHint => expect(
+            s.toArray()).toEqualWithHint(
+                n <= 0 ? [[[]], [['a'], ['b']], [['c', 'd', 'e']]]
+                    : n === 1 ? [[], ['a'], ['b'], ['c', 'd', 'e']]
+                    : ['a', 'b', 'c', 'd', 'e'],
+                inputHint,
+                runHint
+        )),
+)))
+
 test('flatMap', () =>
     [
         [[]],

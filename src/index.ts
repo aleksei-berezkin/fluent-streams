@@ -223,6 +223,17 @@ export interface Stream<T> extends Iterable<T, undefined> {
 
     /**
      * Returns a stream with the following behavior:
+     * - Non-iterable items are included in the resulting stream as is.
+     * - Iterable items are flattened up to the specified `depth` and included 
+     *   in the resulting stream.
+     * 
+     * @param depth The depth of flattening. Defaults to 1.
+     * @returns A {@link Stream} containing the flattened items.
+     */
+    flat<D extends number = 1>(depth?: D): Stream<FlatIterable<T, D>>
+
+    /**
+     * Returns a stream with the following behavior:
      * 1. Iterates over the items in this stream.
      * 2. Applies the `mapper` function to each item.
      * 3. Flattens and chains together all results returned by the `mapper` function 
@@ -727,6 +738,18 @@ export interface Optional<T> extends Iterable<T, undefined> {
     filter(predicate: (item: T, index: 0) => boolean): Optional<T>
 
     /**
+     * Returns an optional with the following behavior:
+     * - If this optional is empty, resolves to empty.
+     * - If this optional is not empty, creates an iterable yielding the item,
+     *   flattens it as described in {@link Stream.flat}, and resolves to the 
+     *   first item of the flattened iterable.
+     * 
+     * @param depth The depth of flattening. Defaults to 1.
+     * @returns An {@link Optional} containing the first item of the flattened iterable.
+     */
+    flat<D extends number = 1>(depth?: D): Optional<FlatIterable<T, D>>
+
+    /**
      * Similar to {@link Stream.filterWithAssertion}.
      * 
      * @param assertion A type assertion function to test the item.
@@ -899,6 +922,14 @@ export interface Optional<T> extends Iterable<T, undefined> {
      */
     toStream(): Stream<T>
 }
+
+type FlatIterable<T, D extends number> =
+    D extends -1 | 0
+        ? T
+        : T extends Iterable<infer I> ? FlatIterable<I, MinusOne<D>> : never
+
+type MinusOne<N extends number> = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][N]
+
 
 // *** Factories ***
 
@@ -1092,6 +1123,19 @@ abstract class Base<
             let i = 0
             for (const item of ths) {
                 if (assertion(item, i++ as NumberOrZero)) yield item
+            }
+        })
+    }
+
+    flat<D extends number = 1>(depth: D = 1 as D): StreamOrOptional<FlatIterable<T, D>, S> {
+        const ths = this
+        return this.#build(function* () {
+            for (const item of ths) {
+                if (depth >= 1 && (item as any)[Symbol.iterator]) {
+                    yield* stream(item as Iterable<FlatIterable<T, 1>>).flat(depth - 1) as Iterable<FlatIterable<T, D>>
+                } else {
+                    yield item as FlatIterable<T, D>
+                }
             }
         })
     }

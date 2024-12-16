@@ -122,3 +122,28 @@ test('The quick brown fox', () => {
 
     expect(equals).toBe(true)
 })
+
+test('flat do not change', () => {
+    const s = stream([['a', 'b']]).flat(0)
+    expect(s.toArray()).toEqual([['a', 'b']])
+    const t = stream([['a', 'b']]).flat(-1)
+    expect(t.toArray()).toEqual([['a', 'b']])
+    const u = stream([['a', 'b']]).flat(-2)
+    expect(u.toArray()).toEqual([['a', 'b']])
+})
+
+test('flat basic', () => {
+    const s = stream([[['a', 'b'], ['c']]]).flat(1)
+    expect(s.toArray()).toEqual([['a', 'b'], ['c']])
+})
+
+test('flat different levels', () => {
+    const s = stream([[['a', 'b'], ['c'], 'd'], 'e']).flat(1)
+    expect(s.toArray()).toEqual([['a', 'b'], ['c'], 'd', 'e'])
+})
+
+test('flat different levels complete', () => {
+    const s = stream([[['a', 'b'], ['c'], 'd'], 'e']).flat(2)
+    expect(s.toArray()).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(s.flat(10).toArray()).toEqual(['a', 'b', 'c', 'd', 'e'])
+})
