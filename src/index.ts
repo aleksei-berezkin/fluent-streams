@@ -1380,11 +1380,14 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     reduceRight<U>(reducer: (prev: U, curr: T, index: number) => U, initial?: U): Optional<U> | U {
-        const reversed = this.reverse().toArray()
-        if (arguments.length > 1)
+        if (arguments.length > 1) {
+            const reversed = this.toArray().reverse()
             return reduce(reversed, reducer, initial!, reversed.length)
+        }
 
+        const ths = this
         return new SimpleOptional<U>(function* () {
+            const reversed = ths.toArray().reverse()
             const reduced = reduce(reversed, reducer, empty, reversed.length)
             if (!isEmpty(reduced)) yield reduced
         })

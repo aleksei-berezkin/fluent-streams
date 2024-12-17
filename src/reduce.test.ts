@@ -74,8 +74,8 @@ test('reduce with initial', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b',
 
 test('reduceRight', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c', 'd', 'e']].forEach(input => forInput(
     input,
-    s => s,
-    (s, inputHint) => twice(runHint => expect(s.reduceRight((l, r, index) => l + r + String(index)).resolve()).toEqualWithHint(
+    s => s.reduceRight((l, r, index) => l + r + String(index)),
+    (s, inputHint) => twice(runHint => expect(s.resolve()).toEqualWithHint(
         input.length
             ? {has: true, val: input.reduceRight((prev, curr, index) => prev + curr + String(index))}
             : {has: false},
