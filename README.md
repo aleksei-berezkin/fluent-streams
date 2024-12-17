@@ -4,19 +4,19 @@
 [![NPM version](https://img.shields.io/npm/v/fluent-streams.svg)](https://www.npmjs.com/package/fluent-streams)
 [![Read the docs](https://img.shields.io/badge/docs-available-44cc11.svg)](https://aleksei-berezkin.github.io/fluent-streams-docs/)
 
-Fluent Streams is a JavaScript and TypeScript library that provides a rich API for lazily processing [iterables](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterable_protocol) such as arrays, sets, and more.
+Fluent Streams is a JavaScript and TypeScript library that provides a rich API for lazily manipulating iterables such as arrays, sets, and more.
 
 The core concept is the [Stream](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Stream.html), a lightweight, stateless wrapper around an iterable. Additionally, the library includes [Optional](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Optional.html), a construct for representing a value that may or may not exist.
 
-## Install
+## Installation
 
 ```bash
 npm i fluent-streams
 ```
 
-## Use
+## Usage
 
-To create a `Stream` or an `Optional`, use functions described in the [documentation](https://aleksei-berezkin.github.io/fluent-streams-docs/). The most generic is [`stream()`](https://aleksei-berezkin.github.io/fluent-streams-docs/functions/stream-1.html) which creates a stream from any iterable.
+The [`stream()`](https://aleksei-berezkin.github.io/fluent-streams-docs/functions/stream-1.html) function is the primary entry point for creating a stream from an iterable. Refer to the [documentation](https://aleksei-berezkin.github.io/fluent-streams-docs/) for additional ways to create `Stream` or `Optional`.
 
 ```typescript
 import { abc, stream } from 'fluent-streams'
@@ -50,7 +50,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - Clearly distinguishes between `null` or `undefined` as a value, and the absence of a value.
   - Allows conversion of `Optional` back to `Stream` to continue the fluent pipeline.
 - **Extensive Testing:**  
-  - Over 160 tests rigorously cover 100% of the library's source code, validating various stream types in multiple combinations.
+  - Over 170 tests rigorously cover 100% of the library's source code, validating various stream types in multiple combinations.
   - Laziness and statelessness are also thoroughly tested.
 
 ## Using in Older Environments  

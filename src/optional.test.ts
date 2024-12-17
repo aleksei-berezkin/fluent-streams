@@ -27,6 +27,23 @@ test('every', () => [['a'], ['b'], []].forEach(input => forInput(
     ),
 )));
 
+test('flat optional', () => forInput(
+    [[['a']]],
+    o => o.flat(10),
+    (o, inputHint) => twice(runHint =>
+        expect(o.toArray()).toEqualWithHint(['a'], inputHint, runHint)
+    ),
+));
+
+test('flat optional only first', () => forInput(
+    // This optional would resolve to [], so mapping only it, no matter what's next
+    [[], [['a']]],
+    o => o.flat(10),
+    (o, inputHint) => twice(runHint =>
+        expect(o.toArray()).toEqualWithHint([], inputHint, runHint)
+    ),
+));
+
 test('flatMap', () => forInput(
     ['ab'],
     o => o.flatMap(aa => aa.split('')),
