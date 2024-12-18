@@ -94,14 +94,14 @@ export interface Stream<T> extends Iterable<T, undefined> {
 
     /**
      * Returns a stream containing all items of this stream, followed by the
-     * provided `item`.
+     * provided `items`.
      * 
-     * @param item - The item to append to the end of the stream.
+     * @param items - The `items` to append to the end of the stream.
      * 
      * @returns A {@link Stream} with the original items of this stream and
-     * the appended item.
+     * the appended `items`.
      */
-    concat(item: T): Stream<T>
+    concat(...items: T[]): Stream<T>
 
     /**
      * Returns a stream containing all items of this stream, followed by all items 
@@ -220,6 +220,18 @@ export interface Stream<T> extends Iterable<T, undefined> {
      *          if no item matches.
      */
     find(predicate: (item: T, index: number) => boolean): Optional<T>
+
+    /**
+     * Returns an {@link Optional} which resolves to the last item that matches the 
+     * predicate, or to empty if no such item is found.
+     * 
+     * @param predicate - The function to test each item in the stream.
+     * Receives an item and its index in the stream.
+     * 
+     * @returns An {@link Optional} that contains the last matching item or is empty 
+     *          if no item matches.
+     */
+    findLast(predicate: (item: T, index: number) => boolean): Optional<T>
 
     /**
      * Returns a stream with the following behavior:
@@ -1213,11 +1225,8 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this.dropLast(1)
     }
 
-    concat(item: T): Stream<T> {
-        return this.#newIteratorStream(function* () {
-            yield* this
-            yield item
-        })
+    concat(...items: T[]): Stream<T> {
+        return this.concatAll(items)
     }
 
     concatAll(items: Iterable<T>): Stream<T> {
@@ -1272,11 +1281,24 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     find(predicate: (item: T, index: number) => boolean): Optional<T> {
+        return this.#find(predicate)
+    }
+
+    findLast(predicate: (item: T, index: number) => boolean): Optional<T> {
+        return this.#find(predicate, true)
+    }
+
+    #find(predicate: (item: T, index: number) => boolean, last?: boolean): Optional<T> {
         return this._o(function* () {
             let i = 0
+            let foundItem: T | Empty = empty
             for (const item of this) {
-                if (predicate(item, i++)) yield item
+                if (predicate(item, i++)) {
+                    foundItem = item
+                    if (!last) break
+                }
             }
+            if (!isEmpty(foundItem)) yield foundItem
         })
     }
 
@@ -1595,22 +1617,11 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         )
     }
 
-    concat(newItem: T): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => [
-            ix => ix === size ? newItem : getItem(ix),
-            size + 1,
-        ])
-    }
-
     concatAll(items: Iterable<T>): Stream<T> {
-        const itemsStream = Array.isArray(items) ? stream(items) as RandomAccessStream<T>
-            : items instanceof RandomAccessStream ? items
-            : undefined
-
-        if (itemsStream) {
+        if (Array.isArray(items) || items instanceof RandomAccessStream) {
             return new RandomAccessStream(() => {
                 const [get1, size1] = this.#getRandomAccess()
-                const [get2, size2] = itemsStream.#getRandomAccess()
+                const [get2, size2] = Array.isArray(items) ? [(i: number) => items[i] as T, items.length] : items.#getRandomAccess()
                 return [
                     i => i >= size1 ? get2(i - size1) as T : get1(i),
                     size1 + size2,
@@ -1680,16 +1691,16 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     zipWithIndex(): Stream<[T, number]> {
-        return this.#zipWithIndex<false>()
+        return this.#zipWithIndex()
     }
 
     zipWithIndexAndLen(): Stream<[T, number, number]> {
         return this.#zipWithIndex(true)
     }
 
-    #zipWithIndex<AndLen extends boolean>(andLen?: AndLen) {
+    #zipWithIndex<AndLen extends boolean = false>(andLen?: AndLen): Stream<AndLen extends true ? [T, number, number] : [T, number]> {
         return this.#newRandomAccessStream((getItem, size) => [
-            ix => (andLen ? [getItem(ix), ix, size] : [getItem(ix), ix]) as AndLen extends true ? [T, number, number] : [T, number],
+            ix => (andLen ? [getItem(ix), ix, size]: [getItem(ix), ix]) as AndLen extends true ? [T, number, number] : [T, number],
             size,
         ])
     }

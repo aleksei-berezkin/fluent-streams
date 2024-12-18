@@ -56,10 +56,16 @@ test('butLast', () =>  [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input =>
     )
 ));
 
-test('concat', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
+test('concat single', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
     input,
     s => s.concat('c'),
     (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(input.concat('c'), inputHint, runHint)),
+)));
+
+test('concat several', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
+    input,
+    s => s.concat('c', 'd', 'e'),
+    (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(input.concat('c', 'd', 'e'), inputHint, runHint)),
 )));
 
 test('concatAll', () =>  forInput(
@@ -248,12 +254,24 @@ test('filterWithAssertion', () => {
     );
 });
 
-test('find', () => [[], ['a'], ['a', 'b'], ['b', 'a']].forEach((input, iIndex) => forInput(
+test('find', () => [[], ['a'], ['a', 'bx', 'c', 'by'], ['bx', 'a']].forEach((input, iIndex) => forInput(
     input,
-    s => s.find((i, index) => i === 'b' && !!index),
+    s => s.find((i, index) => i[0] === 'b' && !!index),
     (o, inputHint) => twice(runHint =>
         expect(o.orElseUndefined()).toEqualWithHint(
-            iIndex === 2 ? 'b' : undefined,
+            iIndex === 2 ? 'bx' : undefined,
+            inputHint,
+            runHint,
+        )
+    ),
+)));
+
+test('findLast', () => [[], ['a'], ['a', 'bx', 'c', 'by', 'bz'], ['by', 'a']].forEach((input, iIndex) => forInput(
+    input,
+    s => s.findLast((i, index) => i[0] === 'b' && index !== 4),
+    (o, inputHint) => twice(runHint =>
+        expect(o.orElseUndefined()).toEqualWithHint(
+            iIndex === 2 || iIndex === 3 ? 'by' : undefined,
             inputHint,
             runHint,
         )
