@@ -184,6 +184,62 @@ test('dropLast empty', () => [-1, 0, 1, 3].forEach(n =>
     )
 ))
 
+test('dropLastWhile', () => [[], [''], ['', ''], ['a', 'b'], ['a', '', 'b', '', '']].forEach((input, iIndex) =>
+    forInput(
+        input,
+        s => s.dropLastWhile(c => !c),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(
+                iIndex <= 2 ? []
+                    : iIndex === 3 ? ['a', 'b']
+                    : ['a', '', 'b'],
+                inputHint,
+                runHint),
+        )
+    )
+))
+
+test('dropLastWhile index', () => [['a', 'b'], ['a', 'b', 'c', 'd']].forEach((input, iIndex) =>
+    forInput(
+        input,
+        s => s.dropLastWhile((_, ix) => ix >= 3),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(
+                iIndex === 0 ? ['a', 'b'] : ['a', 'b', 'c'],
+                inputHint,
+                runHint),
+        )
+    )
+))
+
+test('dropWhile', () => [[], [''], ['', ''], ['a', 'b'], ['', '', 'a', '', 'b', '']].forEach((input, iIndex) =>
+    forInput(
+        input,
+        s => s.dropWhile(c => !c),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(
+                iIndex <= 2 ? []
+                    : iIndex === 3 ? ['a', 'b']
+                    : ['a', '', 'b', ''],
+                inputHint,
+                runHint),
+        )
+    )
+))
+
+test('dropWhile index', () => [['a', 'b'], ['a', 'b', 'c', 'd']].forEach((input, iIndex) =>
+    forInput(
+        input,
+        s => s.dropWhile((_, ix) => ix < 2),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint(
+                iIndex === 0 ? [] : ['c', 'd'],
+                inputHint,
+                runHint),
+        )
+    )
+))
+
 test('equals', () =>
     forInput(
         ['a', 'b', 'c'],

@@ -150,6 +150,37 @@ export interface Stream<T> extends Iterable<T, undefined> {
     dropLast(n: number): Stream<T>
 
     /**
+     * Returns a stream containing all items of this stream after dropping the
+     * trailing items that satisfy the given `predicate`. Items are checked from
+     * the end of the stream backward. Once an item does not match the `predicate`,
+     * all preceding items and that item are included in the resulting stream.
+     * 
+     * @param predicate A function invoked for each item, with the following parameters:
+     *        - `item` - The current item in the stream.
+     *        - `index` - The index of the current item in the stream, starting from 0.
+     *        The function should return `true` to drop the item or `false` to stop dropping.
+     * 
+     * @returns A {@link Stream} containing the remaining items after dropping the trailing
+     * items that satisfy the `predicate`.
+     */
+    dropLastWhile(predicate: (item: T, index: number) => boolean): Stream<T>
+
+    /**
+     * Returns a stream containing all items of this stream after dropping the
+     * leading items that satisfy the given `predicate`. Once an item does not
+     * match the `predicate`, that item and all subsequent items are included in the
+     * resulting stream.
+     * @param predicate A function invoked for each item, with the following parameters:
+     *        - `item` - The current item in the stream.
+     *        - `index` - The index of the current item in the stream, starting from 0.
+     *        The function should return `true` to drop the item or `false` to stop dropping.
+     * 
+     * @returns A {@link Stream} containing the remaining items after dropping the leading
+     * items that satisfy the `predicate`.
+     */
+    dropWhile(predicate: (item: T, index: number) => boolean): Stream<T>
+
+    /**
      * Returns `true` if the `other` iterable contains the same number of items as this
      * stream and all corresponding items are equal using the `===` operator.
      * 
@@ -1251,12 +1282,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     drop(n: number): Stream<T> {
-        return this.#newIteratorStream(function* () {
-            let i = 0
-            for (const item of this) {
-                if (i++ >= n) yield item
-            }
-        })
+        return this.dropWhile((_, i) => i < n)
     }
 
     dropLast(n: number): Stream<T> {
@@ -1265,6 +1291,32 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             for (const item of this) {
                 const evicted = buf(item)
                 if (!isEmpty(evicted)) yield evicted
+            }
+        })
+    }
+
+    dropLastWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
+        return new LazyArrayStream(() => {
+            // findLastIndex() is not yet widely available
+            const a = this.toArray()
+            let i
+            for (i = a.length - 1; i >= 0; i--) {
+                if (!predicate(a[i], i)) return a.slice(0, i + 1)
+            }
+            return []
+        })
+    }
+
+    dropWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
+        return this.#newIteratorStream(function* () {
+            let i = 0
+            for (const item of this) {
+                if (i === -1) {
+                    yield item
+                } else if (!predicate(item, i++)) {
+                    i = -1
+                    yield item
+                }
             }
         })
     }

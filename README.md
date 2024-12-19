@@ -43,7 +43,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - `Stream` and `Optional` implement the `Iterable` protocol, making them compatible with JavaScript constructs such as `for-of` loops and spread syntax.
   - Intermediate arrays created by operations like `sort()` are not immediately discarded; instead, they are reused in subsequent steps to minimize memory allocations.
 - **Compact Size:**
-  - Minified: 8.7 kB
+  - Minified: 8.9 kB
   - Gzipped: 2.8 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
@@ -53,26 +53,13 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - Over 170 tests rigorously cover 100% of the library's source code, validating various stream types in multiple combinations.
   - Laziness and statelessness are also thoroughly tested.
 
-## Using in Older Environments  
+## Platform requirements
 
-Fluent Streams relies on [widely available](https://web.dev/baseline) ES6+ features, such as generators, spread operators, for-of loops, and arrow functions. The library is shipped **untranspiled** to ES5.  
+Fluent Streams relies on [widely available](https://developer.mozilla.org/en-US/docs/Glossary/Baseline/Compatibility#baseline_badges) ES6+ features, such as generators, spread operators, for-of loops, and arrow functions. The library doesn't use newly available features, or features with limited availability. The library is shipped **untranspiled** to ES5.
 
-> **Why?** These features have concise syntax, helping minimize the bundle size.  
+> **Why?** Modern language features have concise syntax, helping to minimize the bundle size.
 
-However, it is possible to use the library in an ES5 environment by transpiling it to ES5 and adding the following polyfills:  
-
-- `Array.isArray()`
-- `Array.prototype.forEach()`
-- `Array.prototype[@@iterator]()`
-- `Map`
-- `Object.keys()`
-- `Set`
-- `Symbol`
-- `Symbol.iterator`
-
-**Optionally:**  
-
-- `Promise.all` — required only for [`Stream.awaitAll()`](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Stream.html#awaitall).  
+While it is possible to transpile the library to ES5 and polyfill it, this is not recommended, as it may increase the library footprint in the bundle by 2.5 to 3 times.
 
 ## Benchmarks  
 
