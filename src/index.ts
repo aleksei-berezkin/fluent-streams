@@ -605,6 +605,34 @@ export interface Stream<T> extends Iterable<T, undefined> {
     takeLast(n: number): Stream<T>
 
     /**
+     * Returns a stream containing the trailing items of this stream that satisfy
+     * the given `predicate`. Once an item does not match the `predicate`, this item
+     * and all preceding items are excluded from the resulting stream.
+     *
+     * @param predicate - A function invoked with each item and its index. Returns
+     * `true` to include the item in the resulting stream, or `false` to stop
+     * iterating.
+     * 
+     * @returns A {@link Stream} containing the trailing items that satisfy the
+     * given `predicate`.
+     */
+    takeLastWhile(predicate: (item: T, index: number) => boolean): Stream<T>
+
+    /**
+     * Returns a stream containing the leading items of this stream that satisfy
+     * the given `predicate`. Once an item does not match the `predicate`, this
+     * item and all subsequent items are excluded from the resulting stream.
+     *
+     * @param predicate - A function invoked with each item and its index. Returns
+     * `true` to include the item in the resulting stream, or `false` to stop
+     * iterating.
+     * 
+     * @returns A {@link Stream} containing the leading items that satisfy the
+     * given `predicate`.
+     */
+    takeWhile(predicate: (item: T, index: number) => boolean): Stream<T>
+
+    /**
      * Returns a stream containing no more than `n` random items from this stream. 
      * The result is sampled [without replacement](https://en.wikipedia.org/wiki/Simple_random_sample), 
      * meaning each item from this stream appears no more than once in the result. 
@@ -1296,26 +1324,40 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     dropLastWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
-        return new LazyArrayStream(() => {
-            // findLastIndex() is not yet widely available
-            const a = this.toArray()
-            let i
-            for (i = a.length - 1; i >= 0; i--) {
-                if (!predicate(a[i], i)) return a.slice(0, i + 1)
-            }
-            return []
-        })
+        return this.#dropOrTakeLastWhile(predicate)
     }
 
     dropWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
+        return this.#dropOrTakeWhile(predicate)
+    }
+
+    #dropOrTakeLastWhile(predicate: (item: T, index: number) => boolean, take?: boolean): Stream<T> {
+        return new LazyArrayStream(() => {
+            // findLastIndex() is not yet widely available
+            const a = this.toArray()
+            for (let i = a.length - 1; i >= 0; i--) {
+                if (!predicate(a[i], i))
+                    return take ? a.slice(i + 1) : a.slice(0, i + 1)
+            }
+            return take ? a : []
+        })
+    }
+
+    #dropOrTakeWhile(predicate: (item: T, index: number) => boolean, take?: boolean): Stream<T> {
         return this.#newIteratorStream(function* () {
             let i = 0
             for (const item of this) {
                 if (i === -1) {
-                    yield item
-                } else if (!predicate(item, i++)) {
-                    i = -1
-                    yield item
+                    yield item // after dropped
+                } else if (predicate(item, i++)) {
+                    if (take) yield item // else drop
+                } else {
+                    if (take) {
+                        break
+                    } else {
+                        yield item
+                        i = -1
+                    } 
                 }
             }
         })
@@ -1516,6 +1558,8 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             let i = 0
             for (const item of this) {
                 yield item
+                // Checking before yielding would consume extra item
+                // from the source iterator before actual breaking
                 if (++i >= n) break
             }
         })
@@ -1528,6 +1572,14 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                 yield a[(p + i) % a.length]
             }
         })
+    }
+
+    takeLastWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
+        return this.#dropOrTakeLastWhile(predicate, true)
+    }
+
+    takeWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
+        return this.#dropOrTakeWhile(predicate, true)
     }
 
     takeRandom(n: number): Stream<T> {

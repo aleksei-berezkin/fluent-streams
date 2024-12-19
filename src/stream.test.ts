@@ -701,6 +701,38 @@ test('take, takeLast', () => {
     );
 });
 
+test('takeLastWhile', () =>
+    [[], [1], [0, 1], [1, 2, 2], [0, 0, 2, 3]].forEach((input, iIndex) =>
+        forInput(
+            input,
+            s => s.takeLastWhile((num, ix) => num === ix),
+            (s, inputHint) => twice(runHint =>
+                expect(s.toArray()).toEqualWithHint(
+                    iIndex === 0 || iIndex === 1 ? []
+                        : iIndex === 2 ? [0, 1]
+                        : iIndex === 3 ? [2]
+                        : iIndex === 4 ? [2, 3]
+                        : undefined as never,
+                    inputHint,
+                    runHint
+                )
+            ),
+        )
+    )
+);
+
+test('takeWhile', () =>
+    [[], [1], [1, 2], [1, 2, 2], [1, 2, 2, 3]].forEach(input =>
+        forInput(
+            input,
+            s => s.takeWhile((num, ix) => num !== ix),
+            (s, inputHint) => twice(runHint =>
+                expect(s.toArray()).toEqualWithHint(input.slice(0, 2), inputHint, runHint)
+            ),
+        )
+    )
+);
+
 test('takeRandom', () => {
     const input = ['a', 'b', 'c', 'd', 'e'];
     const iterPerVariation = 200;
