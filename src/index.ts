@@ -1285,17 +1285,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     at(index: number): Optional<T> {
-        return this._o(function* () {
-            if (index < 0) {
-                const {a, p} = collectLast(this, -index)
-                if (a.length === -index) yield a[p]
-            } else {
-                let i = 0
-                for (const item of this) {
-                    if (i++ === index) yield item
-                }
-            }
-        })
+        return this.#slice(index, index === -1 ? undefined : index + 1).single()
     }
 
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]> {
@@ -1538,7 +1528,11 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return i;
     }
 
-    slice(start?: number, end?: number): Stream<T> {
+    slice(start?: number, end?: number) {
+        return this.#slice(start, end)
+    }
+
+    #slice(start?: number, end?: number, strictNegStart?: boolean): Stream<T> {
         return this.#newIteratorStream<T>(function* () {
             const posStart = start != null && start >= 0
             const posEnd = end != null && end >= 0
@@ -1567,7 +1561,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                 if (!negStart && posEnd && i >= end) break
             }
 
-            if (negStart) {
+            if (negStart && (!strictNegStart || start === -buf!.a.length)) {
                 const {a, p} = buf!
                 for (let j = 0; j < a.length; j++) {
                     const offset = i - a.length + j
@@ -1780,20 +1774,6 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         return super.concatAll(items)
     }
 
-    drop(n: number): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => [
-            ix => getItem(ix + n),
-            Math.max(0, size - n),
-        ])
-    }
-
-    dropLast(n: number): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => [
-            getItem,
-            Math.max(0, size - n),
-        ])
-    }
-
     map<U>(mapper: (item: T, index: number) => U): Stream<U> {
         return this.#newRandomAccessStream((getItem, size) => [
             ix => mapper(getItem(ix), ix),
@@ -1812,20 +1792,6 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         return this.#newRandomAccessStream((getItem, size) => [
             ix => getItem(size - 1 - ix),
             size,
-        ])
-    }
-
-    take(n: number): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => [
-            getItem,
-            Math.max(0, Math.min(n, size)),
-        ])
-    }
-
-    takeLast(n: number): Stream<T> {
-        return this.#newRandomAccessStream((getItem, size) => [
-            ix => getItem(Math.max(0, size - n) + ix),
-            Math.max(0, Math.min(n, size)),
         ])
     }
 
@@ -1996,14 +1962,6 @@ type RingBuffer<T> = {
     a: T[],
     p: number,
     (newItem: T): Empty | T,
-}
-
-function collectLast<T>(input: Iterable<T>, n: number): RingBuffer<T> {
-    const buf = createRingBuffer<T>(n)
-    for (const item of input) {
-        buf(item)
-    }
-    return buf
 }
 
 function createRingBuffer<T>(size: number): RingBuffer<T> {
