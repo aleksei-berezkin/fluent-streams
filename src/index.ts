@@ -532,6 +532,28 @@ export interface Stream<T> extends Iterable<T, undefined> {
     size(): number
 
     /**
+     * Returns a stream containing a portion of this stream, determined by the
+     * `start` and `end` indices. The resulting stream includes the items starting
+     * from the `start` index up to, but not including, the `end` index.
+     *
+     * If no `start` is specified, the slice begins at index `0`. If no `end` is
+     * specified, the slice ends at the last item in the stream. Negative indices
+     * can be used for both `start` and `end` to indicate positions from the end of
+     * the stream, where `-1` refers to the last item, `-2` refers to the
+     * second-to-last item, and so on.
+     * 
+     * The method's behavior aligns with
+     * [Array.slice()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice).
+     *
+     * @param start - The zero-based index at which to begin the slice. Defaults to `0`.
+     * @param end - The zero-based index before which to end the slice. Defaults to the
+     * size of the stream.
+     * 
+     * @returns A {@link Stream} containing the specified portion of this stream.
+     */
+    slice(start?: number, end?: number): Stream<T>
+
+    /**
      * Returns `true` if the `predicate` returns `true` for any item of this stream; 
      * returns `false` otherwise. This is a short-circuiting operation, meaning it 
      * skips the remaining items once the `predicate` returns `true` for any item.
@@ -572,7 +594,7 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * between items for which `isSplit` returns `true`.
      * 
      * @param isSplit A function to check if the items sequence should be split between `l` 
-     * and `r` items. Receives an item and its index in the stream.
+     * and `r` items. Receives the index of the `l` item as a 3rd parameter.
      * 
      * @returns A {@link Stream} containing groups of adjacent items.
      */
@@ -1281,7 +1303,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     butLast(): Stream<T> {
-        return this.dropLast(1)
+        return this.slice(0, -1)
     }
 
     concat(...items: T[]): Stream<T> {
@@ -1310,17 +1332,12 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     drop(n: number): Stream<T> {
-        return this.dropWhile((_, i) => i < n)
+        return this.slice(n)
     }
 
     dropLast(n: number): Stream<T> {
-        return this.#newIteratorStream(function* () {
-            const buf = createRingBuffer<T>(n)
-            for (const item of this) {
-                const evicted = buf(item)
-                if (!isEmpty(evicted)) yield evicted
-            }
-        })
+        if (n < 1) return this
+        return this.slice(0, -n)
     }
 
     dropLastWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
@@ -1521,6 +1538,46 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return i;
     }
 
+    slice(start?: number, end?: number): Stream<T> {
+        return this.#newIteratorStream<T>(function* () {
+            const posStart = start != null && start >= 0
+            const posEnd = end != null && end >= 0
+            const negStart = start != null && start < 0
+            const negEnd = end != null && end < 0
+
+            if (posEnd && (end === 0 || posStart && start >= end)) return 
+
+            const buf = negStart ? createRingBuffer<T>(-start)
+                : negEnd ? createRingBuffer<T>(-end)
+                : undefined
+            let i = 0
+            for (const item of this) {
+                if (negStart) {
+                    buf!(item)
+                } else if (i >= (start ?? 0)) {
+                    if (negEnd) {
+                        const evicted = buf!(item)
+                        if (!isEmpty(evicted)) yield evicted
+                    } else {
+                        yield item
+                    }
+                }
+                ++i
+                // To not to consume extra item
+                if (!negStart && posEnd && i >= end) break
+            }
+
+            if (negStart) {
+                const {a, p} = buf!
+                for (let j = 0; j < a.length; j++) {
+                    const offset = i - a.length + j
+                    if (posEnd && offset >= end || negEnd && offset >= i + end) break
+                    yield a[(p + j) % a.length]
+                }
+            }
+        })
+    }
+
     sort(compareFn?: (a: T, b: T) => number): Stream<T> {
         return new LazyArrayStream(() => this.toArray().sort(compareFn))
     }
@@ -1549,29 +1606,16 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     tail(): Stream<T> {
-        return this.drop(1)
+        return this.slice(1)
     }
 
     take(n: number): Stream<T> {
-        return this.#newIteratorStream(function* () {
-            if (n <= 0) return
-            let i = 0
-            for (const item of this) {
-                yield item
-                // Checking before yielding would consume extra item
-                // from the source iterator before actual breaking
-                if (++i >= n) break
-            }
-        })
+        return this.slice(0, Math.max(0, n))
     }
 
     takeLast(n: number): Stream<T> {
-        return this.#newIteratorStream(function* (){
-            const {a, p} = collectLast(this, n)
-            for (let i = 0; i < a.length; i++) {
-                yield a[(p + i) % a.length]
-            }
-        })
+        if (n < 1) return new LazyArrayStream<T>(() => [])
+        return this.slice(-n)
     }
 
     takeLastWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
@@ -1794,6 +1838,29 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         return this.#getRandomAccess()[1]
     }
 
+    slice(start?: number, end?: number): Stream<T> {
+        return this.#newRandomAccessStream((getItem, size) => {
+            const s = between(
+                0,
+                start == null ? 0
+                    : start < 0 ? size + start
+                    : start,
+                size
+            )
+            const e = between(
+                0,
+                end == null ? size
+                    : end < 0 ? size + end
+                    : end,
+                size
+            )
+            return [
+                ix => getItem(s + ix),
+                Math.max(0, e - s),
+            ]
+        })
+    }
+
     zipWithIndex(): Stream<[T, number]> {
         return this.#zipWithIndex()
     }
@@ -1918,6 +1985,10 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
     toStream(): Stream<T> {
         return new IteratorStream(() => this[Symbol.iterator]())
     }
+}
+
+function between(min: number, n: number, max: number) {
+    return Math.max(min, Math.min(n, max))
 }
 
 type RingBuffer<T> = {
