@@ -1134,7 +1134,20 @@ export function abc(): Stream<string> {
 }
 
 /**
- * Creates an endless {@link Stream} of `value`.
+ * Creates an endless {@link Stream} of the provided `value`. One use case is
+ * zipping with another stream to remember some state.
+ * 
+ * ```typescript
+ * // Find items inside quotes
+ * streamOf('a', '"', 'b', 'c', '"', 'd', '"', 'e', '"', 'f')
+ *   .zip(same({inQuotes: false}))
+ *   .peek(([c, st]) => {
+ *      if (c === '"') st.inQuotes = !st.inQuotes
+ *    })
+ *    .filter(([c, {inQuotes}]) => c !== '"' && inQuotes)
+ *    .map(([c]) => c)  // Unzip state
+ *    .toArray()        // => ['b', 'c', 'e']
+ * ```
  * @typeParam T Value type
  * @param value An item to repeat endlessly
  * @returns An endless stream of the provided value.

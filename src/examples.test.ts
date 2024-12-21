@@ -1,4 +1,4 @@
-import { abc, continually, range, stream, streamOf } from '.'
+import { abc, continually, range, same, stream, streamOf } from '.'
 
 test('shuffle then head', () => {
     const input = ['a', 'b', 'c']
@@ -159,4 +159,16 @@ test('filter with predicate', () => {
         .filter<string>(item => typeof item === 'string')
         .toArray() satisfies string[]
     expect(res1).toEqual([])
+})
+
+test('with-state', () => {
+    const res = streamOf('a', '"', 'b', 'c', '"', 'd', '"', 'e', '"', 'f')
+        .zip(same({inQuotes: false}))
+        .peek(([c, st]) => {
+            if (c === '"') st.inQuotes = !st.inQuotes
+        })
+        .filter(([c, {inQuotes}]) => c !== '"' && inQuotes)
+        .map(([c]) => c)
+        .toArray()
+    expect(res).toEqual(['b', 'c', 'e'])
 })
