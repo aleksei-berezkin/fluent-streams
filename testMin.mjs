@@ -8,7 +8,8 @@ child_process.execSync('gzip index.min.js')
 const gzippedSize = fs.readFileSync('index.min.js.gz').length
 fs.rmSync('index.min.js.gz')
 
-console.log('Bytes:',minimizedSize, gzippedSize)
+console.log('Bytes:', minimizedSize, gzippedSize)
+console.log('Kilobytes:', (minimizedSize / 1024).toFixed(3), (gzippedSize / 1024).toFixed(3))
 
 const minimizedKb = (minimizedSize / 1024).toFixed(1)
 const gzippedKb = (gzippedSize / 1024).toFixed(1)

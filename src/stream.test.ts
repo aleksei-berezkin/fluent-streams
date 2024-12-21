@@ -313,7 +313,7 @@ test('find', () => [[], ['a'], ['a', 'bx', 'c', 'by'], ['bx', 'a']].forEach((inp
     input,
     s => s.find((i, index) => i[0] === 'b' && !!index),
     (o, inputHint) => twice(runHint =>
-        expect(o.orElseUndefined()).toEqualWithHint(
+        expect(o.orUndefined()).toEqualWithHint(
             iIndex === 2 ? 'bx' : undefined,
             inputHint,
             runHint,
@@ -325,7 +325,7 @@ test('findLast', () => [[], ['a'], ['a', 'bx', 'c', 'by', 'bz'], ['by', 'a']].fo
     input,
     s => s.findLast((i, index) => i[0] === 'b' && index !== 4),
     (o, inputHint) => twice(runHint =>
-        expect(o.orElseUndefined()).toEqualWithHint(
+        expect(o.orUndefined()).toEqualWithHint(
             iIndex === 2 || iIndex === 3 ? 'by' : undefined,
             inputHint,
             runHint,

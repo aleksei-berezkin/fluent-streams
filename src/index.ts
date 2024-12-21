@@ -949,12 +949,6 @@ export interface Optional<T> extends Iterable<T, undefined> {
     orElseGet<U>(get: () => U): T | U
 
     /**
-     * If this optional has an item, returns that item; otherwise returns `null`
-     * @returns The item if present, otherwise `null`
-     */
-    orElseNull(): T | null
-
-    /**
      * If this optional has an item, returns that item; otherwise throws an error
      * created by `createError`
      * @param createError Function to create an error if this optional is empty
@@ -964,10 +958,16 @@ export interface Optional<T> extends Iterable<T, undefined> {
     orElseThrow(createError: () => Error): T
 
     /**
+     * If this optional has an item, returns that item; otherwise returns `null`
+     * @returns The item if present, otherwise `null`
+     */
+    orNull(): T | null
+
+    /**
      * If this optional has an item, returns that item; otherwise returns `undefined`
      * @returns The item if present, otherwise `undefined`
      */
-    orElseUndefined(): T | undefined
+    orUndefined(): T | undefined
 
     /**
      * Returns an optional that resolves just like this optional, but when resolving
@@ -1918,17 +1918,17 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
         return isEmpty(i) ? get() : i
     }
 
-    orElseNull(): T | null {
-        return this.orElse(null)
-    }
-
     orElseThrow(createError: () => Error): T {
         const i = this.#get()
         if (isEmpty(i)) throw createError()
         return i
     }
 
-    orElseUndefined(): T | undefined {
+    orNull(): T | null {
+        return this.orElse(null)
+    }
+
+    orUndefined(): T | undefined {
         return this.orElse(undefined)
     }
 
