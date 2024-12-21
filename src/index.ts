@@ -1285,7 +1285,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     at(index: number): Optional<T> {
-        return this.#slice(index, index === -1 ? undefined : index + 1).single()
+        return this.slice(index, index === -1 ? undefined : index + 1).single()
     }
 
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]> {
@@ -1529,16 +1529,14 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     slice(start?: number, end?: number) {
-        return this.#slice(start, end)
-    }
-
-    #slice(start?: number, end?: number, strictNegStart?: boolean): Stream<T> {
         return this.#newIteratorStream<T>(function* () {
             const posStart = start != null && start >= 0
             const posEnd = end != null && end >= 0
             const negStart = start != null && start < 0
             const negEnd = end != null && end < 0
 
+            // Because we check i against end in the end of loop
+            // we need to check that the first iter allowed
             if (posEnd && (end === 0 || posStart && start >= end)) return 
 
             const buf = negStart ? createRingBuffer<T>(-start)
@@ -1548,7 +1546,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             for (const item of this) {
                 if (negStart) {
                     buf!(item)
-                } else if (i >= (start ?? 0)) {
+                } else if (start == null ||i >= start) {
                     if (negEnd) {
                         const evicted = buf!(item)
                         if (!isEmpty(evicted)) yield evicted
@@ -1561,7 +1559,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                 if (!negStart && posEnd && i >= end) break
             }
 
-            if (negStart && (!strictNegStart || start === -buf!.a.length)) {
+            if (negStart) {
                 const {a, p} = buf!
                 for (let j = 0; j < a.length; j++) {
                     const offset = i - a.length + j

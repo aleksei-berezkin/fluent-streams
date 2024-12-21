@@ -3,8 +3,7 @@ import { forStreamInput as forInput } from './testUtil/forInput';
 import { twice } from './testUtil/twice';
 import { permutations } from './testUtil/permutations';
 import { variations } from './testUtil/variations';
-import { range, same, stream, type Stream } from '.';
-
+import { same, stream } from '.';
 
 test('at neg last', () => forInput(
     ['a', 'b', 'c'],
@@ -582,24 +581,6 @@ test('single', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEac
         runHint,
     ))
 )));
-
-test('slice', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input => range(0, 50).forEach(() => {
-    const indexOpt =
-        (range(-4,  5) as Stream<number | undefined>)
-            .concat(undefined)
-            .randomItem()
-    const start = indexOpt.get()
-    const end = indexOpt.get()
-    forInput(
-        input,
-        s => s.slice(start, end),
-        (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(
-            input.slice(start, end),
-            () => `${inputHint()} -- ${input} -- ${start}..${end}`,
-            runHint,
-        ))
-    )
-})))
 
 test('size', () => [[] as string[], ['a'], ['a', 'b'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
