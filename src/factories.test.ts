@@ -38,9 +38,6 @@ test('streamFromModifiable sort', () => {
     const s = streamFromModifiable(input).sort()
     expect(s.toArray()).toBe(input)
     expect(input).toEqual(['a', 'b', 'c'])
-
-    expect(s.reverse().toArray()).toBe(input)
-    expect(input).toEqual(['c', 'b', 'a'])
 })
 
 test('stream of iterable', () => {

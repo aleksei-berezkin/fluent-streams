@@ -1863,10 +1863,6 @@ class LazyArrayStream<T> extends RandomAccessStream<T> implements Stream<T> {
         return this.#getArrayAccess()[2][Symbol.iterator]()
     }
 
-    reverse(): Stream<T> {
-        return new LazyArrayStream(() => this.#getArrayAccess()[2].reverse())
-    }
-
     toArray(): T[] {
         return this.#getArrayAccess()[2]
     }
