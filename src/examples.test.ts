@@ -147,3 +147,16 @@ test('flat different levels complete', () => {
     expect(s.toArray()).toEqual(['a', 'b', 'c', 'd', 'e'])
     expect(s.flat(10).toArray()).toEqual(['a', 'b', 'c', 'd', 'e'])
 })
+
+test('filter with predicate', () => {
+    const res = streamOf('a', null, 'b')
+        .filter<string>(item => typeof item === 'string')
+        .toArray() satisfies string[]
+    expect(res).toEqual(['a', 'b'])
+
+    const res1 = streamOf(null, 'a', 'b')
+        .head()
+        .filter<string>(item => typeof item === 'string')
+        .toArray() satisfies string[]
+    expect(res1).toEqual([])
+})

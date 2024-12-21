@@ -295,15 +295,15 @@ test('filter', () =>
     )
 );
 
-test('filterWithAssertion', () => {
+test('filter with type guard', () => {
     function isString(s: string | number): s is string {
         return typeof s === 'string' && s !== 'not a string';
     }
     forInput(
         ['a', 1, 'c', 'not a string'],
-        s => s.filterWithAssertion(isString),
+        s => s.filter<string>(isString),
         (s, inputHint) => twice(runHint => {
-            const r: string[] = s.filterWithAssertion(isString).toArray();
+            const r: string[] = s.toArray();
             expect(r).toEqualWithHint(['a', 'c'], inputHint, runHint);
         }),
     );

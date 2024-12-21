@@ -218,27 +218,22 @@ export interface Stream<T> extends Iterable<T, undefined> {
     filter(predicate: (item: T, index: number) => boolean): Stream<T>
 
     /**
-     * Similar to {@link filter}, but allows narrowing the output type. This is 
-     * particularly useful in TypeScript when you want to filter items based on a type 
-     * guard. For example, to filter out `null` values:
-     * 
+     * Returns a stream with a possibly narrowed type, containing only the items of
+     * this stream that match the provided `predicate`. For example, this can be
+     * used to filter out `null` values from the stream.
+     *
      * ```typescript
-     * streamOf<string | null>('a', null, 'b')
-     *   .filterWithAssertion(function(item): item is string {
-     *     return typeof item === 'string';
-     *   })
-     *   .toArray();   // => ['a', 'b']: string[]
+     * streamOf('a', null, 'b')
+     *   .filter<string>(item => typeof item === 'string')
+     *   .toArray() satisfies string[]
      * ```
+     *
+     * @param predicate - A type predicate function used to test items and narrow
+     * their type.
      * 
-     * This method is primarily useful in TypeScript. In JavaScript, it functions 
-     * identically to {@link filter}.
-     * 
-     * @param assertion - A type guard function to test and narrow the type of each item.
-     * Receives an item and its index in the stream.
-     * 
-     * @returns A {@link Stream} containing the items that satisfy the assertion.
+     * @returns A {@link Stream} containing only the items that satisfy the predicate.
      */
-    filterWithAssertion<U extends T>(assertion: (item: T, index: number) => item is U): Stream<U>
+    filter<U extends T>(predicate: (item: T, index: number) => item is U): Stream<U>
 
     /**
      * Returns an {@link Optional} which resolves to the first item that matches the 
@@ -831,6 +826,28 @@ export interface Optional<T> extends Iterable<T, undefined> {
     filter(predicate: (item: T, index: 0) => boolean): Optional<T>
 
     /**
+     * Returns an optional with a possibly narrowed type. Resolves to the original
+     * item if this optional contains an item and the `predicate` evaluates to `true`
+     * for it; otherwise, resolves to empty. For example, this can be used to filter
+     * out `null` values from the optional.
+     * 
+     * ```typescript
+     * streamOf('a', null, 'b')
+     *    .head()
+     *    .filter<string>(item => typeof item === 'string')
+     *    .toArray() satisfies string[]
+     * ```
+     * 
+     * @param predicate - A type predicate to test the item and narrow its type.
+     * For compatibility with {@link Stream}, it receives the index as a second 
+     * argument, which is always `0` in this case.
+     * 
+     * @returns An {@link Optional} containing the item if the predicate is satisfied;
+     * otherwise, an empty optional.
+     */
+    filter<U extends T>(predicate: (item: T, index: 0) => item is U): Optional<U>
+  
+    /**
      * Returns an optional with the following behavior:
      * - If this optional is empty, resolves to empty.
      * - If this optional is not empty, creates an iterable yielding the item,
@@ -842,19 +859,6 @@ export interface Optional<T> extends Iterable<T, undefined> {
      */
     flat<D extends number = 1>(depth?: D): Optional<FlatIterable<T, D>>
 
-    /**
-     * Similar to {@link Stream.filterWithAssertion}.
-     * 
-     * @param assertion A type assertion function to test the item.
-     * For compatibility with {@link Stream}, it receives the index as a second argument,
-     * which is always 0 in this case.
-     * 
-     * 
-     * @returns An optional containing the item if the assertion is satisfied; 
-     * otherwise, an empty optional.
-     */
-    filterWithAssertion<U extends T>(assertion: (item: T, index: 0) => item is U): Optional<U>
-  
     /**
      * Creates an optional with the following behavior:
      * - If this optional contains an item, applies `mapper` to it, and retrieves the 
@@ -1207,14 +1211,10 @@ abstract class Base<
     }
 
     filter(predicate: (item: T, index: NumberOrZero) => boolean): StreamOrOptional<T, S> {
-        return this.filterWithAssertion(predicate as (item: T, index: NumberOrZero) => item is T);
-    }
-
-    filterWithAssertion<U extends T>(assertion: (item: T, index: NumberOrZero) => item is U): StreamOrOptional<U, S> {
         return this.#newStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
             let i = 0
             for (const item of this) {
-                if (assertion(item, i++ as NumberOrZero)) yield item
+                if (predicate(item, i++ as NumberOrZero)) yield item
             }
         }.bind(this))
     }
@@ -1245,7 +1245,7 @@ abstract class Base<
     }
 
     mapNullable<U>(mapper: (item: T, index: NumberOrZero) => (U | null | undefined)): StreamOrOptional<U, S> {
-        return (this.map(mapper) as unknown as Base<U, S>).filterWithAssertion((item => item != null))
+        return (this.map(mapper) as unknown as Base<U | null | undefined, S>).filter(item => item != null) as StreamOrOptional<U, S>
     }
 
     peek(effect: (item: T, index: NumberOrZero) => void): StreamOrOptional<T, S> {
@@ -1560,11 +1560,11 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             }
 
             if (negStart) {
-                const {a, p} = buf!
-                for (let j = 0; j < a.length; j++) {
-                    const offset = i - a.length + j
+                const {a, a: {length: l}, p} = buf!
+                for (let j = 0; j < l; j++) {
+                    const offset = i - l + j
                     if (posEnd && offset >= end || negEnd && offset >= i + end) break
-                    yield a[(p + j) % a.length]
+                    yield a[(p + j) % l]
                 }
             }
         })
