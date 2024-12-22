@@ -423,6 +423,18 @@ test('groupBy with index', () => forInput(
     ),
 ));
 
+test('groupByToMap with index', () => forInput(
+    ['a', 'a', 'a', 'b', 'b', 'b', 'b', 'b', 'c'],
+    s => s,
+    (s, inputHint) => twice(runHint =>
+        expect(s.groupByToMap((c, index) => c + String(index % 2))).toEqualWithHint(
+            new Map([['a0', ['a', 'a']], ['a1', ['a']], ['b1', ['b', 'b', 'b']], ['b0', ['b', 'b']], ['c0', ['c']]]),
+            inputHint,
+            runHint,
+        )
+    ),
+));
+
 test('head', () => [[], ['a'], ['a', 'b']].forEach(input => forInput(
     input,
     s => s.head(),
@@ -756,6 +768,7 @@ test('takeRandom', () => {
         )
     );
 });
+
 test('toArray', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
     s => s,
@@ -798,6 +811,14 @@ test('toObject bad key', () =>
         s => twice(() => expect(() => s.toObject()).toThrow()),
     )
 );
+
+test('toSet', () => [[], ['a'], ['a', 'b', 'a']].forEach(input => forInput(
+    input,
+    s => s,
+    (s, inputHint) => twice(runHint =>
+        expect(s.toSet()).toEqualWithHint(new Set(input), inputHint, runHint)
+    ),
+)));
 
 test('transform gen', () => forInput(
     ['a', 'b', 'c'],

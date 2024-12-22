@@ -313,18 +313,37 @@ export interface Stream<T> extends Iterable<T, undefined> {
 
     /**
      * Returns a stream whose elements are `[key, items[]]` pairs. Keys are 
-     * retrieved using the `getKey` function applied to the items of this stream. 
-     * `items` are arrays of stream items that produced the same `key`. The order 
-     * of items is preserved as in this stream. The implementation uses 
-     * [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map), 
-     * meaning key equality is checked with the 
-     * [SameValueZero](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map#key_equality) 
+     * derived using the `getKey` function applied to the items in this stream. 
+     * `items` are arrays of stream elements that produced the same `key`.
+     * 
+     * This method uses a `Map` internally for grouping, meaning that keys are 
+     * compared using the 
+     * [SameValueZero](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set#value_equality)
      * algorithm.
      * 
-     * @param getKey A function to retrieve the key for each item. Receives an item and its index in the stream.
-     * @returns A {@link Stream} of `[key, items[]]` pairs.
+     * @param getKey - A function to derive the key for each item. The function 
+     * receives the item and its index in the stream.
+     * 
+     * @returns A {@link Stream} of `[key, items[]]` pairs, where `key` is a 
+     * derived key and `items[]` is an array of elements associated with that key.
      */
     groupBy<K>(getKey: (item: T, index: number) => K): Stream<[K, T[]]>
+
+    /**
+     * Collects the items of this stream into a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
+     * Keys are generated using the provided `getKey` function applied to each item in the stream.
+     * 
+     * Items that produce the same key (as determined by the `Map`'s
+     * [key equality](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map#key_equality))
+     * are grouped into an array and stored as the value corresponding to that key.
+     * 
+     * @param getKey - A function to derive the key for each item. The function
+     * receives the item and its index in the stream.
+     * 
+     * @returns A `Map` where each key is associated with an array of items that
+     * produced the same key.
+     */
+    groupByToMap<K>(getKey: (item: T, index: number) => K): Map<K, T[]>
 
     /**
      * Returns an optional that resolves to the first item of this stream if the 
@@ -698,6 +717,13 @@ export interface Stream<T> extends Iterable<T, undefined> {
     toObject(): T extends readonly [string | number | symbol, any] ? { [key in T[0]]: T[1] } : unknown;
 
     /**
+     * Returns the items of the stream as a set.
+     * 
+     * @returns A set containing the items of the stream.
+     */
+    toSet(): Set<T>
+
+    /**
      * Extension method to apply an arbitrary operator to the stream. An `operator`
      * is passed an iterable that yields this stream's items, and it must return an
      * iterator to be used in the next step. The easiest way to achieve this is by
@@ -1013,6 +1039,14 @@ export interface Optional<T> extends Iterable<T, undefined> {
     toArray(): T[]
 
     /**
+     * If this optional has an item, returns a set containing that item as the only
+     * element; otherwise, returns an empty set.
+     * 
+     * @returns A set containing the item if present, or an empty set if the optional is empty.
+     */
+    toSet(): Set<T>
+
+    /**
      * Returns a {@link Stream} with an item provided by this optional if it has an item;
      * otherwise, the stream is empty.
      * @returns A stream containing the item if present, or an empty stream if the optional is empty.
@@ -1279,6 +1313,10 @@ abstract class Base<
     toArray(): T[] {
         return [...this]
     }
+
+    toSet(): Set<T> {
+        return new Set(this)
+    }
 }
 
 class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
@@ -1429,19 +1467,22 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     groupBy<K>(getKey: (item: T, index: number) => K): Stream<[K, T[]]> {
-        return new IteratorStream<[K, T[]]>(() => {
-            let i = 0
-            const m = new Map<K, T[]>();
-            for (const item of this) {
-                const key = getKey(item, i++)
-                if (m.has(key)) {
-                    m.get(key)!.push(item)
-                } else {
-                    m.set(key, [item])
-                }
-            }
-            return m[Symbol.iterator]()
-        })
+        return new IteratorStream<[K, T[]]>(() => 
+            this.groupByToMap(getKey)[Symbol.iterator]()
+        )
+    }
+
+    groupByToMap<K>(getKey: (item: T, index: number) => K): Map<K, T[]> {
+        let i = 0
+        const m = new Map<K, T[]>()
+        for (const item of this) {
+            const key = getKey(item, i++)
+            if (m.has(key))
+                m.get(key)!.push(item)
+            else
+                m.set(key, [item])
+        }
+        return m
     }
 
     head(): Optional<T> {
