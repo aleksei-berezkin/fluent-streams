@@ -333,14 +333,14 @@ test('findLast', () => [[], ['a'], ['a', 'bx', 'c', 'by', 'bz'], ['by', 'a']].fo
     ),
 )));
 
-test('flat', () => [-1, 0, 1, 2, 3, 4].forEach(n => forInput(
+test('flat', () => [-1, 0, 1, undefined, 2, 3, 4].forEach(n => forInput(
     [[[]], [['a'], ['b']], [['c', 'd', 'e']]],
     s => s.flat(n),
     (s, inputHint) =>
         twice(runHint => expect(
             s.toArray()).toEqualWithHint(
-                n <= 0 ? [[[]], [['a'], ['b']], [['c', 'd', 'e']]]
-                    : n === 1 ? [[], ['a'], ['b'], ['c', 'd', 'e']]
+                n != null && n <= 0 ? [[[]], [['a'], ['b']], [['c', 'd', 'e']]]
+                    : n === 1 || n == null ? [[], ['a'], ['b'], ['c', 'd', 'e']]
                     : ['a', 'b', 'c', 'd', 'e'],
                 inputHint,
                 runHint

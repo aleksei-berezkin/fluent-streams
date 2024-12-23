@@ -1273,10 +1273,10 @@ abstract class Base<
     S extends 'Stream' | 'Optional',
     NumberOrZero = S extends 'Stream' ? number : 0
 > implements Iterable<T> {
-    #newStreamOrOptional: <U>(generator: (this: typeof this) => Iterator<U>) => StreamOrOptional<U, S>
+    #bindAndCreateStreamOrOptional: <U>(generator: (this: typeof this) => Iterator<U>) => StreamOrOptional<U, S>
 
     constructor(newStreamOrOptional: <U>(generator: () => Iterator<U>) => StreamOrOptional<U, S>) {
-        this.#newStreamOrOptional = generator => newStreamOrOptional(generator.bind(this))
+        this.#bindAndCreateStreamOrOptional = generator => newStreamOrOptional(generator.bind(this))
     }
 
     abstract [Symbol.iterator](): Iterator<T>
@@ -1290,7 +1290,7 @@ abstract class Base<
     }
 
     filter(predicate: (item: T, index: NumberOrZero) => boolean): StreamOrOptional<T, S> {
-        return this.#newStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
+        return this.#bindAndCreateStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
             let i = 0
             for (const item of this) {
                 if (predicate(item, i++ as NumberOrZero)) yield item
@@ -1299,7 +1299,7 @@ abstract class Base<
     }
 
     flat<D extends number = 1>(depth: D = 1 as D): StreamOrOptional<FlatIterable<T, D>, S> {
-        return this.#newStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
+        return this.#bindAndCreateStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
             for (const item of this) {
                 if (depth >= 1 && (item as any)[Symbol.iterator]) {
                     yield* stream(item as Iterable<FlatIterable<T, 1>>).flat(depth - 1) as Iterable<FlatIterable<T, D>>
@@ -1311,7 +1311,7 @@ abstract class Base<
     }
 
     flatMap<U>(mapper: (item: T, index: NumberOrZero) => Iterable<U>): StreamOrOptional<U, S> {
-        return this.#newStreamOrOptional(flatMap.bind<Iterable<T>, [(i: T, index: NumberOrZero) => Iterable<U>], never, Iterator<U>>(this, mapper))
+        return this.#bindAndCreateStreamOrOptional(flatMap.bind<Iterable<T>, [(i: T, index: NumberOrZero) => Iterable<U>], never, Iterator<U>>(this, mapper))
     }
 
     forEach(effect: (item: T, index: NumberOrZero) => void): void {
@@ -1322,7 +1322,7 @@ abstract class Base<
     }
 
     map<U>(mapper: (item: T, index: NumberOrZero) => U): StreamOrOptional<U, S> {
-        return this.#newStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
+        return this.#bindAndCreateStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
             let i = 0
             for (const item of this) {
                 yield mapper(item, i++ as NumberOrZero)
@@ -1390,14 +1390,14 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     concatAll(items: Iterable<T>): Stream<T> {
-        return this.#newIteratorStream(function* () {
+        return this.#bindAndCreateIteratorStream(function* () {
             yield* this
             yield* items
         })
     }
 
     distinctBy(getKey: (item: T, index: number) => any): Stream<T> {
-        return this.#newIteratorStream(function* () {
+        return this.#bindAndCreateIteratorStream(function* () {
             const keys = new Set<any>()
             let i = 0
             for (const item of this) {
@@ -1440,7 +1440,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     #dropOrTakeWhile(predicate: (item: T, index: number) => boolean, take?: boolean): Stream<T> {
-        return this.#newIteratorStream(function* () {
+        return this.#bindAndCreateIteratorStream(function* () {
             let i = 0
             for (const item of this) {
                 if (i === -1) {
@@ -1479,7 +1479,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     #find(predicate: (item: T, index: number) => boolean, last?: boolean): Optional<T> {
-        return this._o(function* () {
+        return this._o(() => {
             let i = 0
             let foundItem: T | Empty = empty
             for (const item of this) {
@@ -1488,7 +1488,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                     if (!last) break
                 }
             }
-            if (!isEmpty(foundItem)) yield foundItem
+            return foundItem
         })
     }
 
@@ -1560,22 +1560,17 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     randomItem(): Optional<T> {
-        return this._o<T>(function* () {
+        return this._o<T>( () => {
             const a = this.toArray()
-            if (a.length) {
-                yield a[Math.floor(Math.random() * a.length)]
-            }
-        });
+            return a.length ? a[Math.floor(Math.random() * a.length)] : empty
+        })
     }
 
     reduce<U>(reducer: (acc: U, curr: T, index: number) => U, initial?: U): Optional<U> | U {
         if (arguments.length > 1)
             return reduce(this, reducer, initial!)
 
-        return this._o(function* () {
-            const reduced = reduce(this, reducer, empty)
-            if (!isEmpty(reduced)) yield reduced
-        });
+        return this._o(() => reduce(this, reducer, empty))
     }
 
     reduceRight<U>(reducer: (prev: U, curr: T, index: number) => U, initial?: U): Optional<U> | U {
@@ -1584,10 +1579,9 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             return reduce(reversed, reducer, initial!, reversed.length)
         }
 
-        return this._o(function* () {
+        return this._o(() => {
             const reversed = this.toArray().reverse()
-            const reduced = reduce(reversed, reducer, empty, reversed.length)
-            if (!isEmpty(reduced)) yield reduced
+            return reduce(reversed, reducer, empty, reversed.length)
         })
     }
 
@@ -1600,13 +1594,13 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     single(): Optional<T> {
-        return this._o(function* () {
+        return this._o(() => {
             let foundItem: T | Empty = empty
             for (const item of this) {
-                if (!isEmpty(foundItem)) return
+                if (!isEmpty(foundItem)) return empty
                 foundItem = item
             }
-            if (!isEmpty(foundItem)) yield foundItem
+            return foundItem
         })
     }
 
@@ -1617,7 +1611,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     slice(start?: number, end?: number) {
-        return this.#newIteratorStream<T>(function* () {
+        return this.#bindAndCreateIteratorStream<T>(function* () {
             const posStart = start != null && start >= 0
             const posEnd = end != null && end >= 0
             const negStart = start != null && start < 0
@@ -1667,7 +1661,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     splitWhen(isSplit: (l: T, r: T, lIndex: number) => boolean): Stream<T[]> {
-        return this.#newIteratorStream(function* () {
+        return this.#bindAndCreateIteratorStream(function* () {
             let chunk: T[] | undefined = undefined
             let i = 0
             for (const item of this) {
@@ -1759,7 +1753,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     zipWithIndexAndLen(): Stream<[T, number, number]> {
-        return this.#newIteratorStream(function* () {
+        return this.#bindAndCreateIteratorStream(function* () {
             const a = this.toArray()
             let i = 0
             for (const item of a) {
@@ -1769,7 +1763,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     #zip<U>(other: Iterable<U>, strict = false): Stream<[T, U]> {
-        return this.#newIteratorStream(function* () {
+        return this.#bindAndCreateIteratorStream(function* () {
             const it1 = this[Symbol.iterator]()
             const it2 = other[Symbol.iterator]()
             for ( ; ; ) {
@@ -1785,15 +1779,18 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         })
     }
 
-    #newIteratorStream<U>(generator: (this: typeof this) => Iterator<U>): Stream<U> {
+    #bindAndCreateIteratorStream<U>(generator: (this: typeof this) => Iterator<U>): Stream<U> {
         return new IteratorStream(generator.bind(this))
     }
 
     /**
      * Minifiers cannot mangle a non-private name, so short
      */
-    protected _o<U>(generator: (this: typeof this) => Iterator<U>): Optional<U> {
-        return new SimpleOptional(generator.bind(this))
+    protected _o<U>(getItemOrEmpty: () => Empty | U): Optional<U> {
+        return new SimpleOptional(function* () {
+            const item = getItemOrEmpty()
+            if (!isEmpty(item)) yield item
+        })
     }
 }
 
@@ -1829,13 +1826,11 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     at(index: number): Optional<T> {
-        return this._o(function* () {
+        return this._o(() => {
             const [getItem, s] = this.#getRandomAccess()
-            if (0 <= index && index < s) {
-                yield getItem(index)
-            } else if (-s <= index && index < 0) {
-                yield getItem(s + index)
-            }
+            return -s <= index && index < s
+                ? getItem(index < 0 ? s + index : index)
+                : empty
         })
     }
 
@@ -1868,9 +1863,9 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     }
 
     randomItem(): Optional<T> {
-        return this._o(function* () {
+        return this._o(() => {
             const [getItem, size] = this.#getRandomAccess()
-            if (size) yield getItem(Math.floor(Math.random() * size))
+            return size ? getItem(Math.floor(Math.random() * size)) : empty
         })
     }
 
@@ -1969,13 +1964,12 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
 
     [Symbol.iterator](): Iterator<T> {
         let n = getIterator(this.#input).next()
+
         return {
             next() {
-                if (n.done) return n
-
                 const m = n
                 n = {done: true, value: undefined}
-                return m
+                return m as IteratorResult<T>
             }
         }
     }
@@ -2046,10 +2040,11 @@ type RingBuffer<T> = {
     (newItem: T): Empty | T,
 }
 
+/**
+ * @param size Must be > 0
+ */
 function createRingBuffer<T>(size: number): RingBuffer<T> {
     const buf: RingBuffer<T> = ((newItem: T) => {
-        if (size < 1) return newItem
-
         let {a, p} = buf
         if (a.length < size) {
             a.push(newItem)

@@ -4,9 +4,9 @@
 [![NPM version](https://img.shields.io/npm/v/fluent-streams.svg)](https://www.npmjs.com/package/fluent-streams)
 [![Read the docs](https://img.shields.io/badge/docs-available-44cc11.svg)](https://aleksei-berezkin.github.io/fluent-streams-docs/)
 
-Fluent Streams is a JavaScript and TypeScript library that provides a rich API for lazily manipulating iterables such as arrays, sets, and more.
+Fluent Streams is a JavaScript and TypeScript library that offers a rich API for lazily processing iterables such as arrays, sets, and more. At its core is the [Stream](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Stream.html), a lightweight, stateless wrapper around an iterable. The library also includes [Optional](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Optional.html), which represents a value that may or may not exist.
 
-The core concept is the [Stream](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Stream.html), a lightweight, stateless wrapper around an iterable. Additionally, the library includes [Optional](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Optional.html), a construct for representing a value that may or may not exist.
+The library's primary goal is to provide an API that closely mirrors JavaScript's Array, while introducing a variety of additional, powerful methods inspired by libraries like Ramda and Underscore. Using Fluent Streams feels like working with a familiar Array that has been significantly enhanced with extra functionality.
 
 ## Installation
 
@@ -43,7 +43,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - `Stream` and `Optional` implement the `Iterable` protocol, making them compatible with JavaScript constructs such as `for-of` loops and spread syntax.
   - Intermediate arrays created by operations like `sort()` are not immediately discarded; instead, they are reused in subsequent steps to minimize memory allocations.
 - **Compact Size:**
-  - Minified: 9.0 kB
+  - Minified: 8.9 kB
   - Gzipped: 3.0 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
@@ -73,6 +73,7 @@ Fluent Streams [is compared](https://github.com/aleksei-berezkin/fluent-streams-
 Fluent Streams was inspired by several great libraries:  
 
 - [Ramda](https://ramdajs.com/)  
+- [Underscore.js](https://underscorejs.org/)
 - [prelude-ts](https://github.com/emmanueltouzery/prelude-ts)  
 - [Java Streams](https://docs.oracle.com/javase/8/docs/api/java/util/stream/package-summary.html)  
 - [Sequency](https://github.com/winterbe/sequency)  

@@ -106,7 +106,7 @@ test('coprime', () => {
         .zip(randomInts)
         .filter(([a, b]) => a % 2 === 0 || b % 2 === 0)
         .filter(([a, b]) => gcd(a, b) === 1)
-        .distinctBy(pair => stream(pair).sortBy(i => i).join())
+        .distinctBy(([a, b]) => a < b ? `${a},${b}` : `${b},${a}`)
         .take(10)
 
     expect(ints.size()).toBe(10)
@@ -183,4 +183,12 @@ test('optional from generator', () => {
     const a = optional(function* () { yield 1; yield 2; yield 3; })
         .toArray()
     expect(a).toEqual([1])
+})
+
+test('stream | optional type', () => {
+    const s = stream(['a', 'b', 'c'])
+    const o = optional(['d', 'e', 'f'])
+    const sink: string[] = [];
+    [s, o].forEach(so => so.forEach((i, ix) => sink.push(`${i},${ix}`)))
+    expect(sink).toEqual(['a,0', 'b,1', 'c,2', 'd,0'])
 })
