@@ -916,6 +916,14 @@ export interface Optional<T> extends Iterable<T, undefined> {
     flatMapToStream<U>(mapper: (item: T, index: 0) => Iterable<U>): Stream<U>
 
     /**
+     * If this optional contains an item, invokes `effect` for it.
+     *
+     * @param effect - The effect to apply to this optional's item. For compatibility with {@link Stream},
+     * it receives the index as a second argument, which is always 0 in this case.
+     */
+    forEach(effect: (item: T, index: number) => void): void;
+
+    /**
      * If this optional contains an item, returns that item; otherwise, throws an 
      * error.
      * @returns The item, if this optional has an item
@@ -1306,6 +1314,13 @@ abstract class Base<
         return this.#newStreamOrOptional(flatMap.bind<Iterable<T>, [(i: T, index: NumberOrZero) => Iterable<U>], never, Iterator<U>>(this, mapper))
     }
 
+    forEach(effect: (item: T, index: NumberOrZero) => void): void {
+        let i = 0
+        for (const item of this) {
+            effect(item, i++ as NumberOrZero)
+        }
+    }
+
     map<U>(mapper: (item: T, index: NumberOrZero) => U): StreamOrOptional<U, S> {
         return this.#newStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
             let i = 0
@@ -1475,10 +1490,6 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             }
             if (!isEmpty(foundItem)) yield foundItem
         })
-    }
-
-    forEach(effect: (item: T, index: number) => void): void {
-        this.forEachUntil((item, index) => void effect(item, index));
     }
 
     forEachUntil(effect: (item: T, index: number) => boolean | undefined | void) {

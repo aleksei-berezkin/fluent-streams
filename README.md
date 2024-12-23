@@ -50,7 +50,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - Clearly distinguishes between `null` or `undefined` as a value, and the absence of a value.
   - Allows conversion of `Optional` back to `Stream` to continue the fluent pipeline.
 - **Extensive Testing:**  
-  - Over 180 tests rigorously cover 100% of the library's source code, validating various stream types in multiple combinations.
+  - Over 190 tests rigorously cover 100% of the library's source code, validating various stream types in multiple combinations.
   - Laziness and statelessness are also thoroughly tested.
 
 ## Platform requirements

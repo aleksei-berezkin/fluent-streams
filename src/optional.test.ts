@@ -93,6 +93,26 @@ test('get empty', () => forInput(
     o => twice(() => expect(() => o.get()).toThrow()),
 ));
 
+test('forEach', () => forInput(
+    ['a', 'b', 'c'],
+    o => o,
+    (o, inputHint) => twice(runHint => {
+        const result: string[] = []
+        o.forEach((i, ix) => result.push(`${i},${ix}`))
+        expect(result).toEqualWithHint(['a,0'], inputHint, runHint)
+    }),
+))
+
+test('forEach empty', () => forInput(
+    [],
+    o => o,
+    (o, inputHint) => twice(runHint => {
+        const result: string[] = []
+        o.forEach((i, ix) => result.push(`${i},${ix}`))
+        expect(result).toEqualWithHint([], inputHint, runHint)
+    }),
+))
+
 test('is', () => forInput(
     ['a'],
     o => o,
