@@ -7,3 +7,10 @@ const output = stream(['a', 'b', 'c'])
 
 if (output !== 'ABCDEF')
     throw new Error(String(output))
+
+const one = stream(function*() { yield 'a' })
+    .head()
+    .toArray()
+
+if (one.length !== 1 || one[0] !== 'a') 
+    throw new Error(String(one))

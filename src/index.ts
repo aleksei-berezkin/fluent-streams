@@ -1065,30 +1065,43 @@ type MinusOne<N extends number> = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
 // *** Factories ***
 
 /**
- * Creates a {@link Stream} from an iterable (for example, array, set, etc). Streams created with
- * this function never modify `input`; if you want the opposite, use {@link streamFromModifiable}.
- * @typeParam T Items type
- * @param input Input to create the stream from. Can be array, set, or any other iterable, including user-defined,
- * as long as it correctly implements
- * the [iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols).
+ * Creates a {@link Stream} from an iterable (e.g., array, set, etc.) or a function 
+ * that returns an iterator (such as a generator function). Streams created with this 
+ * function never modify `input`; if you need the opposite, use {@link streamFromModifiable}.
  * 
- * If you implement your own iterator, please note:
+ * @typeParam T - The type of the stream's items.
+ * 
+ * @param input - The source to create the stream from. This can be:
+ * 
+ * 1) **Iterable.** This includes arrays, sets, or any other iterable, including 
+ * user-defined ones, as long as they correctly implement the 
+ * [iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols).
+ * Example: `stream([1, 2, 3])`.  
+ * 
+ * If you implement your own iterator, note the following:
  * - [next()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#next)
- * args, if any, are not used.
+ * arguments, if any, are not used.
  * - [value](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#value)
- * returned with `{done: true}` is not used.
+ * returned with `{done: true}` is ignored.
  * - [return()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#returnvalue)
  * and [throw()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#throwvalue)
- * methods are not used.
- * @returns A stream created from the provided iterable.
+ * methods are not utilized.
+ * 
+ * 2) **Function returning an iterator.** The most convenient usage is with a 
+ * generator function. Example: `stream(function* () { yield 1; yield 2; yield 3; })`.  
+ * 
+ * If the `input` is both iterable (i.e., has a `[Symbol.iterator]` property) 
+ * and a function, it is interpreted as an iterable.
+ * 
+ * @returns A {@link Stream} created from the provided input.
  */
-export function stream<T>(input: Iterable<T>): Stream<T> {
+export function stream<T>(input: Iterable<T> | (() => Iterator<T>)): Stream<T> {
     return Array.isArray(input)
         ? new RandomAccessStream<T>(() => ([
             ix => input[ix],
             input.length,
         ]))
-        : new IteratorStream<T>(() => input[Symbol.iterator]())
+        : new IteratorStream<T>(input)
 }
 
 /**
@@ -1176,11 +1189,11 @@ export function abc(): Stream<string> {
  * streamOf('a', '"', 'b', 'c', '"', 'd', '"', 'e', '"', 'f')
  *   .zip(same({inQuotes: false}))
  *   .peek(([c, st]) => {
- *      if (c === '"') st.inQuotes = !st.inQuotes
- *    })
- *    .filter(([c, {inQuotes}]) => c !== '"' && inQuotes)
- *    .map(([c]) => c)  // Unzip state
- *    .toArray()        // => ['b', 'c', 'e']
+ *     if (c === '"') st.inQuotes = !st.inQuotes
+ *   })
+ *   .filter(([c, {inQuotes}]) => c !== '"' && inQuotes)
+ *   .map(([c]) => c)  // Unzip state
+ *   .toArray()        // => ['b', 'c', 'e']
  * ```
  * @typeParam T Value type
  * @param value An item to repeat endlessly
@@ -1206,15 +1219,21 @@ export function continually<T>(getItem: () => T): Stream<T> {
 }
 
 /**
- * Creates an {@link Optional} from a given iterable. An empty iterable resolves to an empty
- * optional; otherwise, the optional resolves to the first item yielded by the iterable,
- * and the rest of the elements are discarded.
- * @typeParam T Elements type.
- * @param input The iterable to create the optional from.
- * @returns An optional containing the first item of the iterable or empty if the iterable is empty.
+ * Creates an {@link Optional} from a given iterable or a function that produces 
+ * an iterator. If the iterable (or iterator) is empty, the optional resolves 
+ * to empty. Otherwise, the optional resolves to the first item yielded by the 
+ * iterator, and all subsequent elements are discarded.
+ * 
+ * @typeParam T - The type of elements in the optional.
+ * 
+ * @param input - The source to create the optional from. The `input` is interpreted
+ * in the same way as described in the {@link stream} function.
+ * 
+ * @returns An {@link Optional} containing the first item of the iterable, or 
+ * empty if the iterable is empty.
  */
-export function optional<T>(input: Iterable<T>): Optional<T> {
-    return new SimpleOptional(() => input[Symbol.iterator]());
+export function optional<T>(input: Iterable<T> | (() => Iterator<T>)): Optional<T> {
+    return new SimpleOptional(input);
 }
 
 /**
@@ -1236,15 +1255,20 @@ export function optionalOfNullable<T>(getInput: () => T | null | undefined): Opt
 
 type StreamOrOptional<T, S extends 'Stream' | 'Optional'> = S extends 'Stream' ? Stream<T> : Optional<T>
 
+type Input<T> = Iterable<T> | (() => Iterator<T>)
+
+const getIterator = <T>(input: Input<T>): Iterator<T> =>
+    ((input as Iterable<T>)[Symbol.iterator]?.bind(input) ?? input as () => Iterator<T>)()
+
 abstract class Base<
     T,
     S extends 'Stream' | 'Optional',
     NumberOrZero = S extends 'Stream' ? number : 0
 > implements Iterable<T> {
-    #newStreamOrOptional: <U>(createIter: () => Iterator<U>) => StreamOrOptional<U, S>
+    #newStreamOrOptional: <U>(generator: (this: typeof this) => Iterator<U>) => StreamOrOptional<U, S>
 
-    constructor(newStreamOrOptional: <U>(createIter: () => Iterator<U>) => StreamOrOptional<U, S>) {
-        this.#newStreamOrOptional = newStreamOrOptional
+    constructor(newStreamOrOptional: <U>(generator: () => Iterator<U>) => StreamOrOptional<U, S>) {
+        this.#newStreamOrOptional = generator => newStreamOrOptional(generator.bind(this))
     }
 
     abstract [Symbol.iterator](): Iterator<T>
@@ -1263,7 +1287,7 @@ abstract class Base<
             for (const item of this) {
                 if (predicate(item, i++ as NumberOrZero)) yield item
             }
-        }.bind(this))
+        })
     }
 
     flat<D extends number = 1>(depth: D = 1 as D): StreamOrOptional<FlatIterable<T, D>, S> {
@@ -1275,7 +1299,7 @@ abstract class Base<
                     yield item as FlatIterable<T, D>
                 }
             }
-        }.bind(this))
+        })
     }
 
     flatMap<U>(mapper: (item: T, index: NumberOrZero) => Iterable<U>): StreamOrOptional<U, S> {
@@ -1288,7 +1312,7 @@ abstract class Base<
             for (const item of this) {
                 yield mapper(item, i++ as NumberOrZero)
             }
-        }.bind(this))
+        })
     }
 
     mapNullable<U>(mapper: (item: T, index: NumberOrZero) => (U | null | undefined)): StreamOrOptional<U, S> {
@@ -1321,22 +1345,21 @@ abstract class Base<
 
 class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     /**
-     * Can only be used in [Symbol.iterator]() methods. Subclass may pass `undefined`
-     * having overridden [Symbol.iterator]().
+     * Subclass may pass `undefined` having overridden all usages.
      */
-    #createIter: () => Iterator<T>
+    #input: Iterable<T> | {(): Iterator<T>}
 
-    constructor(createIter: () => Iterator<T>) {
-        super(newCreateIter => new IteratorStream(newCreateIter))
-        this.#createIter = createIter
+    constructor(input: Iterable<T> | {(): Iterator<T>}) {
+        super(newInput => new IteratorStream(newInput))
+        this.#input = input
     }
 
     [Symbol.iterator](): Iterator<T> {
-        return this.#createIter()
+        return getIterator(this.#input)
     }
 
     at(index: number): Optional<T> {
-        return this.slice(index, index === -1 ? undefined : index + 1).single()
+        return new SimpleOptional(this.slice(index, index === -1 ? undefined : index + 1))
     }
 
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]> {
@@ -1486,7 +1509,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     head(): Optional<T> {
-        return this.at(0)
+        return new SimpleOptional(this)
     }
 
     join(separator: string | {sep: string, leading?: boolean, trailing?: boolean} | undefined): string {
@@ -1751,15 +1774,15 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         })
     }
 
-    #newIteratorStream<U>(createIter: (this: typeof this) => Iterator<U>): Stream<U> {
-        return new IteratorStream(createIter.bind(this))
+    #newIteratorStream<U>(generator: (this: typeof this) => Iterator<U>): Stream<U> {
+        return new IteratorStream(generator.bind(this))
     }
 
     /**
      * Minifiers cannot mangle a non-private name, so short
      */
-    protected _o<U>(createIter: (this: typeof this) => Iterator<U>): Optional<U> {
-        return new SimpleOptional(createIter.bind(this))
+    protected _o<U>(generator: (this: typeof this) => Iterator<U>): Optional<U> {
+        return new SimpleOptional(generator.bind(this))
     }
 }
 
@@ -1926,21 +1949,21 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
     /**
      * Can yield multiple items, use only first
      */
-    #createIter: () => Iterator<T>
+    #input: Input<T>
 
-    constructor(createIter: () => Iterator<T>) {
-        super(newCreateIter => new SimpleOptional(newCreateIter))
-        this.#createIter = createIter
+    constructor(input: Input<T>) {
+        super(newInput => new SimpleOptional(newInput))
+        this.#input = input
     }
 
     [Symbol.iterator](): Iterator<T> {
-        let n: IteratorResult<T> | Empty = this.#createIter().next()
+        let n = getIterator(this.#input).next()
         return {
             next() {
-                if (isEmpty(n)) return {done: true, value: undefined}
+                if (n.done) return n
 
                 const m = n
-                n = empty
+                n = {done: true, value: undefined}
                 return m
             }
         }
@@ -1992,12 +2015,12 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
     }
 
     #get(): T | Empty {
-        const {done, value} = this.#createIter().next()
+        const {done, value} = getIterator(this.#input).next()
         return done ? empty : value
     }
 
     toStream(): Stream<T> {
-        return new IteratorStream(() => this[Symbol.iterator]())
+        return new IteratorStream(this)
     }
 }
 
@@ -2032,7 +2055,7 @@ function createRingBuffer<T>(size: number): RingBuffer<T> {
     return buf
 }
 
-function* flatMap<T, U>(this: Iterable<T>, mapper: (item: T, index: number) => Iterable<U>): Iterator<U> {
+function* flatMap<T, U>(this: Iterable<T>, mapper: (item: T, index: number) => Iterable<U>) {
     let i = 0
     for (const item of this) {
         yield* mapper(item, i++)

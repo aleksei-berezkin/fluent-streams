@@ -1,4 +1,4 @@
-import { abc, continually, range, same, stream, streamOf } from '.'
+import { abc, continually, optional, range, same, stream, streamOf } from '.'
 
 test('shuffle then head', () => {
     const input = ['a', 'b', 'c']
@@ -171,4 +171,16 @@ test('with-state', () => {
         .map(([c]) => c)
         .toArray()
     expect(res).toEqual(['b', 'c', 'e'])
+})
+
+test('stream from generator', () => {
+    const a = stream(function* () { yield 1; yield 2; yield 3; })
+        .toArray()
+    expect(a).toEqual([1, 2, 3])
+})
+
+test('optional from generator', () => {
+    const a = optional(function* () { yield 1; yield 2; yield 3; })
+        .toArray()
+    expect(a).toEqual([1])
 })

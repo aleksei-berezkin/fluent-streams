@@ -16,7 +16,7 @@ npm i fluent-streams
 
 ## Usage
 
-The [`stream()`](https://aleksei-berezkin.github.io/fluent-streams-docs/functions/stream-1.html) function is the primary entry point for creating a stream from an iterable. Refer to the [documentation](https://aleksei-berezkin.github.io/fluent-streams-docs/) for additional ways to create `Stream` or `Optional`.
+The [`stream()`](https://aleksei-berezkin.github.io/fluent-streams-docs/functions/stream-1.html) function is the primary entry point for creating a stream from an iterable or generator function. Refer to the [documentation](https://aleksei-berezkin.github.io/fluent-streams-docs/) for additional ways to create `Stream` or `Optional`.
 
 ```typescript
 import { abc, stream } from 'fluent-streams'
@@ -32,7 +32,7 @@ stream('The quick brown fox jumps over the lazy dog')
 // => true, indeed a pangram
 ```
 
-Note that we created a stream from the string — this is possible because strings implement the iterable protocol, just like Arrays and Sets.
+Note that we created a stream from the string — this is possible because strings implement the iterable protocol, just like Arrays and Sets. [More examples.](https://dev.to/alekseiberezkin/fluent-streams-a-library-for-rich-iterables-manipulation-5cja#examples)
 
 ## Why Choose Fluent Streams?  
 
