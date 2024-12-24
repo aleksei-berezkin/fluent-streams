@@ -908,22 +908,6 @@ test('transformToOptional empty', () => forInput(
     (o, inputHint) => twice(runHint => expect(o.resolve()).toEqualWithHint({has: false}, inputHint, runHint)),
 ));
 
-test('with', () => forInput(
-    ['a', 'b', 'c', 'd', 'e'],
-    s => s
-        .with(0, 'x')
-        .with(2, 'y')
-        .with(4, 'z')
-        .with(5, 'zz')
-        .with(-1, 'zzz'),
-    (s, inputHint) => twice(runHint =>
-        expect(s.toArray()).toEqualWithHint(['x', 'b', 'y', 'd', 'z'],
-            inputHint,
-            runHint,
-        )
-    ),
-))
-
 test('zip', () => [[], ['i'], ['i', 'j'], ['i', 'j', 'k']].forEach(input => forInput(
     ['a', 'b'],
     s => s.zip(input),

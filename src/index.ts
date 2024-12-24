@@ -815,13 +815,20 @@ export interface Stream<T> extends Iterable<T, undefined> {
     transformToOptional<U>(operator: (input: Iterable<T>) => Iterator<U>): Optional<U>
 
     /**
-     * Returns a stream with the element at the specified `index` replaced by the 
+     * Returns a stream with the element at the specified `index` replaced by the
      * provided `value`, while all other elements remain unchanged.
-     * If the length of this stream is less than `index + 1`, the resulting stream remains unchanged.
+     * 
+     * Negative index counts back from the end of the array, with `-1` being the last
+     * element, `-2` being the second to last, and so on. If the index is out of bounds,
+     * a `RangeError` is thrown.
      * 
      * @param index The index of the element to replace.
      * @param value The value to insert at the specified index.
-     * @returns A {@link Stream} with the element at the specified `index` replaced by the provided `value`.
+     * 
+     * @returns A {@link Stream} with the element at the specified `index` replaced by
+     * the provided `value`.
+     * 
+     * @throws `RangeError` - if the index is out of bounds
      */
     with(index: number, value: T): Stream<T>
 
@@ -1250,12 +1257,12 @@ export function entryStream<O extends {[k: string]: any}>(object: O): Stream<rea
  * Creates a {@link Stream} of ascending numbers starting from `from` and ending 
  * just before `bound`. If `bound` is omitted, the stream will continue indefinitely.
  * @param from The starting value (inclusive).
- * @param bound The end value (exclusive). Defaults to `Number.POSITIVE_INFINITY`, 
- * resulting in an endless stream.
+ * @param bound The end value (exclusive). Defaults to `Infinity`, resulting in
+ * an endless stream.
  * @returns A stream of ascending numbers starting from `from` and, if `bound` is 
  * provided, ending just before `bound`.
  */
-export function range(from: number, bound: number = Number.POSITIVE_INFINITY): Stream<number> {
+export function range(from: number, bound: number = Infinity): Stream<number> {
     return new RandomAccessStream(() => ([
         ix => from + ix,
         Math.max(0, bound - from),
@@ -1740,6 +1747,15 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     splice(start: number, deleteCount?: number, ...items: T[]): Stream<T> {
+        return this.#splice(
+            start, arguments.length < 2
+                ? Infinity
+                : Math.max(0, deleteCount ?? 0),
+            items
+        )
+    }
+
+    #splice(start: number, deleteCount: number, items: T[], strict?: boolean): Stream<T> {
         const delCount = arguments.length < 2
             ? Number.POSITIVE_INFINITY
             : Math.max(0, deleteCount ?? 0)
@@ -1764,6 +1780,9 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                 }
                 i++
             }
+
+            if (strict && (start < -i || start >= i)) throw new RangeError(`start=${start}, length=${i}`)
+
             yield* _items
             if (buf) {
                 const {a, a: {length: l}, p} = buf
@@ -1848,7 +1867,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     with(index: number, value: T): Stream<T> {
-        return this.map((item, i) => i === index ? value : item)
+        return this.#splice(index, 1, [value], true)
     }
 
     zip<U>(other: Iterable<U>): Stream<[T, U]> {

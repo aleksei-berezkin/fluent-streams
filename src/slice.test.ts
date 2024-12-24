@@ -56,7 +56,7 @@ test('slice exact items 1 start', () => {
 
 test('splice', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e']].forEach(input => range(0, 50).forEach(() => {
     const start = range(-7,  7).randomItem().get()
-    const deleteCount = (range(-1,  6) as Stream<number | undefined>).concat(undefined).randomItem().get()
+    const deleteCount = (range(-1,  6) as Stream<number | undefined>).concat(undefined, Infinity).randomItem().get()
     const insertedItems = streamOf('x', 'y', 'z', 'xx', 'yy', 'zz')
         .take(range(0, 7).randomItem().get())
         .toArray()
@@ -70,5 +70,64 @@ test('splice', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd
             () => `${inputHint()} -- ${input} -- ${start},${deleteCount} ++ ${insertedItems}`,
             runHint,
         ))
+    )
+})))
+
+test('splice no delete items', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e']].forEach(input => range(0, 20).forEach(() => {
+    const start = range(-7,  7).randomItem().get()
+    const expected = [...input]
+    expected.splice(start)
+    forInput(
+        input,
+        s => s.splice(start),
+        (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint(
+            expected,
+            () => `${inputHint()} -- ${input} -- ${start}`,
+            runHint,
+        ))
+    )
+})))
+
+test('with', () => forInput(
+    ['a', 'b', 'c', 'd', 'e'],
+    s => s
+        .with(0, 'x')
+        .with(2, 'y')
+        .with(4, 'z'),
+    (s, inputHint) => twice(runHint =>
+        expect(s.toArray()).toEqualWithHint(['x', 'b', 'y', 'd', 'z'],
+            inputHint,
+            runHint,
+        )
+    ),
+))
+
+test('with randomized', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e']].forEach(input => range(0, 50).forEach(() => {
+    const index = range(-input.length - 2,  input.length + 2).randomItem().get()
+    const expected = (() => {
+        try {
+            return input.with(index, 'x')
+        } catch {
+            return ['xxx']
+        }
+    })()
+    forInput(
+        input,
+        s => s.with(index, 'x'),
+        (s, inputHint) => twice(runHint =>
+            expect(
+                (() => {
+                    try {
+                        return s.toArray()
+                    } catch (e) {
+                        return ['xxx']
+                    }
+                })()
+            ).toEqualWithHint(
+                expected,
+                () => `${inputHint()} -- ${input} -- ${index}`,
+                runHint,
+            )),
+        false,
     )
 })))
