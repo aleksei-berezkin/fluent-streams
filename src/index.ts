@@ -1340,30 +1340,24 @@ abstract class Base<
 
     every(predicate: (item: T, index: NumberOrZero) => boolean): boolean {
         let i = 0
-        for (const item of this) {
-            if (!predicate(item, i++ as NumberOrZero)) return false
-        }
+        for (const item of this) if (!predicate(item, i++ as NumberOrZero)) return false
         return true
     }
 
     filter(predicate: (item: T, index: NumberOrZero) => boolean): StreamOrOptional<T, S> {
         return this.#bindAndCreateStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
             let i = 0
-            for (const item of this) {
-                if (predicate(item, i++ as NumberOrZero)) yield item
-            }
+            for (const item of this) if (predicate(item, i++ as NumberOrZero)) yield item
         })
     }
 
     flat<D extends number = 1>(depth: D = 1 as D): StreamOrOptional<FlatIterable<T, D>, S> {
         return this.#bindAndCreateStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
-            for (const item of this) {
-                if (depth >= 1 && (item as any)[Symbol.iterator]) {
+            for (const item of this)
+                if (depth >= 1 && (item as any)[Symbol.iterator])
                     yield* stream(item as Iterable<FlatIterable<T, 1>>).flat(depth - 1) as Iterable<FlatIterable<T, D>>
-                } else {
+                else
                     yield item as FlatIterable<T, D>
-                }
-            }
         })
     }
 
@@ -1373,22 +1367,19 @@ abstract class Base<
 
     forEach(effect: (item: T, index: NumberOrZero) => void): void {
         let i = 0
-        for (const item of this) {
-            effect(item, i++ as NumberOrZero)
-        }
+        for (const item of this) effect(item, i++ as NumberOrZero)
     }
 
     map<U>(mapper: (item: T, index: NumberOrZero) => U): StreamOrOptional<U, S> {
         return this.#bindAndCreateStreamOrOptional(function* (this: Base<T, S, NumberOrZero>) {
             let i = 0
-            for (const item of this) {
-                yield mapper(item, i++ as NumberOrZero)
-            }
+            for (const item of this) yield mapper(item, i++ as NumberOrZero)
         })
     }
 
     mapNullable<U>(mapper: (item: T, index: NumberOrZero) => (U | null | undefined)): StreamOrOptional<U, S> {
-        return (this.map(mapper) as unknown as Base<U | null | undefined, S>).filter(item => item != null) as StreamOrOptional<U, S>
+        return (this.map(mapper) as unknown as Base<U | null | undefined, S>)
+            .filter(item => item != null) as StreamOrOptional<U, S>
     }
 
     peek(effect: (item: T, index: NumberOrZero) => void): StreamOrOptional<T, S> {
@@ -1400,9 +1391,7 @@ abstract class Base<
 
     some(predicate: (item: T, index: NumberOrZero) => boolean): boolean {
         let i = 0
-        for (const item of this) {
-            if (predicate(item, i++ as NumberOrZero)) return true
-        }
+        for (const item of this) if (predicate(item, i++ as NumberOrZero)) return true
         return false
     }
 
@@ -1488,10 +1477,9 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return new LazyArrayStream(() => {
             // findLastIndex() is not yet widely available
             const a = this.toArray()
-            for (let i = a.length - 1; i >= 0; i--) {
+            for (let i = a.length - 1; i >= 0; i--)
                 if (!predicate(a[i], i))
                     return take ? a.slice(i + 1) : a.slice(0, i + 1)
-            }
             return take ? a : []
         })
     }
@@ -1500,14 +1488,14 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this.#bindAndCreateIteratorStream(function* () {
             let i = 0
             for (const item of this) {
-                if (i === -1) {
+                if (i === -1)
                     yield item // after dropped
-                } else if (predicate(item, i++)) {
+                else if (predicate(item, i++)) {
                     if (take) yield item // else drop
                 } else {
-                    if (take) {
+                    if (take)
                         break
-                    } else {
+                    else {
                         yield item
                         i = -1
                     } 
@@ -1520,9 +1508,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         const itr = other[Symbol.iterator]()
         for (const item of this) {
             const {done, value} = itr.next()
-            if (done || item !== value) {
-                return false
-            }
+            if (done || item !== value) return false
         }
         return !!itr.next().done
     }
@@ -1547,21 +1533,19 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this._o(() => {
             let i = -1
             let foundItem = empty as (Index extends true ? number : T) | Empty
-            for (const item of this) {
+            for (const item of this)
                 if (predicate(item, ++i)) {
                     foundItem = (index ? i : item) as typeof foundItem
                     if (!last) break
                 }
-            }
             return foundItem
         })
     }
 
     forEachUntil(effect: (item: T, index: number) => boolean | undefined | void) {
         let i = 0
-        for (const item of this) {
+        for (const item of this)
             if (effect(item, i++) === true) return true
-        }
         return false
     }
 
@@ -1691,15 +1675,14 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                 : undefined
             let i = 0
             for (const item of this) {
-                if (negStart) {
+                if (negStart)
                     buf!(item)
-                } else if (start == null ||i >= start) {
+                else if (start == null ||i >= start) {
                     if (negEnd) {
                         const evicted = buf!(item)
                         if (!isEmpty(evicted)) yield evicted
-                    } else {
+                    } else
                         yield item
-                    }
                 }
                 ++i
                 // To not to consume extra item
@@ -1730,14 +1713,13 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             let chunk: T[] | undefined = undefined
             let i = 0
             for (const item of this) {
-                if (!chunk) {
+                if (!chunk)
                     chunk = [item]
-                } else if (isSplit(chunk[chunk.length - 1], item, i - 1)) {
+                else if (isSplit(chunk[chunk.length - 1], item, i - 1)) {
                     yield chunk
                     chunk = [item]
-                } else {
+                } else
                     chunk.push(item)
-                }
                 i++
             }
             if (chunk) yield chunk
@@ -1777,19 +1759,16 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
 
     toObject(): T extends readonly [string | number | symbol, any] ? { [key in T[0]]: T[1] } : never {
         const obj: any = {};
-        for (const item of this) {
+        for (const item of this)
             if (Array.isArray(item) && item.length === 2) {
                 const [k, v] = item
                 const t = typeof k
-                if (t === 'string' || t === 'number' || t === 'symbol') {
+                if (t === 'string' || t === 'number' || t === 'symbol')
                     obj[k] = v;
-                } else {
+                else
                     throw Error('Bad key: ' + k);
-                }
-            } else {
+            } else
                 throw Error('Not 2-element array: ' + item);
-            }
-        }
         return obj;
     }
 
@@ -1833,9 +1812,8 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this.#bindAndCreateIteratorStream(function* () {
             const a = this.toArray()
             let i = 0
-            for (const item of a) {
+            for (const item of a)
                 yield [item, i++, a.length] satisfies [T, number, number]
-            }
         })
     }
 
@@ -1855,7 +1833,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                     if (!d1 && d2) throw new Error('Too small other')
                 }
                 if (d1 || d2) break
-                if (!d1 && !d2) yield [v1, v2] satisfies [T, U]
+                yield [v1, v2] satisfies [T, U]
             }
         })
     }
@@ -1898,10 +1876,8 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         let ix = 0
         return {
             next() {
-                if (ix < size)
-                    return {done: false, value: getItem(ix++)}
-                else
-                    return {done: true, value: undefined}
+                const done = ix >= size
+                return {done, value: done ? undefined : getItem(ix++)} as IteratorResult<T>
             }
         }
     }
@@ -2169,9 +2145,7 @@ function createRingBuffer<T>(size: number): RingBuffer<T> {
 
 function* flatMap<T, U>(this: Iterable<T>, mapper: (item: T, index: number) => Iterable<U>) {
     let i = 0
-    for (const item of this) {
-        yield* mapper(item, i++)
-    }
+    for (const item of this) yield* mapper(item, i++)
 }
 
 function reduce<
@@ -2186,7 +2160,7 @@ function reduce<
 ): Initial | U {
     let acc: Initial | U = initial
     let i = isEmpty(initial) ? 1 : 0
-    for (const item of itr) {
+    for (const item of itr)
         if (isEmpty(acc))
             // No initial, U = T
             acc = item as undefined as U
@@ -2196,7 +2170,6 @@ function reduce<
                 item,
                 lengthIfReduceRight != null ? lengthIfReduceRight - 1 - (i++) : i++
             )
-    }
     return acc
 }
 

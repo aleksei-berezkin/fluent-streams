@@ -6,7 +6,7 @@
 
 Fluent Streams is a JavaScript and TypeScript library that offers a rich API for lazily processing iterables such as arrays, sets, and more. At its core is the [Stream](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Stream.html), a lightweight, stateless wrapper around an iterable. The library also includes [Optional](https://aleksei-berezkin.github.io/fluent-streams-docs/interfaces/Optional.html), which represents a value that may or may not exist.
 
-The library's primary goal is to provide an API that closely mirrors JavaScript's Array, while introducing a variety of additional, powerful methods inspired by libraries like Ramda and Underscore. Using Fluent Streams feels like working with a familiar Array that has been significantly enhanced with extra functionality.
+The library's primary goal is to provide an API that closely mirrors JavaScript's Array, while introducing a variety of additional, powerful methods inspired by libraries like Ramda and Underscore.
 
 ## Installation
 
@@ -43,7 +43,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - `Stream` and `Optional` implement the `Iterable` protocol, making them compatible with JavaScript constructs such as `for-of` loops and spread syntax.
   - Intermediate arrays created by operations like `sort()` are not immediately discarded; instead, they are reused in subsequent steps to minimize memory allocations.
 - **Compact Size:**
-  - Minified: 9.4 kB
+  - Minified: 9.3 kB
   - Gzipped: 3.1 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
