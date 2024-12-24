@@ -100,8 +100,11 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * 
      * @returns A {@link Stream} with the original items of this stream and
      * the appended `items`.
+     * 
+     * @typeParam U - The type of the items to append, defaults to `T` -
+     * the item type of this stream.
      */
-    concat(...items: T[]): Stream<T>
+    concat<U = T>(...items: U[]): Stream<T | U>
 
     /**
      * Returns a stream containing all items of this stream, followed by all items 
@@ -111,8 +114,10 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * 
      * @returns A {@link Stream} with the original items of this stream followed by the
      *          items from the provided iterable.
+     * @typeParam U - The type of the items to append, defaults to `T` -
+     * the item type of this stream.
      */
-    concatAll(items: Iterable<T>): Stream<T>
+    concatAll<U = T>(items: Iterable<U>): Stream<T | U>
 
     /**
      * Returns a stream containing only the elements of this stream for which `getKey` 
@@ -1469,11 +1474,11 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this.slice(0, -1)
     }
 
-    concat(...items: T[]): Stream<T> {
+    concat<U = T>(...items: U[]): Stream<T | U> {
         return this.concatAll(items)
     }
 
-    concatAll(items: Iterable<T>): Stream<T> {
+    concatAll<U = T>(items: Iterable<U>): Stream<T | U> {
         return this.#bindAndCreateIteratorStream(function* () {
             yield* this
             yield* items
@@ -1767,29 +1772,28 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                 if (buf) {
                     const evicted = buf(item)
                     if (!isEmpty(evicted)) yield evicted
-                } else {
-                    if (i < start) yield item
-                    else if (i <= start + delCount) {
-                        if (_items.length) {
-                            yield* _items
-                            _items = []
-                        }
-                        if (i === start + delCount) yield item
-                    }
-                    else yield item
                 }
+                else if (i < start) yield item
+                else if (i <= start + delCount) {
+                    if (_items.length) {
+                        yield* _items
+                        _items = []
+                    }
+                    if (i === start + delCount) yield item
+                }
+                else yield item
                 i++
             }
 
-            if (strict && (start < -i || start >= i)) throw new RangeError(`start=${start}, length=${i}`)
+            if (strict && (start < -i || start >= i))
+                throw new RangeError(`start=${start}, length=${i}`)
 
-            yield* _items
+            yield*_items
+
             if (buf) {
                 const {a, a: {length: l}, p} = buf
-                for (let j = 0; j < l; j++) {
-                    const offset = i - l + j
-                    if (offset >= i - l + delCount) yield a[(p + j) % l]
-                }
+                for (let j = delCount; j < l; j++)
+                    yield a[(p + j) % l]
             }
         })
     }
@@ -1983,7 +1987,7 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         )
     }
 
-    concatAll(items: Iterable<T>): Stream<T> {
+    concatAll<U>(items: Iterable<U>): Stream<T | U> {
         if (Array.isArray(items) || items instanceof RandomAccessStream) {
             return new RandomAccessStream(() => {
                 const [get1, size1] = this.#getRandomAccess()

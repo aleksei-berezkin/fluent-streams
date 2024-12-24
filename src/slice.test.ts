@@ -1,11 +1,11 @@
 import './testUtil/extendExpect';
 import { forStreamInput as forInput } from './testUtil/forInput';
 import { twice } from './testUtil/twice';
-import { continually, range, streamOf, type Stream } from '.';
+import { continually, range, streamOf } from '.';
 
 test('slice', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e']].forEach(input => range(0, 50).forEach(() => {
     const indexOpt =
-        (range(-6,  7) as Stream<number | undefined>)
+        range(-6,  7)
             .concat(undefined)
             .randomItem()
     const start = indexOpt.get()
@@ -56,7 +56,7 @@ test('slice exact items 1 start', () => {
 
 test('splice', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e']].forEach(input => range(0, 50).forEach(() => {
     const start = range(-7,  7).randomItem().get()
-    const deleteCount = (range(-1,  6) as Stream<number | undefined>).concat(undefined, Infinity).randomItem().get()
+    const deleteCount = range(-1,  6).concat(undefined, Infinity).randomItem().get()
     const insertedItems = streamOf('x', 'y', 'z', 'xx', 'yy', 'zz')
         .take(range(0, 7).randomItem().get())
         .toArray()
