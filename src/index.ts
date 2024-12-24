@@ -631,6 +631,37 @@ export interface Stream<T> extends Iterable<T, undefined> {
     sortBy(getComparable: (item: T) => number | string | boolean): Stream<T>
 
     /**
+     * Removes or replaces existing items in the stream and/or adds new items in their place.
+     * This method is similar to
+     * [Array.prototype.splice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice),
+     * but instead of modifying the input in place and returning removed items, it
+     * leaves the input unchanged and returns a new stream reflecting the changes.
+     * 
+     * @param start - The zero-based index at which to begin changing the stream.
+     * A negative value counts from the end of the stream.
+     * * If `start` is greater than the stream's length, no items are removed, and any new
+     *   items are added at the end of the stream.
+     * * If `start` is less than the size of the stream, the method begins removing items
+     *   or inserting new ones at the specified index.
+     * 
+     * @param deleteCount - The number of items to remove from the stream.
+     * * If omitted, all items from `start` to the end of the stream are removed.
+     * * If `0`, negative, or explicitly `null` or `undefined`, no items are removed.
+     * 
+     * @param items - The items to add to the stream starting at `start`. If no items are
+     * provided, the method only removes items.
+     * 
+     * @returns A stream containing the items after removing or replacing items.
+     * 
+     * @example
+     * ```typescript
+     * const original = stream([1, 2, 3, 4, 5])
+     * const modified = original.splice(1, 2, 8, 9) // => Stream of [1, 8, 9, 4, 5]
+     * ```
+     */
+    splice(start: number, deleteCount?: number, ...items: T[]): Stream<T>
+
+    /**
      * Returns a stream whose items are groups of adjacent items from this stream for which 
      * `isSplit` returned false. In other words, given all items as a sequence, it splits them
      * between items for which `isSplit` returns `true`.
@@ -1706,6 +1737,42 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
 
     sortBy(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
         return new LazyArrayStream(() => sortBy(this.toArray(), getComparable))
+    }
+
+    splice(start: number, deleteCount?: number, ...items: T[]): Stream<T> {
+        const delCount = arguments.length < 2
+            ? Number.POSITIVE_INFINITY
+            : Math.max(0, deleteCount ?? 0)
+        return this.#bindAndCreateIteratorStream(function* () {
+            const buf = start < 0 ? createRingBuffer<T>(-start) : undefined
+            let _items = items
+            let i = 0
+            for (const item of this) {
+                if (buf) {
+                    const evicted = buf(item)
+                    if (!isEmpty(evicted)) yield evicted
+                } else {
+                    if (i < start) yield item
+                    else if (i <= start + delCount) {
+                        if (_items.length) {
+                            yield* _items
+                            _items = []
+                        }
+                        if (i === start + delCount) yield item
+                    }
+                    else yield item
+                }
+                i++
+            }
+            yield* _items
+            if (buf) {
+                const {a, a: {length: l}, p} = buf
+                for (let j = 0; j < l; j++) {
+                    const offset = i - l + j
+                    if (offset >= i - l + delCount) yield a[(p + j) % l]
+                }
+            }
+        })
     }
 
     splitWhen(isSplit: (l: T, r: T, lIndex: number) => boolean): Stream<T[]> {
