@@ -319,7 +319,20 @@ test('find', () => [[], ['a'], ['a', 'bx', 'c', 'by'], ['bx', 'a']].forEach((inp
             runHint,
         )
     ),
-)));
+)))
+
+test('findIndex', () => [[], ['a'], ['a', 'bx', 'c', 'by'], ['bx', 'a']].forEach((input, iIndex) => forInput(
+    input,
+    s => s.findIndex((i, index) => i[0] === 'b' && !!index),
+    (o, inputHint) => twice(runHint =>
+        expect(o.orElse(-1)).toEqualWithHint(
+            iIndex === 2 ? 1
+                : -1,
+            inputHint,
+            runHint,
+        )
+    ),
+)))
 
 test('findLast', () => [[], ['a'], ['a', 'bx', 'c', 'by', 'bz'], ['by', 'a']].forEach((input, iIndex) => forInput(
     input,
@@ -331,7 +344,21 @@ test('findLast', () => [[], ['a'], ['a', 'bx', 'c', 'by', 'bz'], ['by', 'a']].fo
             runHint,
         )
     ),
-)));
+)))
+
+test('findLastIndex', () => [[], ['a'], ['a', 'bx', 'c', 'by', 'bz'], ['by', 'a']].forEach((input, iIndex) => forInput(
+    input,
+    s => s.findLastIndex((i, index) => i[0] === 'b' && index !== 4),
+    (o, inputHint) => twice(runHint =>
+        expect(o.orElse(-2)).toEqualWithHint(
+            iIndex === 2 ? 3
+                : iIndex === 3 ? 0
+                : -2,
+            inputHint,
+            runHint,
+        )
+    ),
+)))
 
 test('flat', () => [-1, 0, 1, undefined, 2, 3, 4].forEach(n => forInput(
     [[[]], [['a'], ['b']], [['c', 'd', 'e']]],
@@ -550,6 +577,16 @@ test('randomItem', () => {
         false,
     )
 });
+
+test('randomItem empty', () => forInput(
+    [],
+    s => s.randomItem(),
+    (o, inputHint) => twice(runHint => expect(o.orUndefined()).toEqualWithHint(
+        undefined,
+        inputHint,
+        runHint,
+    ))
+));
 
 test('reverse', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => forInput(
     input,
@@ -923,6 +960,56 @@ test('zip second endless', () => forInput(
         )
 ))
 
+test('zipAdjacent', () =>
+    forInput(
+        ['a', 'b', 'c', 'd', 'e', 'f'],
+        s => s.zipAdjacent(4),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint([['a', 'b', 'c', 'd'], ['b', 'c', 'd', 'e'], ['c', 'd', 'e', 'f']], inputHint, runHint)
+        ),
+    )
+)
+
+test('zipAdjacent exact n', () =>
+    forInput(
+        ['a', 'b', 'c', 'd', 'e', 'f'],
+        s => s.zipAdjacent(6),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint([['a', 'b', 'c', 'd', 'e', 'f']], inputHint, runHint)
+        ),
+    )
+)
+
+test('zipAdjacent zero n', () =>
+    forInput(
+        ['a', 'b', 'c', 'd', 'e', 'f'],
+        s => s.zipAdjacent(0),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint([[], [], [], [], [], []], inputHint, runHint)
+        ),
+    )
+)
+
+test('zipAdjacent neg n', () =>
+    forInput(
+        ['a', 'b', 'c', 'd', 'e', 'f'],
+        s => s.zipAdjacent(-3),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint([], inputHint, runHint)
+        ),
+    )
+)
+
+test('zipAdjacent n too large', () =>
+    forInput(
+        ['a', 'b', 'c', 'd', 'e', 'f'],
+        s => s.zipAdjacent(7),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint([], inputHint, runHint)
+        ),
+    )
+)
+
 test('zipStrict', () =>
     forInput(
         ['a', 'b', 'c'],
@@ -947,6 +1034,16 @@ test('zipWithIndex', () =>
         (s, inputHint) => twice(runHint => expect(s.toArray()).toEqualWithHint([['a', 0], ['b', 1], ['c', 2]], inputHint, runHint))
     )
 );
+
+test('zipWithNext', () =>
+    forInput(
+        ['a', 'b', 'c', 'd'],
+        s => s.zipWithNext(),
+        (s, inputHint) => twice(runHint =>
+            expect(s.toArray()).toEqualWithHint([['a', 'b'], ['b', 'c'], ['c', 'd']], inputHint, runHint)
+        ),
+    )
+)
 
 test('zipWithIndexAndLen', () =>
     forInput(

@@ -43,14 +43,14 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - `Stream` and `Optional` implement the `Iterable` protocol, making them compatible with JavaScript constructs such as `for-of` loops and spread syntax.
   - Intermediate arrays created by operations like `sort()` are not immediately discarded; instead, they are reused in subsequent steps to minimize memory allocations.
 - **Compact Size:**
-  - Minified: 8.9 kB
-  - Gzipped: 3.0 kB
+  - Minified: 9.4 kB
+  - Gzipped: 3.1 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
   - Clearly distinguishes between `null` or `undefined` as a value, and the absence of a value.
   - Allows conversion of `Optional` back to `Stream` to continue the fluent pipeline.
 - **Extensive Testing:**  
-  - Over 190 tests rigorously cover 100% of the library's source code, validating various stream types in multiple combinations.
+  - Over 200 tests rigorously cover 100% of the library's source code, validating various stream types in multiple combinations.
   - Laziness and statelessness are also thoroughly tested.
 
 ## Platform requirements

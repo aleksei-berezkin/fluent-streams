@@ -248,6 +248,20 @@ export interface Stream<T> extends Iterable<T, undefined> {
     find(predicate: (item: T, index: number) => boolean): Optional<T>
 
     /**
+     * Returns an {@link Optional} containing the index of the first item in this
+     * stream that satisfies the given `predicate`. If no such item is found, the
+     * optional resolves to empty.
+     * 
+     * @param predicate - A function that tests each item in the stream. It receives
+     * the current item and its index as arguments and should return `true` for the
+     * desired item.
+     * 
+     * @returns An {@link Optional} containing the index of the first matching item,
+     * or empty if no item matches the predicate.
+     */
+    findIndex(predicate: (item: T, index: number) => boolean): Optional<number>
+
+    /**
      * Returns an {@link Optional} which resolves to the last item that matches the 
      * predicate, or to empty if no such item is found.
      * 
@@ -258,6 +272,20 @@ export interface Stream<T> extends Iterable<T, undefined> {
      *          if no item matches.
      */
     findLast(predicate: (item: T, index: number) => boolean): Optional<T>
+
+    /**
+     * Returns an {@link Optional} containing the index of the last item in this
+     * stream that satisfies the given `predicate`. If no such item is found, the
+     * optional resolves to empty.
+     * 
+     * @param predicate - A function that tests each item in the stream. It receives
+     * the current item and its index as arguments and should return `true` for the
+     * desired item.
+     * 
+     * @returns An {@link Optional} containing the index of the last matching item,
+     * or empty if no item matches the predicate.
+     */
+    findLastIndex(predicate: (item: T, index: number) => boolean): Optional<number>
 
     /**
      * Returns a stream with the following behavior:
@@ -778,6 +806,19 @@ export interface Stream<T> extends Iterable<T, undefined> {
     zip<U>(other: Iterable<U>): Stream<[T, U]>
 
     /**
+     * Returns a stream composed of `n`-tuples of consecutive elements from this
+     * stream. If `n` is greater than the number of items in the stream, the
+     * resulting stream will be empty.
+     * 
+     * @typeParam N - The size of each tuple.
+     * 
+     * @param n - The number of consecutive elements to include in each tuple.
+     * 
+     * @returns A {@link Stream} of `n`-tuples of consecutive elements.
+     */
+    zipAdjacent<N extends number>(n: N): Stream<TupleOf<T, N>>
+
+    /**
      * Similar to {@link zip}, but requires that this stream and the `other`
      * iterable have the same length. Throws an error if the lengths do not
      * match.
@@ -795,6 +836,16 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * @returns A new {@link Stream} of `[T, number]` pairs.
      */
     zipWithIndex(): Stream<[T, number]>;
+
+    /**
+     * Returns a stream of pairs, where each pair contains an item from this stream
+     * and the next item. The resulting stream has one less item than the original
+     * stream. If the original stream has only one element or is empty, the resulting 
+     * stream will be empty.
+     * 
+     * @returns A {@link Stream} of adjacent element pairs.
+     */
+    zipWithNext(): Stream<[T, T]>
 
     /**
      * Returns a stream of triplets where the first element is an item from this
@@ -1069,6 +1120,12 @@ type FlatIterable<T, D extends number> =
 
 type MinusOne<N extends number> = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][N]
 
+type IsNegative<N extends number> =`${N}` extends `-${string}` ? true : false;
+
+type TupleOf<T, N extends number> = N extends (0 | -1) ? [] :
+    N extends never ? T[] :
+    IsNegative<N> extends true ? [] :
+    [T, ...TupleOf<T, MinusOne<N>>]
 
 // *** Factories ***
 
@@ -1474,17 +1531,25 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this.#find(predicate)
     }
 
+    findIndex(predicate: (item: T, index: number) => boolean): Optional<number> {
+        return this.#find(predicate, false, true)
+    }
+
     findLast(predicate: (item: T, index: number) => boolean): Optional<T> {
         return this.#find(predicate, true)
     }
+    
+    findLastIndex(predicate: (item: T, index: number) => boolean): Optional<number> {
+        return this.#find(predicate, true, true)
+    }
 
-    #find(predicate: (item: T, index: number) => boolean, last?: boolean): Optional<T> {
+    #find<Index extends boolean = false>(predicate: (item: T, index: number) => boolean, last?: boolean, index?: Index): Optional<Index extends true ? number : T> {
         return this._o(() => {
-            let i = 0
-            let foundItem: T | Empty = empty
+            let i = -1
+            let foundItem = empty as (Index extends true ? number : T) | Empty
             for (const item of this) {
-                if (predicate(item, i++)) {
-                    foundItem = item
+                if (predicate(item, ++i)) {
+                    foundItem = (index ? i : item) as typeof foundItem
                     if (!last) break
                 }
             }
@@ -1744,6 +1809,18 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this.#zip(other)
     }
 
+    zipAdjacent<N extends number>(n: N): Stream<TupleOf<T, N>> {
+        return this.#bindAndCreateIteratorStream(function* () {
+            const buf = createRingBuffer<T>(n)
+            for (const item of this) {
+                buf(item)
+                const {a, a: {length}, p} = buf
+                if (length === n)
+                    yield Array.from({length}, (_, i) => a[(p + i) % length]) as TupleOf<T, N>
+            }
+        })
+    }
+
     zipStrict<U>(other: Iterable<U>): Stream<[T, U]> {
         return this.#zip(other, true)
     }
@@ -1760,6 +1837,10 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                 yield [item, i++, a.length] satisfies [T, number, number]
             }
         })
+    }
+
+    zipWithNext(): Stream<[T, T]> {
+        return this.zipAdjacent<2>(2)
     }
 
     #zip<U>(other: Iterable<U>, strict = false): Stream<[T, U]> {
@@ -1853,6 +1934,29 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         }
 
         return super.concatAll(items)
+    }
+
+    findLast(predicate: (item: T, index: number) => boolean): Optional<T> {
+        return this.#findLast(predicate)
+    }
+
+    findLastIndex(predicate: (item: T, index: number) => boolean): Optional<number> {
+        return this.#findLast(predicate, true)
+    }
+
+    #findLast<Index extends boolean = false>(predicate: (item: T, index: number) => boolean, index?: Index): Optional<Index extends true ? number : T> {
+        return this._o(() => {
+            const [getItem, size] = this.#getRandomAccess()
+            let foundItem = empty as (Index extends true ? number : T) | Empty
+            for (let i = size - 1; i >= 0; i--) {
+                const item = getItem(i)
+                if (predicate(item, i)) {
+                    foundItem = (index ? i : item) as typeof foundItem
+                    break
+                }
+            }
+            return foundItem
+        })
     }
 
     map<U>(mapper: (item: T, index: number) => U): Stream<U> {
@@ -2045,6 +2149,8 @@ type RingBuffer<T> = {
  */
 function createRingBuffer<T>(size: number): RingBuffer<T> {
     const buf: RingBuffer<T> = ((newItem: T) => {
+        if (size < 1) return newItem
+
         let {a, p} = buf
         if (a.length < size) {
             a.push(newItem)
