@@ -658,13 +658,15 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * 
      * @returns A stream containing the items after removing or replacing items.
      * 
+     * @typeParam U - The type of the items to add, defaults to `T` - the item type
+     * of this stream.
      * @example
      * ```typescript
      * const original = stream([1, 2, 3, 4, 5])
      * const modified = original.splice(1, 2, 8, 9) // => Stream of [1, 8, 9, 4, 5]
      * ```
      */
-    splice(start: number, deleteCount?: number, ...items: T[]): Stream<T>
+    splice<U = T>(start: number, deleteCount?: number, ...items: U[]): Stream<T | U>
 
     /**
      * Returns a stream whose items are groups of adjacent items from this stream for which 
@@ -1479,10 +1481,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     concatAll<U = T>(items: Iterable<U>): Stream<T | U> {
-        return this.#bindAndCreateIteratorStream(function* () {
-            yield* this
-            yield* items
-        })
+        return this.#splice(Infinity, 0, items)
     }
 
     distinctBy(getKey: (item: T, index: number) => any): Stream<T> {
@@ -1751,7 +1750,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return new LazyArrayStream(() => sortBy(this.toArray(), getComparable))
     }
 
-    splice(start: number, deleteCount?: number, ...items: T[]): Stream<T> {
+    splice<U = T>(start: number, deleteCount?: number, ...items: U[]): Stream<T | U> {
         return this.#splice(
             start, arguments.length < 2
                 ? Infinity
@@ -1760,13 +1759,13 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         )
     }
 
-    #splice(start: number, deleteCount: number, items: T[], strict?: boolean): Stream<T> {
+    #splice<U = T>(start: number, deleteCount: number, items: Iterable<U>, strict?: boolean): Stream<T | U> {
         const delCount = arguments.length < 2
-            ? Number.POSITIVE_INFINITY
+            ? Infinity
             : Math.max(0, deleteCount ?? 0)
         return this.#bindAndCreateIteratorStream(function* () {
             const buf = start < 0 ? createRingBuffer<T>(-start) : undefined
-            let _items = items
+            let _items: typeof items | undefined = items
             let i = 0
             for (const item of this) {
                 if (buf) {
@@ -1775,9 +1774,9 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                 }
                 else if (i < start) yield item
                 else if (i <= start + delCount) {
-                    if (_items.length) {
+                    if (_items) {
                         yield* _items
-                        _items = []
+                        _items = undefined
                     }
                     if (i === start + delCount) yield item
                 }
@@ -1788,7 +1787,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             if (strict && (start < -i || start >= i))
                 throw new RangeError(`start=${start}, length=${i}`)
 
-            yield*_items
+            if (_items) yield* _items
 
             if (buf) {
                 const {a, a: {length: l}, p} = buf

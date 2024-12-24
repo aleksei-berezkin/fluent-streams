@@ -44,7 +44,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - Intermediate arrays created by operations like `sort()` are not immediately discarded; instead, they are reused in subsequent steps to minimize memory allocations.
 - **Compact Size:**
   - Minified: 9.8 kB
-  - Gzipped: 3.3 kB
+  - Gzipped: 3.2 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
   - Clearly distinguishes between `null` or `undefined` as a value, and the absence of a value.
