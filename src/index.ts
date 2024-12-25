@@ -1451,7 +1451,7 @@ abstract class Base<
 
 class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     /**
-     * Subclass may pass `undefined` having overridden all usages.
+     * Subclass may pass `null` having overridden all usages.
      */
     #input: Iterable<T> | {(): Iterator<T>}
 
@@ -1481,7 +1481,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     concatAll<U = T>(items: Iterable<U>): Stream<T | U> {
-        return this._s(Infinity, 0, items)
+        return this._p(Infinity, 0, items)
     }
 
     distinctBy(getKey: (item: T, index: number) => any): Stream<T> {
@@ -1703,42 +1703,30 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
 
     slice(start?: number, end?: number) {
         return this.#bindAndCreateIteratorStream<T>(function* () {
-            const posStart = start != null && start >= 0
-            const posEnd = end != null && end >= 0
-            const negStart = start != null && start < 0
-            const negEnd = end != null && end < 0
+            const _start = start ?? 0
+            const _end = end ?? Infinity
+            if (_end >= 0 && _start >= _end) return
 
-            // Because we check i against end in the end of loop
-            // we need to check that the first iter allowed
-            if (posEnd && (end === 0 || posStart && start >= end)) return 
-
-            const buf = negStart ? createRingBuffer<T>(-start)
-                : negEnd ? createRingBuffer<T>(-end)
-                : undefined
+            const buf = _start < 0 ? createRingBuffer<T>(-_start)
+                : _end < 0 ? createRingBuffer<T>(-_end)
+                : null
             let i = 0
             for (const item of this) {
-                if (negStart)
+                if (_start < 0)
                     buf!(item)
-                else if (start == null ||i >= start) {
-                    if (negEnd) {
-                        const evicted = buf!(item)
-                        if (!isEmpty(evicted)) yield evicted
-                    } else
+                else if (i >= _start) {
+                    if (_end < 0)
+                        yield* buf!(item)
+                    else
                         yield item
                 }
                 ++i
                 // To not to consume extra item
-                if (!negStart && posEnd && i >= end) break
+                if (!buf && i >= _end) break
             }
 
-            if (negStart) {
-                const {a, a: {length: l}, p} = buf!
-                for (let j = 0; j < l; j++) {
-                    const offset = i - l + j
-                    if (posEnd && offset >= end || negEnd && offset >= i + end) break
-                    yield a[(p + j) % l]
-                }
-            }
+            if (_start < 0)
+                yield* ringBufferToArray(buf!, 0, _end < 0 ? -_end : i - _end)
         })
     }
 
@@ -1751,7 +1739,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     splice<U = T>(start: number, deleteCount?: number, ...items: U[]): Stream<T | U> {
-        return this._s(
+        return this._p(
             start,
             arguments.length < 2
                 ? Infinity
@@ -1760,21 +1748,18 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         )
     }
 
-    protected _s<U = T>(start: number, deleteCount: number, items: Iterable<U>, strict?: boolean): Stream<T | U> {
+    protected _p<U = T>(start: number, deleteCount: number, items: Iterable<U>, strict?: boolean): Stream<T | U> {
         return this.#bindAndCreateIteratorStream(function* () {
-            const buf = start < 0 ? createRingBuffer<T>(-start) : undefined
-            let _items: typeof items | undefined = items
+            const buf = start < 0 ? createRingBuffer<T>(-start) : null
+            let _items: typeof items | null = items
             let i = 0
             for (const item of this) {
-                if (buf) {
-                    const evicted = buf(item)
-                    if (!isEmpty(evicted)) yield evicted
-                }
+                if (buf) yield* buf(item)
                 else if (i < start) yield item
                 else if (i <= start + deleteCount) {
                     if (_items) {
                         yield* _items
-                        _items = undefined
+                        _items = null
                     }
                     if (i === start + deleteCount) yield item
                 }
@@ -1786,29 +1771,23 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
 
             if (_items) yield* _items
 
-            if (buf) {
-                const {a, a: {length: l}, p} = buf
-                for (let j = deleteCount; j < l; j++)
-                    yield a[(p + j) % l]
-            }
+            if (buf) yield* ringBufferToArray(buf, deleteCount)
         })
     }
 
     splitWhen(isSplit: (l: T, r: T, lIndex: number) => boolean): Stream<T[]> {
         return this.#bindAndCreateIteratorStream(function* () {
-            let chunk: T[] | undefined = undefined
+            let chunk: T[] = []
             let i = 0
             for (const item of this) {
-                if (!chunk)
-                    chunk = [item]
-                else if (isSplit(chunk[chunk.length - 1], item, i - 1)) {
+                if (chunk.length && isSplit(chunk.at(-1)!, item, i - 1)) {
                     yield chunk
                     chunk = [item]
                 } else
                     chunk.push(item)
                 i++
             }
-            if (chunk) yield chunk
+            if (i) yield chunk
         })
     }
 
@@ -1867,7 +1846,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     with(index: number, value: T): Stream<T> {
-        return this._s(index, 1, [value], true)
+        return this._p(index, 1, [value], true)
     }
 
     zip<U>(other: Iterable<U>): Stream<[T, U]> {
@@ -1879,9 +1858,8 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
             const buf = createRingBuffer<T>(n)
             for (const item of this) {
                 buf(item)
-                const {a, a: {length}, p} = buf
-                if (length === n)
-                    yield Array.from({length}, (_, i) => a[(p + i) % length]) as TupleOf<T, N>
+                if (buf.a.length === n)
+                    yield ringBufferToArray(buf) as TupleOf<T, N>
             }
         })
     }
@@ -1953,7 +1931,7 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     #getRandomAccess: () => RandomAccess<T>
 
     constructor(getRandomAccess: () => RandomAccess<T>) {
-        super(undefined as never)
+        super(null as never)
         this.#getRandomAccess = getRandomAccess
     }
 
@@ -2059,7 +2037,7 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         })
     }
 
-    protected override _s<U = T>(start: number, deleteCount: number, items: Iterable<U>, strict?: boolean): Stream<T | U> {
+    protected override _p<U = T>(start: number, deleteCount: number, items: Iterable<U>, strict?: boolean): Stream<T | U> {
         return Array.isArray(items)
             ? new RandomAccessStream(() => {
                 const [get, size] = this.#getRandomAccess()
@@ -2074,7 +2052,7 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
                     size - _deleteCount + insertedSize,
                 ]
             })
-            : super._s(start, deleteCount, items, strict)
+            : super._p(start, deleteCount, items, strict)
     }
 
     zipWithIndex(): Stream<[T, number]> {
@@ -2206,7 +2184,7 @@ type RingBuffer<T> = {
     // Bundlers cannot minimize this, doing manually
     a: T[],
     p: number,
-    (newItem: T): Empty | T,
+    (newItem: T): [] | [T],
 }
 
 /**
@@ -2219,17 +2197,25 @@ function createRingBuffer<T>(size: number): RingBuffer<T> {
         let {a, p} = buf
         if (a.length < size) {
             a.push(newItem)
-            return empty
+            return []
         }
 
         const evicted = a[p]
         a[p] = newItem
         buf.p = ++p >= size ? 0 : p
-        return evicted
+        return [evicted]
     }) as RingBuffer<T>
     buf.a = []
     buf.p = 0
     return buf
+}
+
+function ringBufferToArray<T>(buf: RingBuffer<T>, dropFirst: number = 0, dropLast: number = 0): T[] {
+    const {a, a: {length: l}, p} = buf
+    return Array.from(
+        {length: l - dropFirst - Math.max(0, dropLast)},
+        (_, i) => a[(p + dropFirst + i) % l],
+    )
 }
 
 function* flatMap<T, U>(this: Iterable<T>, mapper: (item: T, index: number) => Iterable<U>) {
