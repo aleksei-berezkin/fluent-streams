@@ -1481,7 +1481,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     concatAll<U = T>(items: Iterable<U>): Stream<T | U> {
-        return this.#splice(Infinity, 0, items)
+        return this._s(Infinity, 0, items)
     }
 
     distinctBy(getKey: (item: T, index: number) => any): Stream<T> {
@@ -1751,18 +1751,16 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     splice<U = T>(start: number, deleteCount?: number, ...items: U[]): Stream<T | U> {
-        return this.#splice(
-            start, arguments.length < 2
+        return this._s(
+            start,
+            arguments.length < 2
                 ? Infinity
                 : Math.max(0, deleteCount ?? 0),
             items
         )
     }
 
-    #splice<U = T>(start: number, deleteCount: number, items: Iterable<U>, strict?: boolean): Stream<T | U> {
-        const delCount = arguments.length < 2
-            ? Infinity
-            : Math.max(0, deleteCount ?? 0)
+    protected _s<U = T>(start: number, deleteCount: number, items: Iterable<U>, strict?: boolean): Stream<T | U> {
         return this.#bindAndCreateIteratorStream(function* () {
             const buf = start < 0 ? createRingBuffer<T>(-start) : undefined
             let _items: typeof items | undefined = items
@@ -1773,25 +1771,24 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                     if (!isEmpty(evicted)) yield evicted
                 }
                 else if (i < start) yield item
-                else if (i <= start + delCount) {
+                else if (i <= start + deleteCount) {
                     if (_items) {
                         yield* _items
                         _items = undefined
                     }
-                    if (i === start + delCount) yield item
+                    if (i === start + deleteCount) yield item
                 }
                 else yield item
                 i++
             }
 
-            if (strict && (start < -i || start >= i))
-                throw new RangeError(`start=${start}, length=${i}`)
+            if (strict) validateSpliceStart(start, i)
 
             if (_items) yield* _items
 
             if (buf) {
                 const {a, a: {length: l}, p} = buf
-                for (let j = delCount; j < l; j++)
+                for (let j = deleteCount; j < l; j++)
                     yield a[(p + j) % l]
             }
         })
@@ -1870,7 +1867,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     with(index: number, value: T): Stream<T> {
-        return this.#splice(index, 1, [value], true)
+        return this._s(index, 1, [value], true)
     }
 
     zip<U>(other: Iterable<U>): Stream<[T, U]> {
@@ -1986,21 +1983,6 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         )
     }
 
-    concatAll<U>(items: Iterable<U>): Stream<T | U> {
-        if (Array.isArray(items) || items instanceof RandomAccessStream) {
-            return new RandomAccessStream(() => {
-                const [get1, size1] = this.#getRandomAccess()
-                const [get2, size2] = Array.isArray(items) ? [(i: number) => items[i] as T, items.length] : items.#getRandomAccess()
-                return [
-                    i => i >= size1 ? get2(i - size1) as T : get1(i),
-                    size1 + size2,
-                ]
-            })
-        }
-
-        return super.concatAll(items)
-    }
-
     findLast(predicate: (item: T, index: number) => boolean): Optional<T> {
         return this.#findLast(predicate)
     }
@@ -2075,6 +2057,24 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
                 Math.max(0, e - s),
             ]
         })
+    }
+
+    protected override _s<U = T>(start: number, deleteCount: number, items: Iterable<U>, strict?: boolean): Stream<T | U> {
+        return Array.isArray(items)
+            ? new RandomAccessStream(() => {
+                const [get, size] = this.#getRandomAccess()
+                if (strict) validateSpliceStart(start, size)
+                const insertedSize = items.length
+                const _start = between(0, start < 0 ? size + start : start, size)
+                const _deleteCount = between(0, deleteCount, size - _start)
+                return [
+                    ix => ix < _start ? get(ix)
+                        : ix < _start + insertedSize ? items[ix - _start] as U
+                        : get(ix + deleteCount- insertedSize),
+                    size - _deleteCount + insertedSize,
+                ]
+            })
+            : super._s(start, deleteCount, items, strict)
     }
 
     zipWithIndex(): Stream<[T, number]> {
@@ -2260,6 +2260,11 @@ function reduce<
                 lengthIfReduceRight != null ? lengthIfReduceRight - 1 - (i++) : i++
             )
     return acc
+}
+
+function validateSpliceStart(start: number, length: number) {
+    if (start < -length || start >= length)
+        throw new RangeError(`start=${start}, length=${length}`)
 }
 
 function shuffle<T>(a: T[], n: number = a.length) {

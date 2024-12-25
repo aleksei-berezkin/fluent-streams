@@ -107,7 +107,7 @@ test('with randomized', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b'
     const expected = (() => {
         try {
             return input.with(index, 'x')
-        } catch {
+        } catch (e) {
             return ['xxx']
         }
     })()
