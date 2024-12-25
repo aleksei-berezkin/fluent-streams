@@ -1125,6 +1125,13 @@ export interface Optional<T> extends Iterable<T, undefined> {
     resolve(): {has: true; val: T} | {has: false, val?: undefined}
 
     /**
+     * Returns 1 if this optional has an item; otherwise, returns 0.
+     * 
+     * @returns 1 if this optional has an item; otherwise 0.
+     */
+    size(): number
+
+    /**
      * Returns `true` if this optional has an item and `predicate` evaluates to `true` for it;
      * `false` otherwise.
      * 
@@ -1434,6 +1441,12 @@ abstract class Base<
         })
     }
 
+    size(): number {
+        let i = 0
+        for (const _ of this) i++
+        return i;
+    }
+
     some(predicate: (item: T, index: NumberOrZero) => boolean): boolean {
         let i = 0
         for (const item of this) if (predicate(item, i++ as NumberOrZero)) return true
@@ -1529,20 +1542,17 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     #dropOrTakeWhile(predicate: (item: T, index: number) => boolean, take?: boolean): Stream<T> {
         return this.#bindAndCreateIteratorStream(function* () {
             let i = 0
-            for (const item of this) {
+            for (const item of this)
                 if (i === -1)
                     yield item // after dropped
                 else if (predicate(item, i++)) {
                     if (take) yield item // else drop
-                } else {
-                    if (take)
-                        break
-                    else {
-                        yield item
-                        i = -1
-                    } 
-                }
-            }
+                } else if (take)
+                    break
+                else {
+                    yield item
+                    i = -1
+                } 
         })
     }
 
@@ -1616,20 +1626,16 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
 
     join(separator: string | {sep: string, leading?: boolean, trailing?: boolean} | undefined): string {
         const isObj = typeof(separator) === 'object'
-        const sep = separator == null ? ','
-            : isObj ? separator.sep
-            : separator
-        const leading = isObj && separator.leading
-        const trailing = isObj && separator.trailing
+        const sep = isObj ? separator.sep : separator ?? ','
 
-        let result = leading ? sep : ''
-        let first = true
+        let result = isObj && separator.leading ? sep : ''
+        let notFirst
         for (const item of this) {
-            if (!first) result += sep
+            if (notFirst) result += sep
             result += String(item)
-            first = false
+            notFirst = 1
         }
-        if (trailing) result += sep
+        if (isObj && separator.trailing) result += sep
         return result;
     }
 
@@ -1638,10 +1644,9 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         let prev: T | undefined;
         let i = 0
         for (const item of this) {
-            if (i > 0) result += getSep(prev as T, item, i - 1)
+            if (i++) result += getSep(prev as T, item, i - 2)
             result += String(item)
             prev = item
-            i++
         }
         return result;
     }
@@ -1653,15 +1658,14 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     randomItem(): Optional<T> {
         return this._o<T>( () => {
             const a = this.toArray()
-            return a.length ? a[Math.floor(Math.random() * a.length)] : empty
+            return a.length ? a[randomInt(a.length)] : empty
         })
     }
 
     reduce<U>(reducer: (acc: U, curr: T, index: number) => U, initial?: U): Optional<U> | U {
-        if (arguments.length > 1)
-            return reduce(this, reducer, initial!)
-
-        return this._o(() => reduce(this, reducer, empty))
+        return arguments.length > 1
+            ? reduce(this, reducer, initial!)
+            : this._o(() => reduce(this, reducer, empty))
     }
 
     reduceRight<U>(reducer: (prev: U, curr: T, index: number) => U, initial?: U): Optional<U> | U {
@@ -1695,12 +1699,6 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         })
     }
 
-    size(): number {
-        let i = 0
-        for (const _ of this) i++
-        return i;
-    }
-
     slice(start?: number, end?: number) {
         return this.#bindAndCreateIteratorStream<T>(function* () {
             const _start = start ?? 0
@@ -1715,8 +1713,8 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
                 if (_start < 0)
                     buf!(item)
                 else if (i >= _start) {
-                    if (_end < 0)
-                        yield* buf!(item)
+                    if (buf)
+                        yield* buf(item)
                     else
                         yield item
                 }
@@ -1778,16 +1776,14 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     splitWhen(isSplit: (l: T, r: T, lIndex: number) => boolean): Stream<T[]> {
         return this.#bindAndCreateIteratorStream(function* () {
             let chunk: T[] = []
-            let i = 0
-            for (const item of this) {
-                if (chunk.length && isSplit(chunk.at(-1)!, item, i - 1)) {
+            let i = -1
+            for (const item of this)
+                if (++i && isSplit(chunk.at(-1)!, item, i - 1)) {
                     yield chunk
                     chunk = [item]
                 } else
                     chunk.push(item)
-                i++
-            }
-            if (i) yield chunk
+            if (i >= 0) yield chunk
         })
     }
 
@@ -1815,7 +1811,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     takeRandom(n: number): Stream<T> {
         return new LazyArrayStream(() => {
             const a = this.toArray()
-            const size = Math.max(0, Math.min(n, a.length))
+            const size = between0And(n, a.length)
             shuffle(a, size)
             a.length = size
             return a
@@ -1994,7 +1990,7 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
     randomItem(): Optional<T> {
         return this._o(() => {
             const [getItem, size] = this.#getRandomAccess()
-            return size ? getItem(Math.floor(Math.random() * size)) : empty
+            return size ? getItem(randomInt(size)) : empty
         })
     }
 
@@ -2016,15 +2012,13 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
 
     slice(start?: number, end?: number): Stream<T> {
         return this.#newRandomAccessStream((getItem, size) => {
-            const s = between(
-                0,
+            const s = between0And(
                 start == null ? 0
                     : start < 0 ? size + start
                     : start,
                 size
             )
-            const e = between(
-                0,
+            const e = between0And(
                 end == null ? size
                     : end < 0 ? size + end
                     : end,
@@ -2043,8 +2037,8 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
                 const [get, size] = this.#getRandomAccess()
                 if (strict) validateSpliceStart(start, size)
                 const insertedSize = items.length
-                const _start = between(0, start < 0 ? size + start : start, size)
-                const _deleteCount = between(0, deleteCount, size - _start)
+                const _start = between0And(start < 0 ? size + start : start, size)
+                const _deleteCount = between0And(deleteCount, size - _start)
                 return [
                     ix => ix < _start ? get(ix)
                         : ix < _start + insertedSize ? items[ix - _start] as U
@@ -2176,8 +2170,8 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
     }
 }
 
-function between(min: number, n: number, max: number) {
-    return Math.max(min, Math.min(n, max))
+function between0And(n: number, max: number) {
+    return Math.max(0, Math.min(n, max))
 }
 
 type RingBuffer<T> = {
@@ -2223,6 +2217,8 @@ function* flatMap<T, U>(this: Iterable<T>, mapper: (item: T, index: number) => I
     for (const item of this) yield* mapper(item, i++)
 }
 
+const randomInt = (bound: number) => Math.floor(Math.random() * bound)
+
 function reduce<
     T,
     Initial,
@@ -2256,7 +2252,7 @@ function validateSpliceStart(start: number, length: number) {
 function shuffle<T>(a: T[], n: number = a.length) {
     const r = n < a.length ? n : n - 1
     for (let i = 0; i < r; i++) {
-        const j = i + Math.floor(Math.random() * (a.length - i))
+        const j = i + randomInt(a.length - i)
         const t = a[i]
         a[i] = a[j]
         a[j] = t
