@@ -1543,7 +1543,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this.#bindAndCreateIteratorStream(function* () {
             let i = 0
             for (const item of this)
-                if (i === -1)
+                if (i < 0)
                     yield item // after dropped
                 else if (predicate(item, i++)) {
                     if (take) yield item // else drop

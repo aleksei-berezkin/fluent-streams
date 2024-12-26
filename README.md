@@ -41,7 +41,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
 - **Prioritizes Standard Array and Iteration Protocols:**
   - `Stream` follows familiar `Array` naming and method signatures, enabling seamless integration or removal.
   - `Stream` and `Optional` implement the `Iterable` protocol, making them compatible with JavaScript constructs such as `for-of` loops and spread syntax.
-  - Intermediate arrays created by operations like `sort()` are not immediately discarded; instead, they are reused in subsequent steps to minimize memory allocations.
+  - The library is optimized for arrays. If the input is an array, it will iterate faster and consume less memory.
 - **Compact Size:**
   - Minified: 9.4 kB
   - Gzipped: 3.2 kB
@@ -63,10 +63,10 @@ While it is possible to transpile the library to ES5 and polyfill it, this is no
 
 ## Benchmarks  
 
-Fluent Streams [is compared](https://github.com/aleksei-berezkin/fluent-streams-docs/tree/master/benchmarks) to the native JavaScript `Array` and two other similar libraries. The library demonstrates generally reasonable performance, though it is slightly slower in some benchmarks. This can be attributed to the following factors:  
+The library [demonstrates](https://github.com/aleksei-berezkin/fluent-streams-docs/tree/master/benchmarks) generally reasonable performance, though it is slightly slower in some benchmarks. This can be attributed to the following factors:  
 
-- **Use of Generators.** Generators enable iteration with very compact syntax, which helps keep the bundle size small. However, they are typically somewhat slower than simpler iterator implementations.  
-- **Standard Iteration Protocol.** Both `Stream` and `Optional` implement the standard iteration protocol, allowing them to be used with the `for-of` loop. This makes the syntax compact for both the library and client code. However, custom protocols, while potentially less convenient, can sometimes be faster.  
+- **Use of Generators.** While they allow for iteration with very compact syntax, generators are typically slightly slower than simple iterators.
+- **Standard Iteration Protocol.** Ensures compatibility with `for-of` loops, spread syntax, and other language features, though custom protocols can be faster at the cost of losing these benefits.
 
 ## Inspirations and Acknowledgements  
 
