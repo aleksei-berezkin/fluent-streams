@@ -43,7 +43,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - `Stream` and `Optional` implement the `Iterable` protocol, making them compatible with JavaScript constructs such as `for-of` loops and spread syntax.
   - The library is optimized for arrays. If the input is an array, it will iterate faster and consume less memory.
 - **Compact Size:**
-  - Minified: 9.4 kB
+  - Minified: 9.5 kB
   - Gzipped: 3.2 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
@@ -63,7 +63,7 @@ While it is possible to transpile the library to ES5 and polyfill it, this is no
 
 ## Benchmarks  
 
-The library [demonstrates](https://github.com/aleksei-berezkin/fluent-streams-docs/tree/master/benchmarks) generally reasonable performance, though it is slightly slower in some benchmarks. This can be attributed to the following factors:  
+The library [demonstrates](https://github.com/aleksei-berezkin/fluent-streams-docs/tree/master/benchmarks) generally reasonable performance, though it is slightly slower in some benchmarks compared to similar libraries. This is due to:
 
 - **Use of Generators.** While they allow for iteration with very compact syntax, generators are typically slightly slower than simple iterators.
 - **Standard Iteration Protocol.** Ensures compatibility with `for-of` loops, spread syntax, and other language features, though custom protocols can be faster at the cost of losing these benefits.

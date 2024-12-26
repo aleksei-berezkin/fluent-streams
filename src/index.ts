@@ -1521,22 +1521,11 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     dropLastWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
-        return this.#dropOrTakeLastWhile(predicate)
+        return this.#toArrayStream().dropLastWhile(predicate)
     }
 
     dropWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
         return this.#dropOrTakeWhile(predicate)
-    }
-
-    #dropOrTakeLastWhile(predicate: (item: T, index: number) => boolean, take?: boolean): Stream<T> {
-        return new LazyArrayStream(() => {
-            // findLastIndex() is not yet widely available
-            const a = this.toArray()
-            for (let i = a.length - 1; i >= 0; i--)
-                if (!predicate(a[i], i))
-                    return take ? a.slice(i + 1) : a.slice(0, i + 1)
-            return take ? a : []
-        })
     }
 
     #dropOrTakeWhile(predicate: (item: T, index: number) => boolean, take?: boolean): Stream<T> {
@@ -1656,10 +1645,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     randomItem(): Optional<T> {
-        return this._o<T>( () => {
-            const a = this.toArray()
-            return a.length ? a[randomInt(a.length)] : empty
-        })
+        return this.#toArrayStream().randomItem()
     }
 
     reduce<U>(reducer: (acc: U, curr: T, index: number) => U, initial?: U): Optional<U> | U {
@@ -1681,11 +1667,11 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     reverse(): Stream<T> {
-        return new LazyArrayStream(() => this.toArray().reverse())
+        return this.#toArrayStream(a => a.reverse())
     }
 
     shuffle(): Stream<T> {
-        return new LazyArrayStream(() => shuffle(this.toArray()))
+        return this.#toArrayStream(shuffle)
     }
 
     single(): Optional<T> {
@@ -1729,11 +1715,11 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     sort(compareFn?: (a: T, b: T) => number): Stream<T> {
-        return new LazyArrayStream(() => this.toArray().sort(compareFn))
+        return this.#toArrayStream(a => a.sort(compareFn))
     }
 
     sortBy(getComparable: (item: T) => (number | string | boolean)): Stream<T> {
-        return new LazyArrayStream(() => sortBy(this.toArray(), getComparable))
+        return this.#toArrayStream(a => sortBy(a, getComparable))
     }
 
     splice<U = T>(start: number, deleteCount?: number, ...items: U[]): Stream<T | U> {
@@ -1801,7 +1787,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     takeLastWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
-        return this.#dropOrTakeLastWhile(predicate, true)
+        return this.#toArrayStream().takeLastWhile(predicate)
     }
 
     takeWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
@@ -1809,8 +1795,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     takeRandom(n: number): Stream<T> {
-        return new LazyArrayStream(() => {
-            const a = this.toArray()
+        return this.#toArrayStream(a => {
             const size = between0And(n, a.length)
             shuffle(a, size)
             a.length = size
@@ -1898,6 +1883,10 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         })
     }
 
+    #toArrayStream(fn: (a: T[]) => T[] = a => a): Stream<T> {
+        return new LazyArrayStream(() => fn(this.toArray()))
+    }
+
     #bindAndCreateIteratorStream<U>(generator: (this: typeof this) => Iterator<U>): Stream<U> {
         return new IteratorStream(generator.bind(this))
     }
@@ -1957,27 +1946,28 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
         )
     }
 
+    dropLastWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
+        return new RandomAccessStream(() => {
+            const [getItem, size] = this.#getRandomAccess()
+            return [
+                getItem,
+                this.#findLastIndex(getItem, size, invert(predicate), -1) + 1,
+            ]
+        })
+    }
+
     findLast(predicate: (item: T, index: number) => boolean): Optional<T> {
-        return this.#findLast(predicate)
+        return this._o(() => {
+            const [getItem, size] = this.#getRandomAccess()
+            const i = this.#findLastIndex(getItem, size, predicate)
+            return isEmpty(i) ? empty : getItem(i)
+        })
     }
 
     findLastIndex(predicate: (item: T, index: number) => boolean): Optional<number> {
-        return this.#findLast(predicate, true)
-    }
-
-    #findLast<Index extends boolean = false>(predicate: (item: T, index: number) => boolean, index?: Index): Optional<Index extends true ? number : T> {
-        return this._o(() => {
-            const [getItem, size] = this.#getRandomAccess()
-            let foundItem = empty as (Index extends true ? number : T) | Empty
-            for (let i = size - 1; i >= 0; i--) {
-                const item = getItem(i)
-                if (predicate(item, i)) {
-                    foundItem = (index ? i : item) as typeof foundItem
-                    break
-                }
-            }
-            return foundItem
-        })
+        return this._o(() =>
+            this.#findLastIndex(...(this.#getRandomAccess().slice(0, 2) as [RandomAccess<T>[0], RandomAccess<T>[1]]), predicate)
+        )
     }
 
     map<U>(mapper: (item: T, index: number) => U): Stream<U> {
@@ -1999,6 +1989,24 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
             ix => getItem(size - 1 - ix),
             size,
         ])
+    }
+
+    takeLastWhile(predicate: (item: T, index: number) => boolean): Stream<T> {
+        return new RandomAccessStream(() => {
+            const [getItem, size] = this.#getRandomAccess()
+            const i = this.#findLastIndex(getItem, size, invert(predicate), -1)
+            return [
+                ix => getItem(i + 1 + ix),
+                size - i - 1,
+            ]
+        })
+    }
+
+    #findLastIndex<OrElse = Empty>(getItem: RandomAccess<T>[0], size: RandomAccess<T>[1], predicate: (item: T, index: number) => boolean, orElse: OrElse = empty as OrElse): number | OrElse {
+        for (let i = size - 1; i >= 0; i--)
+            if (predicate(getItem(i), i))
+                return i
+        return orElse as OrElse
     }
 
     toArray(): T[] {
@@ -2234,7 +2242,7 @@ function reduce<
     for (const item of itr)
         if (isEmpty(acc))
             // No initial, U = T
-            acc = item as undefined as U
+            acc = item as unknown as U
         else
             acc = reducer(
                 acc as U,
@@ -2269,6 +2277,9 @@ function sortBy<T>(a: T[], getComparable: (item: T) => (number | string | boolea
             : 0
     })
 }
+
+const invert: (predicate: (...args: any[]) => boolean) => () => boolean =
+    predicate => (...args) => !predicate(...args)
 
 type Empty = {_brand?: never}
 const empty: Empty = {}
