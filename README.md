@@ -43,7 +43,7 @@ Fluent Streams is not the first library to offer this kind of functionality, but
   - `Stream` and `Optional` implement the `Iterable` protocol, making them compatible with JavaScript constructs such as `for-of` loops and spread syntax.
   - The library is optimized for arrays. If the input is an array, it will iterate faster and consume less memory.
 - **Compact Size:**
-  - Minified: 9.5 kB
+  - Minified: 9.3 kB
   - Gzipped: 3.2 kB
   - [Bundlephobia report](https://bundlephobia.com/package/fluent-streams)
 - **Includes `Optional`:**
