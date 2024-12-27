@@ -673,12 +673,13 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * `isSplit` returned false. In other words, given all items as a sequence, it splits them
      * between items for which `isSplit` returns `true`.
      * 
-     * @param isSplit A function to check if the items sequence should be split between `l` 
-     * and `r` items. Receives the index of the `l` item as a 3rd parameter.
+     * @param isSplit A function to check if the items sequence should be split between `left` 
+     * and `right` items. Receives the index of the `right` item as a 3rd parameter, that is,
+     * for the first invocation it is `1`.
      * 
      * @returns A {@link Stream} containing groups of adjacent items.
      */
-    splitWhen(isSplit: (l: T, r: T, lIndex: number) => boolean): Stream<T[]>
+    splitWhen(isSplit: (left: T, right: T, rightIndex: number) => boolean): Stream<T[]>
 
     /**
      * Returns a stream that contains all but the first item of this stream. If the stream 
@@ -1317,9 +1318,7 @@ export function abc(): Stream<string> {
  * @returns An endless stream of the provided value.
  */
 export function same<T>(value: T): Stream<T> {
-    return new IteratorStream(function* () {
-        for ( ; ; ) yield value
-    })
+    return continually(() => value)
 }
 
 /**
@@ -1362,10 +1361,7 @@ export function optional<T>(input: Iterable<T> | (() => Iterator<T>)): Optional<
  *          `undefined`, otherwise an empty optional.
  */
 export function optionalOfNullable<T>(getInput: () => T | null | undefined): Optional<T> {
-    return new SimpleOptional<T>(function* () {
-        const input = getInput()
-        if (input != null) yield(input)
-    })
+    return newOptional(() => getInput() ?? empty)
 }
 
 // *** Implementation ***
@@ -1546,12 +1542,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     equals(other: Iterable<T>): boolean {
-        const itr = other[Symbol.iterator]()
-        for (const item of this) {
-            const {done, value} = itr.next()
-            if (done || item !== value) return false
-        }
-        return !!itr.next().done
+        return this.#zip(other, 2).every(([a, b]) => a === b)
     }
 
     find(predicate: (item: T, index: number) => boolean): Optional<T> {
@@ -1759,12 +1750,12 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         })
     }
 
-    splitWhen(isSplit: (l: T, r: T, lIndex: number) => boolean): Stream<T[]> {
+    splitWhen(isSplit: (l: T, r: T, rIndex: number) => boolean): Stream<T[]> {
         return this.#bindAndCreateIteratorStream(function* () {
             let chunk: T[] = []
             let i = -1
             for (const item of this)
-                if (++i && isSplit(chunk.at(-1)!, item, i - 1)) {
+                if (++i && isSplit(chunk.at(-1)!, item, i)) {
                     yield chunk
                     chunk = [item]
                 } else
@@ -1846,7 +1837,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     zipStrict<U>(other: Iterable<U>): Stream<[T, U]> {
-        return this.#zip(other, true)
+        return this.#zip(other, 1)
     }
 
     zipWithIndex(): Stream<[T, number]> {
@@ -1854,11 +1845,12 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     zipWithIndexAndLen(): Stream<[T, number, number]> {
-        return this.#bindAndCreateIteratorStream(function* () {
+        return new RandomAccessStream(()  => {
             const a = this.toArray()
-            let i = 0
-            for (const item of a)
-                yield [item, i++, a.length] satisfies [T, number, number]
+            return [
+                ix => [a[ix], ix, a.length],
+                a.length,
+            ]
         })
     }
 
@@ -1866,19 +1858,17 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         return this.zipAdjacent<2>(2)
     }
 
-    #zip<U>(other: Iterable<U>, strict = false): Stream<[T, U]> {
+    #zip<U, Mode extends 0 /* normal */ | 1 /* strict */ | 2 /* pad empty */ = 0>(other: Iterable<U>, mode?: Mode): Stream<[Mode extends 2 ? Empty | T : T, Mode extends 2 ? Empty | U : U]> {
         return this.#bindAndCreateIteratorStream(function* () {
             const it1 = this[Symbol.iterator]()
             const it2 = other[Symbol.iterator]()
             for ( ; ; ) {
                 const {done: d1, value: v1} = it1.next()
                 const {done: d2, value: v2} = it2.next()
-                if (strict) {
-                    if (d1 && !d2) throw new Error('Too small this')
-                    if (!d1 && d2) throw new Error('Too small other')
-                }
-                if (d1 || d2) break
-                yield [v1, v2] satisfies [T, U]
+                if (!d1 && !d2) yield [v1, v2] satisfies [T, U]
+                else if (d1 && d2 || !mode) break
+                else if (mode === 1) throw new Error(`Too small ${d1 ? 'this' : 'other'}`)
+                else yield [d1 ? empty : v1, d2 ? empty : v2] as any
             }
         })
     }
