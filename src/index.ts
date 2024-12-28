@@ -2145,9 +2145,7 @@ class SimpleOptional<T> extends Base<T, 'Optional'> implements Optional<T> {
     }
 }
 
-function between0And(n: number, max: number) {
-    return Math.max(0, Math.min(n, max))
-}
+const between0And = (n: number, max: number) => Math.max(0, Math.min(n, max))
 
 type RingBuffer<T> = {
     // Bundlers cannot minimize this, doing manually
@@ -2179,13 +2177,11 @@ function createRingBuffer<T>(size: number): RingBuffer<T> {
     return buf
 }
 
-function ringBufferToArray<T>(buf: RingBuffer<T>, dropFirst: number = 0, dropLast: number = 0): T[] {
-    const {a, a: {length: l}, p} = buf
-    return Array.from(
-        {length: l - dropFirst - Math.max(0, dropLast)},
-        (_, i) => a[(p + dropFirst + i) % l],
+const ringBufferToArray = <T>(buf: RingBuffer<T>, dropFirst: number = 0, dropLast: number = 0): T[] =>
+    Array.from(
+        {length: buf.a.length - dropFirst - Math.max(0, dropLast)},
+        (_, i) => buf.a[(buf.p + dropFirst + i) % buf.a.length],
     )
-}
 
 function* flatMap<T, U>(this: Iterable<T>, mapper: (item: T, index: number) => Iterable<U>) {
     let i = 0
@@ -2235,21 +2231,18 @@ function shuffle<T>(a: T[], n: number = a.length) {
     return a
 }
 
-function sortBy<T>(a: T[], getComparable: (item: T) => (number | string | boolean)) {
-    return a.sort((x, y) => {
+const sortBy = <T>(a: T[], getComparable: (item: T) => (number | string | boolean)) =>
+    a.sort((x, y) => {
         const ca = getComparable(x)
         const cb = getComparable(y)
         return ca < cb ? -1
             : ca > cb ? 1
             : 0
     })
-}
 
 const invert: (predicate: (...args: any[]) => boolean) => () => boolean =
     predicate => (...args) => !predicate(...args)
 
 type Empty = {_brand?: never}
 const empty: Empty = {}
-function isEmpty(a: unknown): a is Empty {
-    return a === empty
-}
+const isEmpty = (a: unknown): a is Empty => a === empty
