@@ -3,13 +3,24 @@ import { forStreamInput as forInput } from './testUtil/forInput';
 import { twice } from './testUtil/twice';
 import { continually, range, streamOf } from '.';
 
+
+test('at shuffle', () => [[], ['a'], ['a', 'b', 'c']].forEach(input => range(0, 20).forEach(() => {
+    const index = -5 + Math.random() * 9
+    forInput(
+        input,
+        s => s.at(index),
+        (o, inputHint) => twice(runHint => expect(o.orUndefined()).toEqualWithHint(
+            input.at(index),
+            () => `${inputHint()} -- ${input} -- [${index}]`,
+            runHint,
+        ))
+    )
+})))
+
 test('slice', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e']].forEach(input => range(0, 50).forEach(() => {
-    const indexOpt =
-        range(-6,  7)
-            .concat(undefined)
-            .randomItem()
-    const start = indexOpt.get()
-    const end = indexOpt.get()
+    const randomOffset = () => Math.random() < .2 ? undefined : -6 + Math.random() * 13
+    const start = randomOffset()
+    const end = randomOffset()
     forInput(
         input,
         s => s.slice(start, end),
@@ -55,8 +66,8 @@ test('slice exact items 1 start', () => {
 })
 
 test('splice', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e']].forEach(input => range(0, 50).forEach(() => {
-    const start = range(-7,  7).randomItem().get()
-    const deleteCount = range(-1,  6).concat(undefined, Infinity).randomItem().get()
+    const start = -7 + Math.random() * 14
+    const deleteCount = streamOf(-2 + Math.random() * 8).concat(undefined, Infinity).randomItem().get()
     const insertedItems = streamOf('x', 'y', 'z', 'xx', 'yy', 'zz')
         .take(range(0, 7).randomItem().get())
         .toArray()
@@ -103,7 +114,7 @@ test('with', () => forInput(
 ))
 
 test('with randomized', () => [[], ['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'c', 'd', 'e']].forEach(input => range(0, 50).forEach(() => {
-    const index = range(-input.length - 2,  input.length + 2).randomItem().get()
+    const index = -input.length - 2 + Math.random() *  (input.length + 1)
     const expected = (() => {
         try {
             return input.with(index, 'x')

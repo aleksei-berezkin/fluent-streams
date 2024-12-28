@@ -65,7 +65,8 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * specified position does not exist, the optional resolves to empty.
      * 
      * @param index - A zero-based position for the desired item, or a negative position 
-     *                to count from the end of the stream.
+     *                to count from the end of the stream,
+     *                [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
      * 
      * @returns An {@link Optional} containing the item at the specified position, or 
      *          empty if no such position exists.
@@ -140,7 +141,8 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * Returns a stream containing all items except the first `n` items of this stream. 
      * If the stream contains `n` or fewer items, the resulting stream will be empty.
      * 
-     * @param n The number of items to drop from the start of the stream.
+     * @param n The number of items to drop from the start of the stream,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
      * @returns A {@link Stream} containing all items except the first `n`.
      */
     drop(n: number): Stream<T>
@@ -149,7 +151,8 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * Returns a stream containing all items except the last `n` items of this stream. 
      * If the stream contains `n` or fewer items, the resulting stream will be empty.
      * 
-     * @param n The number of items to drop from the end of the stream.
+     * @param n The number of items to drop from the end of the stream,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
      * @returns A {@link Stream} containing all items except the last `n`.
      */
     dropLast(n: number): Stream<T>
@@ -592,9 +595,13 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * The method's behavior aligns with
      * [Array.slice()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice).
      *
-     * @param start - The zero-based index at which to begin the slice. Defaults to `0`.
-     * @param end - The zero-based index before which to end the slice. Defaults to the
-     * size of the stream.
+     * @param start - The zero-based index at which to begin the slice,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
+     * Defaults to `0`.
+     * 
+     * @param end - The zero-based index before which to end the slice,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
+     * Defaults to the size of the stream.
      * 
      * @returns A {@link Stream} containing the specified portion of this stream.
      */
@@ -642,15 +649,16 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * but instead of modifying the input in place and returning removed items, it
      * leaves the input unchanged and returns a new stream reflecting the changes.
      * 
-     * @param start - The zero-based index at which to begin changing the stream.
-     * A negative value counts from the end of the stream.
-     * * If `start` is greater than the stream's length, no items are removed, and any new
-     *   items are added at the end of the stream.
-     * * If `start` is less than the size of the stream, the method begins removing items
-     *   or inserting new ones at the specified index.
+     * @param start - The zero-based index at which to begin changing the stream,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
+     * A negative value counts from the end of the stream, with `-1` referring to the last item.
+     * * If positive `start` exceeds the length of the stream, no items are deleted, and the provided
+     * `items` are added to the end of the stream.
+     * * If negative `start` is less than the negative size of the stream, `0` is used.
      * 
-     * @param deleteCount - The number of items to remove from the stream.
-     * * If omitted, all items from `start` to the end of the stream are removed.
+     * @param deleteCount - The number of items to remove from the stream,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
+     * * If omitted or `Infinity`, all items from `start` to the end of the stream are removed.
      * * If `0`, negative, or explicitly `null` or `undefined`, no items are removed.
      * 
      * @param items - The items to add to the stream starting at `start`. If no items are
@@ -691,7 +699,8 @@ export interface Stream<T> extends Iterable<T, undefined> {
     /**
      * Returns a stream containing no more than the first `n` items of this stream.
      * 
-     * @param n The maximum number of leading items to select from this stream.
+     * @param n The maximum number of leading items to select from this stream,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
      * 
      * @returns A {@link Stream} containing no more than the first `n` items.
      */
@@ -700,7 +709,8 @@ export interface Stream<T> extends Iterable<T, undefined> {
     /**
      * Creates a stream containing no more than the last `n` items of this stream.
      * 
-     * @param n The maximum number of trailing items to select from this stream.
+     * @param n The maximum number of trailing items to select from this stream,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
      * 
      * @returns A {@link Stream} containing the last `n` items.
      */
@@ -741,7 +751,8 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * The implementation uses pseudo-random [Math.random()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random),
      * so it is not suitable for cryptographic purposes.
      * 
-     * @param n The maximum number of items to sample.
+     * @param n The maximum number of items to sample,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
      * 
      * @returns A {@link Stream} containing up to `n` random items.
      */
@@ -829,7 +840,8 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * element, `-2` being the second to last, and so on. If the index is out of bounds,
      * a `RangeError` is thrown.
      * 
-     * @param index The index of the element to replace.
+     * @param index The index of the element to replace,
+     * [converted to an integer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion).
      * @param value The value to insert at the specified index.
      * 
      * @returns A {@link Stream} with the element at the specified `index` replaced by
@@ -1193,7 +1205,13 @@ type TupleOf<T, N extends number> = N extends (0 | -1) ? [] :
  * 1) **Iterable.** This includes arrays, sets, or any other iterable, including 
  * user-defined ones, as long as they correctly implement the 
  * [iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols).
- * Example: `stream([1, 2, 3])`.  
+ * 
+ * @example
+ * ```typescript
+ * // Prints 1, 2, 3
+ * stream([1, 2, 3])
+ *   .forEach(i => console.log(i))
+ * ```
  * 
  * If you implement your own iterator, note the following:
  * - [next()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#next)
@@ -1205,7 +1223,18 @@ type TupleOf<T, N extends number> = N extends (0 | -1) ? [] :
  * methods are not utilized.
  * 
  * 2) **Function returning an iterator.** The most convenient usage is with a 
- * generator function. Example: `stream(function* () { yield 1; yield 2; yield 3; })`.  
+ * generator function.
+ * 
+ * @example
+ * ```typescript
+ * // Prints 1, 2, 3
+ * stream(function* () {
+ *   yield 1
+ *   yield 2
+ *   yield 3
+ * })
+ *   .forEach(i => console.log(i))
+ * ```
  * 
  * If the `input` is both iterable (i.e., has a `[Symbol.iterator]` property) 
  * and a function, it is interpreted as an iterable.
@@ -1473,7 +1502,8 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     at(index: number): Optional<T> {
-        return new SimpleOptional(this.slice(index, index === -1 ? undefined : index + 1))
+        const _index = toInteger(index)
+        return new SimpleOptional(this.slice(_index, _index === -1 ? undefined : _index + 1))
     }
 
     awaitAll(): Promise<T extends PromiseLike<infer E> ? E[] : T[]> {
@@ -1677,8 +1707,8 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
 
     slice(start?: number, end?: number) {
         return this.#bindAndCreateIteratorStream<T>(function* () {
-            const _start = start ?? 0
-            const _end = end ?? Infinity
+            const _start = toInteger(start)
+            const _end = toInteger(end ?? Infinity)
             if (_end >= 0 && _start >= _end) return
 
             const buf = _start < 0 ? createRingBuffer<T>(-_start)
@@ -1714,10 +1744,10 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
 
     splice<U = T>(start: number, deleteCount?: number, ...items: U[]): Stream<T | U> {
         return this._s(
-            start,
+            toInteger(start),
             arguments.length < 2
                 ? Infinity
-                : Math.max(0, deleteCount ?? 0),
+                : Math.max(0, toInteger(deleteCount)),
             items
         )
     }
@@ -1786,7 +1816,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
 
     takeRandom(n: number): Stream<T> {
         return this.#toArrayStream(a => {
-            const size = between0And(n, a.length)
+            const size = between0And(toInteger(n), a.length)
             shuffle(a, size)
             a.length = size
             return a
@@ -1817,7 +1847,7 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
     }
 
     with(index: number, value: T): Stream<T> {
-        return this._s(index, 1, [value], true)
+        return this._s(toInteger(index), 1, [value], true)
     }
 
     zip<U>(other: Iterable<U>): Stream<[T, U]> {
@@ -1914,8 +1944,9 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
 
     at(index: number): Optional<T> {
         return this.#newOptional((getItem, size) => {
-            return -size <= index && index < size
-                ? getItem(index < 0 ? size + index : index)
+            const _index = toInteger(index)
+            return -size <= _index && _index < size
+                ? getItem(_index < 0 ? size + _index : _index)
                 : empty
         })
     }
@@ -1966,18 +1997,11 @@ class RandomAccessStream<T> extends IteratorStream<T> implements Stream<T> {
 
     slice(start?: number, end?: number): Stream<T> {
         return this.#newRandomAccessStream((getItem, size) => {
-            const s = between0And(
-                start == null ? 0
-                    : start < 0 ? size + start
-                    : start,
-                size
-            )
-            const e = between0And(
-                end == null ? size
-                    : end < 0 ? size + end
-                    : end,
-                size
-            )
+            const _start = toInteger(start)
+            const _end = toInteger(end ?? size)
+
+            const s = between0And(_start < 0 ? size + _start : _start, size)
+            const e = between0And(_end < 0 ? size + _end : _end, size)
             return [
                 ix => getItem(s + ix),
                 Math.max(0, e - s),
@@ -2238,6 +2262,11 @@ const sortBy = <T>(a: T[], getComparable: (item: T) => (number | string | boolea
             : ca > cb ? 1
             : 0
     })
+
+const toInteger: (n: number | undefined | null) => number = n => {
+    const m = Math.trunc(n as any) // coerces arg to number
+    return isNaN(m) ? 0 : m
+}
 
 const invert: (predicate: (...args: any[]) => boolean) => () => boolean =
     predicate => (...args) => !predicate(...args)

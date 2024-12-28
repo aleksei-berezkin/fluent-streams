@@ -804,7 +804,7 @@ test('takeWhile', () =>
 test('takeRandom', () => {
     const input = ['a', 'b', 'c', 'd', 'e'];
     const iterPerVariation = 200;
-    [-1, 0, 1, 2, 5, 6].forEach(k =>
+    [-Infinity, -1.5, -1, -.11, 0, .57, 1, 2, 2.24, 4.78, 5.01, 6].forEach(k =>
         forInput(
             input,
             s => s.takeRandom(k),

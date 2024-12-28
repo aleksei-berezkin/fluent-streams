@@ -1,5 +1,5 @@
 export function variations(items: string[], k: number): string[] {
-    if (k <= 0 || items.length === 0) {
+    if (k < 1 || items.length === 0) {
         return [];
     }
 
@@ -9,7 +9,7 @@ export function variations(items: string[], k: number): string[] {
 
     const res: string[] = [];
     for (let i = 0; i < items.length; i++) {
-        if (k === 1) {
+        if (k < 2) {
             res.push(items[i]);
         } else {
             const inner = [...items];
