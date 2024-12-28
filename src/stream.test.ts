@@ -719,7 +719,7 @@ test('splitWhen each', () => forInput(
 
 test('splitWhen some', () => forInput(
     ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
-    s => s.splitWhen((l, r, lIndex) => r === 'a' || l === 'b' || r === 'd' || lIndex === 5 || l === 'g'),
+    s => s.splitWhen((l, r, lIndex) => r === 'a' || l === 'b' || r === 'd' || lIndex === 4 || l === 'g'),
     (s, inputHint) => twice(runHint =>
         expect(s.toArray()).toEqualWithHint(
             [['a', 'b'], ['c'], ['d', 'e'], ['f', 'g']], inputHint, runHint

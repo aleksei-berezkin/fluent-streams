@@ -422,7 +422,7 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * @returns A string representing the concatenated stream items with custom 
      * separators.
      */
-    joinBy(getSep: (l: T, r: T, lIndex: number) => string): string
+    joinBy(getSep: (left: T, right: T, leftIndex: number) => string): string
 
     /**
      * Returns an optional resolving to the last item of this stream if it's nonempty, 
@@ -674,12 +674,11 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * between items for which `isSplit` returns `true`.
      * 
      * @param isSplit A function to check if the items sequence should be split between `left` 
-     * and `right` items. Receives the index of the `right` item as a 3rd parameter, that is,
-     * for the first invocation it is `1`.
+     * and `right` items. Receives the index of the `left` item as a 3rd parameter.
      * 
      * @returns A {@link Stream} containing groups of adjacent items.
      */
-    splitWhen(isSplit: (left: T, right: T, rightIndex: number) => boolean): Stream<T[]>
+    splitWhen(isSplit: (left: T, right: T, leftIndex: number) => boolean): Stream<T[]>
 
     /**
      * Returns a stream that contains all but the first item of this stream. If the stream 
@@ -1750,12 +1749,12 @@ class IteratorStream<T> extends Base<T, 'Stream'> implements Stream<T> {
         })
     }
 
-    splitWhen(isSplit: (l: T, r: T, rIndex: number) => boolean): Stream<T[]> {
+    splitWhen(isSplit: (l: T, r: T, lIndex: number) => boolean): Stream<T[]> {
         return this.#bindAndCreateIteratorStream(function* () {
             let chunk: T[] = []
             let i = -1
             for (const item of this)
-                if (++i && isSplit(chunk.at(-1)!, item, i)) {
+                if (++i && isSplit(chunk.at(-1)!, item, i - 1)) {
                     yield chunk
                     chunk = [item]
                 } else

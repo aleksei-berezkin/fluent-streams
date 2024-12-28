@@ -50,10 +50,10 @@ test('poker', () => {
     const [flop, turn, river, ...hands] = stream(deck)
         .takeRandom(3 + 1 + 1 + playersNumber * 2)
         .splitWhen((_l, _r, i) =>
-            i === 3             // flop
-            || i === 4          // turn
-            || i >= 5           // river
-                && i % 2 === 1  // ...players' hands
+            i === 2             // flop
+            || i === 3          // turn
+            || i >= 4           // river
+                && !(i % 2)     // ...players' hands
         )
     expect(flop).not.toEqual(deck.slice(0, 3))
     expect(flop.length).toBe(3)
