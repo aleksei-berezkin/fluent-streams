@@ -192,3 +192,19 @@ test('stream | optional type', () => {
     [s, o].forEach(so => so.forEach((i, ix) => sink.push(`${i},${ix}`)))
     expect(sink).toEqual(['a,0', 'b,1', 'c,2', 'd,0'])
 })
+
+test('user iterator', () => {
+    const a = stream({
+        [Symbol.iterator]() {
+            let i = 1
+            return {
+                next() {
+                    return i <= 3
+                        ? {value: i++, done: false}
+                        : {value: undefined, done: true}
+                }
+            }
+        }
+    }).toArray()
+    expect(a).toEqual([1, 2, 3])
+})

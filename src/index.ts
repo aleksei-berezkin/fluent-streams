@@ -357,6 +357,9 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * [SameValueZero](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set#value_equality)
      * algorithm.
      * 
+     * The method works similar to
+     * [Map.groupBy()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/groupBy).
+     * 
      * @param getKey - A function to derive the key for each item. The function 
      * receives the item and its index in the stream.
      * 
@@ -372,6 +375,9 @@ export interface Stream<T> extends Iterable<T, undefined> {
      * Items that produce the same key (as determined by the `Map`'s
      * [key equality](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map#key_equality))
      * are grouped into an array and stored as the value corresponding to that key.
+     * 
+     * The method works similar to
+     * [Map.groupBy()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/groupBy).
      * 
      * @param getKey - A function to derive the key for each item. The function
      * receives the item and its index in the stream.
@@ -1200,16 +1206,47 @@ type TupleOf<T, N extends number> = N extends (0 | -1) ? [] :
  * 
  * @typeParam T - The type of the stream's items.
  * 
- * @param input - The source to create the stream from. This can be:
+ * @param input - The source to create the stream from. The `input` can be an
+ * iterable, such as an array, set, or map, or a function that returns an
+ * iterator, such as a generator function.
  * 
- * 1) **Iterable.** This includes arrays, sets, or any other iterable, including 
- * user-defined ones, as long as they correctly implement the 
- * [iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols).
+ * @returns A {@link Stream} created from the provided input.
+ *
+ * @example Creating a stream from a simple iterable
  * 
- * @example
  * ```typescript
  * // Prints 1, 2, 3
  * stream([1, 2, 3])
+ *   .forEach(i => console.log(i))
+ * ```
+ * @example Creating a stream from a generator function
+ * 
+ * ```typescript
+ * // Prints 1, 2, 3
+ * stream(function* () {
+ *   yield 1
+ *   yield 2
+ *   yield 3
+ * })
+ *   .forEach(i => console.log(i))
+ * ```
+ * 
+ * @example Creating a stream from user-defined iterable
+ * 
+ * ```typescript
+ * // Prints 1, 2, 3
+ * stream({
+ *  [Symbol.iterator]() {
+ *    let i = 1
+ *    return {
+ *      next() {
+ *        return i <= 3
+ *          ? {value: i++, done: false}
+ *          : {value: undefined, done: true}
+ *        }
+ *      }
+ *    }
+ * })
  *   .forEach(i => console.log(i))
  * ```
  * 
@@ -1221,25 +1258,6 @@ type TupleOf<T, N extends number> = N extends (0 | -1) ? [] :
  * - [return()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#returnvalue)
  * and [throw()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#throwvalue)
  * methods are not utilized.
- * 
- * 2) **Function returning an iterator.** The most convenient usage is with a 
- * generator function.
- * 
- * @example
- * ```typescript
- * // Prints 1, 2, 3
- * stream(function* () {
- *   yield 1
- *   yield 2
- *   yield 3
- * })
- *   .forEach(i => console.log(i))
- * ```
- * 
- * If the `input` is both iterable (i.e., has a `[Symbol.iterator]` property) 
- * and a function, it is interpreted as an iterable.
- * 
- * @returns A {@link Stream} created from the provided input.
  */
 export function stream<T>(input: Iterable<T> | (() => Iterator<T>)): Stream<T> {
     return Array.isArray(input)
@@ -2223,6 +2241,7 @@ function reduce<
     initial: Initial,
     lengthIfReduceRight?: number,
 ): Initial | U {
+    Object.groupBy
     let acc: Initial | U = initial
     let i = isEmpty(initial) ? 1 : 0
     for (const item of itr)
